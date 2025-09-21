@@ -79,31 +79,90 @@
         </div>
 
         <div id="students" class="tab users-tab">
+            <header>
+                <div class="title-container">
+                    <i class="fa-solid fa-bus"></i>
+                    <h2>Student Management</h2>
+                </div>
+                <p>Monitor and manage all student shuttle operations</p>
+            </header>
             <div class="table-header">
-                <h3>Users</h3>
-                <div class="table-actions">
-                    <select id="sortUsers" onchange="filterUsers()">
-                        <option value="createdAt-desc">Sort by Date (Desc)</option>
-                        <option value="createdAt-asc">Sort by Date (Asc)</option>
-                        <option value="username-asc">Sort by Username (Asc)</option>
-                        <option value="username-desc">Sort by Username (Desc)</option>
-                        <option value="email-asc">Sort by Email (Asc)</option>
-                        <option value="email-desc">Sort by Email (Desc)</option>
-                    </select>
-                </div>
+                <h3>Active Students</h3>
+                <p>Real-time student tracking and status monitoring</p>
             </div>
-            <div class="users-header">
-                <div class="search-container">
-                    <input id="searchInput" type="text" placeholder="Search users..." oninput="filterUsers()">
-                </div>
-                <button class="add-user-btn" onclick="openUserModal()">+ Add User</button>
+            <div class="search-container">
+                <input id="searchStudents" type="text" placeholder="Search students, parents, or shuttles..." oninput="filterStudents()">
+                <select id="statusFilter" onchange="filterStudents()">
+                    <option value="all">All Status</option>
+                    <option value="checked-in">Checked in</option>
+                    <option value="checked-out">Checked out</option>
+                    <option value="not-boarded">Not boarded</option>
+                </select>
             </div>
-            <p id="no-users-message" style="display:none; color: red; margin-top: 10px;">No users found.</p>
+            <p id="no-shuttles-message" style="display:none; color: red; margin-top: 10px;">No students found.</p>
             <table>
                 <thead>
-                <tr><th>Username</th><th>Email</th><th>Actions</th></tr>
+                <tr>
+                    <th><i class="fa-solid fa-user"></i> Student</th>
+                    <th><i class="fa-solid fa-user"></i> Parent/Guardian</th>
+                    <th><i class="fa-solid fa-address-book"></i> Contact</th>
+                    <th><i class="fa-solid fa-bus"></i> Assigned Shuttle</th>
+                    <th>Status</th>
+                    <th>Check-in Time</th>
+                    <th>Current Location</th>
+                    <th>Actions</th>
+                </tr>
                 </thead>
-                <tbody id="users-table"></tbody>
+                <tbody id="students-table">
+                <tr>
+                    <td>Emma Johnson<br><small>Grade 10 - Section A</small></td>
+                    <td>Michael Johnson</td>
+                    <td><i class="fa-solid fa-phone"></i> 098087556<br><i class="fa-solid fa-envelope"></i> emma.johnson@example.com</td>
+                    <td>Campus Express</td>
+                    <td><span class="status-badge badge-checked-in">Checked in</span></td>
+                    <td>7:45 AM</td>
+                    <td>Main Street & 5th Ave</td>
+                    <td>
+                        <button class="action-btn track-btn">Track Details</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Liam Smith<br><small>Grade 11 - Section B</small></td>
+                    <td>Jane Smith</td>
+                    <td><i class="fa-solid fa-phone"></i> 0971234567<br><i class="fa-solid fa-envelope"></i> liam.smith@example.com</td>
+                    <td>Uptown Shuttle</td>
+                    <td><span class="status-badge badge-not-boarded">Not boarded</span></td>
+                    <td>N/A</td>
+                    <td>N/A</td>
+                    <td>
+                        <button class="action-btn track-btn">Track Details</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Olivia Brown<br><small>Grade 9 - Section C</small></td>
+                    <td>Mike Brown</td>
+                    <td><i class="fa-solid fa-phone"></i> 0967890123<br><i class="fa-solid fa-envelope"></i> olivia.brown@example.com</td>
+                    <td>Suburbs Route</td>
+                    <td><span class="status-badge badge-checked-in">Checked in</span></td>
+                    <td>8:00 AM</td>
+                    <td>Park Avenue</td>
+                    <td>
+                        <button class="action-btn track-btn">Track Details</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Noah Davis<br><small>Grade 12 - Section A</small></td>
+                    <td>Emily Davis</td>
+                    <td><i class="fa-solid fa-phone"></i> 0952345678<br><i class="fa-solid fa-envelope"></i> noah.davis@example.com</td>
+                    <td>Campus Express</td>
+                    <td><span class="status-badge badge-checked-out">Checked out</span></td>
+                    <td>7:30 AM</td>
+                    <td>University Blvd</td>
+                    <td>
+                        <button class="action-btn track-btn">Track Details</button>
+                    </td>
+                </tr>
+                </tbody>
             </table>
         </div>
 
@@ -186,7 +245,7 @@
                     <option value="maintenance">Maintenance</option>
                 </select>
             </div>
-            <p id="no-shuttles-message" style="display:none; color: red; margin-top: 10px;">No shuttles found.</p>
+            <p id="no-students-message" style="display:none; color: red; margin-top: 10px;">No shuttles found.</p>
             <table>
                 <thead>
                 <tr>
