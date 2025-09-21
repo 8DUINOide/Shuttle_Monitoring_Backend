@@ -392,9 +392,9 @@ async function updateDashboard() {
         // UPDATE UI
         const balanceCards = document.querySelectorAll(".balance-card h1");
         balanceCards[0].textContent = users.filter(u => u.username?.toLowerCase() !== "admin").length;
-        balanceCards[1].textContent = `₱${(budgetRequests.filter(b => b.status === "RELEASED").reduce((sum, b) => sum + (b.amount || 0), 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        balanceCards[2].textContent = `₱${(liquidations.filter(l => l.status === "LIQUIDATED").reduce((sum, l) => sum + (l.totalSpent || 0), 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        balanceCards[3].textContent = `₱${(liquidations.filter(l => l.status === "LIQUIDATED").reduce((sum, l) => sum + ((l.amount || 0) - (l.totalSpent || 0)), 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        balanceCards[1].textContent = `${(budgetRequests.filter(b => b.status === "RELEASED").reduce((sum, b) => sum + (b.amount || 0), 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        balanceCards[2].textContent = `${(liquidations.filter(l => l.status === "LIQUIDATED").reduce((sum, l) => sum + (l.totalSpent || 0), 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        balanceCards[3].textContent = `${(liquidations.filter(l => l.status === "LIQUIDATED").reduce((sum, l) => sum + ((l.amount || 0) - (l.totalSpent || 0)), 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         updateCharts();
         updateUserTable();
         updateBudgetTable();
@@ -441,10 +441,10 @@ function updateCharts() {
                     type: 'logarithmic', // Use logarithmic scale
                     beginAtZero: false, // Logarithmic scales can't start at zero
                     min: 1, // Minimum value for logarithmic scale
-                    title: { display: true, text: "Amount (₱)" },
+                    title: { display: true, text: "Amount" },
                     ticks: {
                         callback: function(value) {
-                            return '₱' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                         }
                     }
                 }
@@ -486,10 +486,10 @@ function updateCharts() {
                     type: 'logarithmic', // Use logarithmic scale
                     beginAtZero: false,
                     min: 1,
-                    title: { display: true, text: "Amount (₱)" },
+                    title: { display: true, text: "Amount" },
                     ticks: {
                         callback: function(value) {
-                            return '₱' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                         }
                     }
                 }
@@ -540,10 +540,10 @@ function updateCharts() {
                     type: 'logarithmic', // Use logarithmic scale
                     beginAtZero: false,
                     min: 1,
-                    title: { display: true, text: "Amount (₱)" },
+                    title: { display: true, text: "Amount" },
                     ticks: {
                         callback: function(value) {
-                            return '₱' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                         }
                     }
                 },
@@ -927,7 +927,7 @@ row.innerHTML = `
     <td>${sanitizeHTML(formatDate(req.date))}</td>
     <td>${sanitizeHTML(req.username)}</td>
     <td>${sanitizeHTML(req.name)}</td>
-    <td>₱${sanitizeHTML((req.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</td>
+    <td>${sanitizeHTML((req.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</td>
     <td><span class="status-badge ${statusClass}">${sanitizeHTML(req.status)}</span></td>
     <td>${sanitizeHTML(req.remarks || '')}</td>
     <td>
@@ -973,7 +973,7 @@ detailsDiv.innerHTML = `
         <span style="font-weight: bold; min-width: 120px; display: inline-block;">Request Name:</span> <span style="word-break: break-word;">${sanitizeHTML(budget.name || 'No Name')}</span>
     </div>
     <div>
-        <span style="font-weight: bold; min-width: 120px; display: inline-block;">Total Amount:</span> <span style="word-break: break-word;">₱${sanitizeHTML((budget.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))} ${expenseTotal !== (budget.amount || 0) && budget.expenses.length > 0 ? `(Calculated from items: ₱${sanitizeHTML(expenseTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))})` : ''}</span>
+        <span style="font-weight: bold; min-width: 120px; display: inline-block;">Total Amount:</span> <span style="word-break: break-word;">${sanitizeHTML((budget.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))} ${expenseTotal !== (budget.amount || 0) && budget.expenses.length > 0 ? `(Calculated from items: ${sanitizeHTML(expenseTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))})` : ''}</span>
     </div>
     <div>
         <span style="font-weight: bold; min-width: 120px; display: inline-block;">Status:</span> <span class="status-badge ${budget.status === "PENDING" ? "badge-pending" : budget.status === "RELEASED" ? "badge-released" : "badge-denied"}" style="word-break: break-word;">${sanitizeHTML(budget.status || 'PENDING')}</span>
@@ -993,10 +993,10 @@ detailsDiv.innerHTML = `
                         <span style="font-weight: bold; min-width: 120px; display: inline-block;">Quantity:</span> <span style="word-break: break-word;">${sanitizeHTML((exp.quantity || 0).toString())}</span>
                     </div>
                     <div>
-                        <span style="font-weight: bold; min-width: 120px; display: inline-block;">Amount per Unit:</span> <span style="word-break: break-word;">₱${sanitizeHTML((exp.amountPerUnit || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</span>
+                        <span style="font-weight: bold; min-width: 120px; display: inline-block;">Amount per Unit:</span> <span style="word-break: break-word;">${sanitizeHTML((exp.amountPerUnit || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</span>
                     </div>
                     <div>
-                        <span style="font-weight: bold; min-width: 120px; display: inline-block;">Subtotal:</span> <span style="word-break: break-word;">₱${sanitizeHTML((exp.quantity * (exp.amountPerUnit || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</span>
+                        <span style="font-weight: bold; min-width: 120px; display: inline-block;">Subtotal:</span> <span style="word-break: break-word;">${sanitizeHTML((exp.quantity * (exp.amountPerUnit || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</span>
                     </div>
                     <div>
                         <span style="font-weight: bold; min-width: 120px; display: inline-block;">Remarks:</span> <span style="word-break: break-word;">${sanitizeHTML(exp.remarks || 'None')}</span>
@@ -1114,7 +1114,7 @@ row.innerHTML = `
     <td>${sanitizeHTML(exp.dateOfTransaction ? formatDate(exp.dateOfTransaction) : '')}</td>
     <td>${sanitizeHTML(exp.username || 'Unknown')}</td>
     <td>${sanitizeHTML(exp.category || '')}</td>
-    <td>₱${sanitizeHTML((exp.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</td>
+    <td>${sanitizeHTML((exp.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</td>
     <td>${sanitizeHTML(exp.remarks || '')}</td>
     <td>
         <button onclick="showExpenseImage(${exp.expenseId}, null, 0)">View</button>
@@ -1473,9 +1473,9 @@ row.innerHTML = `
     <td>${sanitizeHTML(formatDate(l.dateOfTransaction))}</td>
     <td>${sanitizeHTML(l.username)}</td>
     <td>${sanitizeHTML(l.budgetName)}</td>
-    <td>₱${sanitizeHTML((l.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</td>
-    <td>₱${sanitizeHTML((l.totalSpent || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</td>
-    <td>₱${sanitizeHTML((l.remainingBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</td>
+    <td>${sanitizeHTML((l.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</td>
+    <td>${sanitizeHTML((l.totalSpent || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</td>
+    <td>${sanitizeHTML((l.remainingBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</td>
     <td><span class="status-badge ${statusClass}">${sanitizeHTML(l.status)}</span></td>
     <td>${sanitizeHTML(l.remarks || '')}</td>
     <td>
@@ -1520,13 +1520,13 @@ function showLiquidationDetails(index) {
          <span style="font-weight: bold; min-width: 120px; display: inline-block;">Budget Name:</span> <span style="word-break: break-word;">${sanitizeHTML(liquidation.budgetName || 'No Name')}</span>
      </div>
      <div>
-         <span style="font-weight: bold; min-width: 120px; display: inline-block;">Amount:</span> <span style="word-break: break-word;">₱${sanitizeHTML((liquidation.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</span>
+         <span style="font-weight: bold; min-width: 120px; display: inline-block;">Amount:</span> <span style="word-break: break-word;">${sanitizeHTML((liquidation.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</span>
      </div>
      <div>
-         <span style="font-weight: bold; min-width: 120px; display: inline-block;">Total Spent:</span> <span style="word-break: break-word;">₱${sanitizeHTML((liquidation.totalSpent || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</span>
+         <span style="font-weight: bold; min-width: 120px; display: inline-block;">Total Spent:</span> <span style="word-break: break-word;">${sanitizeHTML((liquidation.totalSpent || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</span>
      </div>
      <div>
-         <span style="font-weight: bold; min-width: 120px; display: inline-block;">Remaining Balance:</span> <span style="word-break: break-word;">₱${sanitizeHTML((liquidation.remainingBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</span>
+         <span style="font-weight: bold; min-width: 120px; display: inline-block;">Remaining Balance:</span> <span style="word-break: break-word;">${sanitizeHTML((liquidation.remainingBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</span>
      </div>
      <div>
          <span style="font-weight: bold; min-width: 120px; display: inline-block;">Status:</span> <span class="status-badge ${liquidation.status === "PENDING" ? "badge-pending" : liquidation.status === "LIQUIDATED" ? "badge-liquidated" : "badge-denied"}" style="word-break: break-word;">${sanitizeHTML(liquidation.status || 'PENDING')}</span>
@@ -1543,7 +1543,7 @@ function showLiquidationDetails(index) {
                          <span style="font-weight: bold; min-width: 120px; display: inline-block;">Category:</span> <span style="word-break: break-word;">${sanitizeHTML(exp.category || 'N/A')}</span>
                      </div>
                      <div>
-                         <span style="font-weight: bold; min-width: 120px; display: inline-block;">Amount:</span> <span style="word-break: break-word;">₱${sanitizeHTML((exp.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</span>
+                         <span style="font-weight: bold; min-width: 120px; display: inline-block;">Amount:</span> <span style="word-break: break-word;">${sanitizeHTML((exp.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</span>
                      </div>
                      <div>
                          <span style="font-weight: bold; min-width: 120px; display: inline-block;">Remarks:</span> <span style="word-break: break-word;">${sanitizeHTML(exp.remarks || 'None')}</span>

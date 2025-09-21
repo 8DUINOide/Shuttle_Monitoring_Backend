@@ -139,11 +139,11 @@
             <p class="sidebar-email" id="sidebar-email"></p>
         </div>
         <ul>
-            <li onclick="showTab('home')"><i class="fa-solid fa-house"></i> Home</li>
-            <li onclick="showTab('users')"><i class="fa-solid fa-users"></i> Users</li>
-            <li onclick="showTab('budgets')"><i class="fa-solid fa-wallet"></i> Budget Requests</li>
-            <li onclick="showTab('expenses')"><i class="fa-solid fa-money-bill"></i> Expenses</li>
-            <li onclick="showTab('liquidations')"><i class="fa-solid fa-file-invoice-dollar"></i> Liquidations</li>
+            <li onclick="showTab('home')"><i class="fa-solid fa-house"></i> Dashboard</li>
+            <li onclick="showTab('budgets')"><i class="fa-solid fa-wallet"></i> Live Map</li>
+            <li onclick="showTab('expenses')"><i class="fa-solid fa-money-bill"></i> Shuttles</li>
+            <li onclick="showTab('users')"><i class="fa-solid fa-users"></i> Students</li>
+            <li onclick="showTab('liquidations')"><i class="fa-solid fa-file-invoice-dollar"></i> Notifications</li>
             <li onclick="showTab('profile')"><i class="fa-solid fa-user"></i> Profile</li>
             <li onclick="showLogoutConfirmModal()"><i class="fa-solid fa-sign-out-alt"></i> Logout</li>
         </ul>
@@ -157,36 +157,28 @@
             </header>
             <div class="balance-section">
                 <div class="balance-card">
-                    <div class="label">Number of Users</div>
+                    <div class="label">Active Shuttles</div>
                     <h1>0</h1>
-                    <div class="date">Non-admin users</div>
                 </div>
                 <div class="balance-card">
-                    <div class="label">Total Budget Expense</div>
-                    <h1>₱0</h1>
-                    <div class="date">Released Budgets</div>
+                    <div class="label">Students Checked In</div>
+                    <h1>0</h1>
                 </div>
                 <div class="balance-card">
-                    <div class="label">Total Spent</div>
-                    <h1>₱0</h1>
-                    <div class="date">Liquidated Budgets</div>
+                    <div class="label">On time Performance</div>
+                    <h1>0%</h1>
                 </div>
                 <div class="balance-card">
-                    <div class="label">Total Reimbursed</div>
-                    <h1>₱0</h1>
-                    <div class="date">Liquidated Budgets</div>
+                    <div class="label">Routes Active</div>
+                    <h1>0</h1>
                 </div>
                 <div class="chart-card">
-                    <h4>Top Expense Categories</h4>
+                    <h4>Today's Routes</h4>
                     <canvas id="categoryChart" style="max-height: 250px;"></canvas>
                 </div>
                 <div class="chart-card">
-                    <h4>Top Users by Expenses</h4>
+                    <h4>Recent Activity</h4>
                     <canvas id="userChart" style="max-height: 250px;"></canvas>
-                </div>
-                <div class="chart-card">
-                    <h4>Monthly Spending Trend</h4>
-                    <canvas id="monthlySpendingChart" style="max-height: 250px;"></canvas>
                 </div>
             </div>
         </div>
