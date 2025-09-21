@@ -8,18 +8,6 @@ body, html {
     background-color: #F5F5F5; /* Light Grayish-White */
 }
 
-#home header h2 {
-    margin-left: 40px;
-    margin-top: 2px;
-    color: #003A6C; /* Ateneo Blue */
-}
-
-.table-header h3 {
-    margin-left: 40px;
-    margin-top: 2px;
-    color: #003A6C; /* Ateneo Blue */
-}
-
 /* === Login Page === */
 .login-bg {
     background-image: url('images/background.jpg');
@@ -280,24 +268,7 @@ header h2 {
     color: #003A6C; /* Ateneo Blue */
 }
 
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-    .balance-section {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 0 0.5rem;
-    }
-    .balance-card, .chart-card, .notifications-card {
-        flex: none;
-        width: 100%;
-        max-width: none;
-    }
-    .chart-card canvas {
-        height: 50vw !important;
-        max-height: 300px;
-    }
-}
-
+/* === Notification Items === */
 .notification-item {
     padding: 0.75rem 0;
     border-bottom: 1px solid #D1D5DB; /* Medium Gray */
@@ -313,11 +284,18 @@ header h2 {
     color: #003A6C; /* Ateneo Blue */
 }
 
+/* === Table Header === */
 .table-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
+}
+
+.table-header h3 {
+    margin-left: 40px;
+    margin-top: 2px;
+    color: #003A6C; /* Ateneo Blue */
 }
 
 .table-actions select {
@@ -514,6 +492,72 @@ tbody tr:hover {
     color: black;
 }
 
+/* === Modal Confirm === */
+.modal-confirm {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+}
+
+.modal-confirm-content {
+    background: #F3F4F6; /* Light Gray */
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    width: 400px;
+}
+
+.modal-confirm-content button {
+    margin: 0 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.confirm-action {
+    background: #5cb85c;
+    color: white;
+}
+
+.deny-action {
+    background: #d9534f;
+    color: white;
+}
+
+.cancel-action {
+    background: #ccc;
+    color: black;
+}
+
+.modal-confirm-content textarea {
+    width: 100%;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    resize: vertical;
+}
+
+.confirm-delete {
+    background: #d9534f;
+    color: white;
+}
+
+.cancel-delete {
+    background: #D1D5DB;
+}
+
+/* === Password Toggle === */
 .password-wrapper {
     position: relative;
 }
@@ -625,6 +669,33 @@ tbody tr:hover {
     opacity: 0.7;
 }
 
+/* === Profile Picture === */
+.profile-picture-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.profile-picture-upload {
+    margin-top: 0.5rem;
+}
+
+.profile-picture-upload button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    background: linear-gradient(135deg, #003A6C, #0066CC); /* Ateneo Blue to Lighter Blue */
+    color: #F5F5F5; /* Light Grayish-White */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+#profile-picture-error {
+    text-align: center;
+    color: #d9534f; /* Unchanged: Error text */
+}
+
 /* === User Popup === */
 .user-popup {
     display: flex;
@@ -637,6 +708,28 @@ tbody tr:hover {
     height: 100%;
     background-color: rgba(0,0,0,0.5);
     z-index: 9999;
+}
+
+.user-popup .modal-content {
+    width: 400px;
+    text-align: left;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.user-popup .popup-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.user-popup .popup-actions button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
 }
 
 .popup-card {
@@ -684,9 +777,14 @@ tbody tr:hover {
     color: black;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+.user-profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+    border: 1px solid #f46354;
 }
 
 /* === Search Bar & Table Actions === */
@@ -731,13 +829,54 @@ tbody tr:hover {
     opacity: 0.9;
 }
 
-.error-text {
-    color: #d9534f; /* Unchanged: Error text */
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-    text-align: left;
+/* === Status Badges === */
+.status-badge {
+    padding: 0.3rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: white;
 }
 
+.badge-pending {
+    background: #f0ad4e;
+}
+
+.badge-released {
+    background: #5cb85c;
+}
+
+.badge-denied {
+    background: #d9534f;
+}
+
+.badge-liquidated {
+    background: #5cb85c;
+}
+
+.badge-active {
+    background: #5cb85c;
+}
+
+.badge-inactive {
+    background: #d9534f;
+}
+
+.badge-maintenance {
+    background: #f0ad4e;
+}
+
+/* === User Details === */
+.user-details {
+    display: none;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #F3F4F6; /* Light Gray */
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* === Expenses Tab === */
 .expenses-tab .table-actions {
     display: flex;
     justify-content: flex-end;
@@ -745,7 +884,6 @@ tbody tr:hover {
     gap: 10px;
 }
 
-/* === Enhance Expenses Tab Table === */
 #expenses table {
     background: #F3F4F6; /* Light Gray */
     border-radius: 12px;
@@ -794,6 +932,91 @@ tbody tr:hover {
     color: #0066CC; /* Lighter Ateneo Blue */
 }
 
+/* === Liquidation Popup === */
+#liquidationPopup {
+    z-index: 1000;
+}
+
+#liquidationExpenseImagePopup {
+    z-index: 1100;
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+#liquidationExpenseImagePopup > div {
+    background: linear-gradient(135deg, #fff5f5, #f5f5f5);
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+    position: relative;
+    width: 600px;
+    height: 500px;
+    overflow: hidden;
+}
+
+#liquidationExpenseImagePopup > div > div {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    margin: 0 auto;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#popup-liquidation-expense-img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 5px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    position: relative;
+    transform-origin: center;
+    cursor: grab;
+}
+
+#liquidationExpenseImagePopup button {
+    margin-right: 10px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#liquidationExpenseImagePopup button:nth-child(1) {
+    background: linear-gradient(135deg, #5cb85c, #4cae4c);
+    color: white;
+}
+
+#liquidationExpenseImagePopup button:nth-child(2) {
+    background: linear-gradient(135deg, #d9534f, #c9302c);
+    color: white;
+}
+
+#liquidationExpenseImagePopup button:nth-child(3),
+#liquidationExpenseImagePopup button:nth-child(4) {
+    background: linear-gradient(135deg, #333, #555);
+    color: white;
+}
+
+#liquidationExpenseImagePopup button:nth-child(5) {
+    background: linear-gradient(135deg, #ccc, #aaa);
+    color: black;
+}
+
+#liquidationExpenseImagePopup small {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+}
+
 /* === Toast Notification === */
 #toast {
     position: fixed;
@@ -815,6 +1038,103 @@ tbody tr:hover {
     10% { opacity: 1; }
     90% { opacity: 1; }
     100% { opacity: 0; }
+}
+
+/* === Delete Icon Button === */
+.delete-icon-btn {
+    background: none;
+    border: none;
+    padding: 5px 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.delete-icon-btn i.fas.fa-trash-alt {
+    color: #d9534f; /* Unchanged: Red */
+    font-size: 14px;
+}
+
+.delete-icon-btn:hover i.fas.fa-trash-alt {
+    color: #003A6C; /* Ateneo Blue */
+}
+
+/* === Shuttles Tab Specific Styles === */
+#shuttles header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-left: 40px;
+}
+
+#shuttles header .title-container {
+    display: flex;
+    align-items: center;
+}
+
+#shuttles header i {
+    margin-right: 0.5rem;
+    font-size: 1.5rem;
+    color: #003A6C;
+}
+
+#shuttles header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #003A6C;
+}
+
+#shuttles header p {
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
+    color: #003A6C;
+}
+
+#shuttles .table-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 40px;
+    margin-bottom: 1rem;
+}
+
+#shuttles .table-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #003A6C;
+}
+
+#shuttles .table-header p {
+    margin: 0.5rem 0 0 0;
+    font-size: 0.9rem;
+    color: #003A6C;
+}
+
+#shuttles .search-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 40px;
+    margin-bottom: 1rem;
+}
+
+#shuttles .search-container input {
+    flex: 1;
+    width: 100%;
+    min-width: 300px;
+    max-width: 1200px; /* Further extended width for better visibility */
+}
+
+#shuttles .search-container select {
+    padding: 10px;
+    border: 1px solid #003A6C;
+    border-radius: 6px;
+    background: #fff;
+    color: #003A6C;
+    font-size: 0.9rem;
 }
 
 /* === Responsive Adjustments === */
@@ -840,124 +1160,4 @@ tbody tr:hover {
         grid-template-columns: 1fr;
         padding: 0 20px;
     }
-}
-
-/* Profile Picture Container */
-.profile-picture-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-
-.profile-picture-upload {
-    margin-top: 0.5rem;
-}
-
-.profile-picture-upload button {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-    background: linear-gradient(135deg, #003A6C, #0066CC); /* Ateneo Blue to Lighter Blue */
-    color: #F5F5F5; /* Light Grayish-White */
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-#profile-picture-error {
-    text-align: center;
-    color: #d9534f; /* Unchanged: Error text */
-}
-
-/* === Custom Styles from index.html === */
-.status-badge {
-    padding: 0.3rem 0.6rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: white;
-}
-
-.badge-pending { background: #f0ad4e; } /* Unchanged: Yellow */
-.badge-released { background: #5cb85c; } /* Unchanged: Green */
-.badge-denied { background: #d9534f; } /* Unchanged: Red */
-.badge-liquidated { background: #5cb85c; } /* Unchanged: Green */
-
-.user-details {
-    display: none;
-    margin-top: 1rem;
-    padding: 1rem;
-    background: #F3F4F6; /* Light Gray */
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.modal-confirm {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    justify-content: center;
-    align-items: center;
-    z-index: 3000;
-}
-
-.modal-confirm-content {
-    background: #F3F4F6; /* Light Gray */
-    padding: 2rem;
-    border-radius: 10px;
-    text-align: center;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-}
-
-.modal-confirm-content button {
-    margin: 0 0.5rem;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.confirm-delete { background: #d9534f; color: white; } /* Unchanged: Red */
-.cancel-delete { background: #D1D5DB; } /* Medium Gray */
-
-.modal-content input {
-    width: 100%;
-    padding: 0.5rem;
-    margin: 0.5rem 0;
-    border: 1px solid #003A6C; /* Ateneo Blue */
-    border-radius: 5px;
-}
-
-#liquidationPopup {
-    z-index: 1000; /* Base popup z-index */
-}
-
-#liquidationExpenseImagePopup {
-    z-index: 1100; /* Higher than liquidationPopup to appear above */
-}
-
-/* === Delete Icon Button === */
-.delete-icon-btn {
-    background: none;
-    border: none;
-    padding: 5px 8px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-}
-
-.delete-icon-btn i.fas.fa-trash-alt {
-    color: #d9534f; /* Unchanged: Red */
-    font-size: 14px;
-}
-
-.delete-icon-btn:hover i.fas.fa-trash-alt {
-    color: #003A6C; /* Ateneo Blue */
 }

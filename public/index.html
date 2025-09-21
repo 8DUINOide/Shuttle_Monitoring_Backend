@@ -7,111 +7,6 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .status-badge {
-            padding: 0.3rem 0.6rem;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: white;
-        }
-        .badge-pending { background: #f0ad4e; }
-        .badge-released { background: #5cb85c; }
-        .badge-denied { background: #d9534f; }
-        .badge-liquidated { background: #5cb85c; }
-
-        .user-details {
-            display: none;
-            margin-top: 1rem;
-            padding: 1rem;
-            background: linear-gradient(135deg, #fff5f5, #f5f5f5);
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .modal-confirm {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 3000;
-        }
-
-        .modal-confirm-content {
-            background: linear-gradient(135deg, #fff5f5, #f5f5f5);
-            padding: 2rem;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 0 10px rgba(0,0,0,0.25);
-            width: 400px;
-        }
-
-        .modal-confirm-content button {
-            margin: 0 0.5rem;
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .confirm-action { background: #5cb85c; color: white; }
-        .deny-action { background: #d9534f; color: white; }
-        .cancel-action { background: #ccc; color: black; }
-
-        .modal-confirm-content textarea {
-            width: 100%;
-            padding: 0.5rem;
-            margin: 0.5rem 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            resize: vertical;
-        }
-
-        .modal-content input {
-            width: 100%;
-            padding: 0.5rem;
-            margin: 0.5rem 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        .user-popup .modal-content {
-            width: 400px;
-            text-align: left;
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-
-        .user-popup .popup-actions {
-            margin-top: 1.5rem;
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-        }
-
-        .user-popup .popup-actions button {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .user-profile-pic {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            vertical-align: middle;
-            margin-right: 0.5rem;
-            border: 1px solid #f46354;
-        }
-    </style>
 </head>
 <body>
 <div id="login-screen" class="login-bg">
@@ -122,8 +17,8 @@
         <div class="password-wrapper">
             <input type="password" placeholder="Password" id="password">
             <span class="toggle-password" onclick="togglePassword('password', this)">
-            <i class="fa-solid fa-eye-slash"></i>
-        </span>
+                <i class="fa-solid fa-eye-slash"></i>
+            </span>
         </div>
         <p id="login-error" class="error-text" style="display:none; color: red; text-align: center; margin-top: 10px;"></p>
         <button onclick="login()">Sign in</button>
@@ -140,10 +35,10 @@
         </div>
         <ul>
             <li onclick="showTab('home')"><i class="fa-solid fa-house"></i> Dashboard</li>
-            <li onclick="showTab('budgets')"><i class="fa-solid fa-wallet"></i> Live Map</li>
-            <li onclick="showTab('expenses')"><i class="fa-solid fa-money-bill"></i> Shuttles</li>
-            <li onclick="showTab('users')"><i class="fa-solid fa-users"></i> Students</li>
-            <li onclick="showTab('liquidations')"><i class="fa-solid fa-file-invoice-dollar"></i> Notifications</li>
+            <li onclick="showTab('live-map')"><i class="fa-solid fa-map-location-dot"></i> Live Map</li>
+            <li onclick="showTab('shuttles')"><i class="fa-solid fa-bus"></i> Shuttles</li>
+            <li onclick="showTab('students')"><i class="fa-solid fa-users"></i> Students</li>
+            <li onclick="showTab('notifications')"><i class="fa-solid fa-bell"></i> Notifications</li>
             <li onclick="showTab('profile')"><i class="fa-solid fa-user"></i> Profile</li>
             <li onclick="showLogoutConfirmModal()"><i class="fa-solid fa-sign-out-alt"></i> Logout</li>
         </ul>
@@ -183,7 +78,7 @@
             </div>
         </div>
 
-        <div id="users" class="tab users-tab">
+        <div id="students" class="tab users-tab">
             <div class="table-header">
                 <h3>Users</h3>
                 <div class="table-actions">
@@ -212,7 +107,7 @@
             </table>
         </div>
 
-        <div id="budgets" class="tab">
+        <div id="live-map" class="tab">
             <div class="table-header">
                 <h3>Budget Requests</h3>
                 <div class="table-actions">
@@ -270,65 +165,100 @@
             </div>
         </div>
 
-        <div id="expenses" class="tab">
-            <div class="expenses-tab">
-                <div class="table-header">
-                    <h3>Expenses</h3>
-                    <div class="table-actions">
-                        <select id="sortExpense" onchange="updateExpenseTable()">
-                            <option value="date-desc">Sort by Date (Desc)</option>
-                            <option value="date-asc">Sort by Date (Asc)</option>
-                            <option value="amount-desc">Sort by Amount (High to Low)</option>
-                            <option value="amount-asc">Sort by Amount (Low to High)</option>
-                            <option value="category-asc">Sort by Category (Asc)</option>
-                            <option value="category-desc">Sort by Category (Desc)</option>
-                            <option value="user-asc">Sort by Username (Asc)</option>
-                            <option value="user-desc">Sort by Username (Desc)</option>
-                        </select>
-                    </div>
+        <div id="shuttles" class="tab">
+            <header>
+                <div class="title-container">
+                    <i class="fa-solid fa-bus"></i>
+                    <h2>Shuttle Management</h2>
                 </div>
-                <div class="search-container">
-                    <input id="searchExpense" type="text" placeholder="Search expenses..." oninput="filterExpenses()">
-                </div>
-                <p id="no-expenses-message" style="display:none; color: red; margin-top: 10px;">No expenses found.</p>
-                <table>
-                    <thead>
-                    <tr><th>Date</th><th>Username</th><th>Category</th><th>Amount</th><th>Remarks</th><th>Receipt</th></tr>
-                    </thead>
-                    <tbody id="expenses-table"></tbody>
-                </table>
+                <p>Monitor and manage all shuttle operations</p>
+            </header>
+            <div class="table-header">
+                <h3>Active Shuttles</h3>
+                <p>Real time shuttle tracking and status monitoring</p>
             </div>
-            <div id="expenseImagePopup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1001;">
-                <div style="background: linear-gradient(135deg, #fff5f5, #f5f5f5); padding: 20px; border-radius: 5px; text-align: center; position: relative; z-index: 1002; width: 600px; height: 500px; overflow: hidden;">
-                    <div style="position: relative; width: 100%; height: 400px; margin: 0 auto; overflow: hidden; display: flex; justify-content: center; align-items: center;">
-                        <img id="popup-expense-img" style="max-width: 100%; max-height: 100%; border-radius: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); position: relative; transform-origin: center; cursor: grab;" alt="Expense Receipt">
-                    </div>
-                    <div style="margin-top: 10px; position: relative; z-index: 1003;">
-                        <button onclick="zoomImage('in')" style="margin-right: 10px; padding: 5px 10px; border: none; border-radius: 5px; background: linear-gradient(135deg, #5cb85c, #4cae4c); color: white; cursor: pointer;">
-                            <i class="fas fa-search-plus"></i> Zoom In
-                        </button>
-                        <button onclick="zoomImage('out')" style="margin-right: 10px; padding: 5px 10px; border: none; border-radius: 5px; background: linear-gradient(135deg, #d9534f, #c9302c); color: white; cursor: pointer;">
-                            <i class="fas fa-search-minus"></i> Zoom Out
-                        </button>
-                        <button onclick="showPreviousImage()" style="margin-right: 10px; padding: 5px 10px; border: none; border-radius: 5px; background: linear-gradient(135deg, #333, #555); color: white; cursor: pointer;">
-                            <i class="fas fa-arrow-left"></i> Previous
-                        </button>
-                        <button onclick="showNextImage()" style="margin-right: 10px; padding: 5px 10px; border: none; border-radius: 5px; background: linear-gradient(135deg, #333, #555); color: white; cursor: pointer;">
-                            <i class="fas fa-arrow-right"></i> Next
-                        </button>
-                        <button onclick="downloadImage()" style="padding: 5px 10px; border: none; border-radius: 5px; background: linear-gradient(135deg, #333, #555); color: white; cursor: pointer;">
-                            <i class="fas fa-download"></i> Download
-                        </button>
-                    </div>
-                    <small style="display: block; margin-top: 5px; color: #666;">(Use + / - keys to zoom)</small>
-                    <button onclick="closePopup()" style="margin-top: 10px; padding: 5px 15px; border: none; border-radius: 5px; background: linear-gradient(135deg, #ccc, #aaa); color: black; cursor: pointer; z-index: 1003;">
-                        Close
-                    </button>
-                </div>
+            <div class="search-container">
+                <input id="searchShuttles" type="text" placeholder="Search shuttles, drivers, or routes..." oninput="filterShuttles()">
+                <select id="statusFilter" onchange="filterShuttles()">
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
             </div>
+            <p id="no-shuttles-message" style="display:none; color: red; margin-top: 10px;">No shuttles found.</p>
+            <table>
+                <thead>
+                <tr>
+                    <th>Shuttle</th>
+                    <th>Driver</th>
+                    <th>Route</th>
+                    <th>Status</th>
+                    <th>Occupancy</th>
+                    <th>Location</th>
+                    <th>Next Stop</th>
+                    <th>ETA</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="shuttles-table">
+                <tr>
+                    <td>Shuttle 101</td>
+                    <td>John Doe</td>
+                    <td>Route A - Downtown</td>
+                    <td><span class="status-badge badge-active">Active</span></td>
+                    <td>15/30</td>
+                    <td>Main Street</td>
+                    <td>Central Station</td>
+                    <td>5 min</td>
+                    <td>
+                        <button class="action-btn track-btn">Track Details</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Shuttle 102</td>
+                    <td>Jane Smith</td>
+                    <td>Route B - Uptown</td>
+                    <td><span class="status-badge badge-maintenance">Maintenance</span></td>
+                    <td>0/30</td>
+                    <td>Garage</td>
+                    <td>N/A</td>
+                    <td>N/A</td>
+                    <td>
+                        <button class="action-btn track-btn">Track Details</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Shuttle 103</td>
+                    <td>Mike Johnson</td>
+                    <td>Route C - Suburbs</td>
+                    <td><span class="status-badge badge-inactive">Inactive</span></td>
+                    <td>0/30</td>
+                    <td>Parking Lot</td>
+                    <td>N/A</td>
+                    <td>N/A</td>
+                    <td>
+                        <button class="action-btn track-btn">Track Details</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Shuttle 104</td>
+                    <td>Emily Davis</td>
+                    <td>Route D - Campus</td>
+                    <td><span class="status-badge badge-active">Active</span></td>
+                    <td>22/30</td>
+                    <td>University Blvd</td>
+                    <td>Library</td>
+                    <td>3 min</td>
+                    <td>
+                        <button class="action-btn track-btn">Track Details</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
         </div>
 
-        <div id="liquidations" class="tab">
+        <div id="notifications" class="tab">
             <div class="liquidations-tab">
                 <div class="table-header">
                     <h3>Liquidations</h3>
