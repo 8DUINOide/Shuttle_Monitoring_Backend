@@ -117,12 +117,13 @@
 <div id="login-screen" class="login-bg">
     <div class="login-container">
         <img src="images/logo.png" class="logo">
+        <h3 style="color: #003A6C; font-size: 2rem; margin: 0.5rem 0 2rem 0; font-weight: bold; text-align: center;">Ride.ADNU</h3>
         <input type="text" placeholder="Username" id="username">
         <div class="password-wrapper">
             <input type="password" placeholder="Password" id="password">
             <span class="toggle-password" onclick="togglePassword('password', this)">
-                <i class="fa-solid fa-eye-slash"></i>
-            </span>
+            <i class="fa-solid fa-eye-slash"></i>
+        </span>
         </div>
         <p id="login-error" class="error-text" style="display:none; color: red; text-align: center; margin-top: 10px;"></p>
         <button onclick="login()">Sign in</button>
