@@ -1,4 +1,4 @@
-const SERVER_URL = "http://152.42.192.226:8080"; // Change to "http://152.42.192.226:8080" for server testing
+const SERVER_URL = "http://localhost:8080"; // Change to "http://152.42.192.226:8080" for server testing
 
 let users = [];
 let expenses = [];
