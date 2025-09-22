@@ -483,30 +483,7 @@
             </div>
         </div>
 
-        <div id="userModal" class="modal">
-            <div class="modal-content">
-                <h3>Add User</h3>
-                <input type="text" id="newUsername" placeholder="Username">
-                <input type="email" id="newEmail" placeholder="Email">
-                <div class="password-wrapper">
-                    <input type="password" id="newPassword" placeholder="Password">
-                    <span class="toggle-password" onclick="togglePassword('newPassword', this)">
-                        <i class="fa-solid fa-eye-slash"></i>
-                    </span>
-                </div>
-                <p id="addUserError" class="error-text" style="display:none;"></p>
-                <button onclick="createUser()">Add</button>
-                <button onclick="closeUserModal()">Cancel</button>
-            </div>
-        </div>
 
-        <div id="confirmModal" class="modal-confirm">
-            <div class="modal-confirm-content">
-                <p>Are you sure you want to delete this user?</p>
-                <button class="confirm-delete" onclick="confirmDeleteUser()">Delete</button>
-                <button class="cancel-delete" onclick="cancelDeleteUser()">Cancel</button>
-            </div>
-        </div>
         <div id="logoutConfirmModal" class="modal-confirm" style="display: none;">
             <div class="modal-confirm-content">
                 <h3>Confirm Logout</h3>
@@ -515,25 +492,7 @@
                 <button class="cancel-action" onclick="cancelLogout()">Cancel</button>
             </div>
         </div>
-        <div id="expenseDeleteModal" class="modal-confirm" style="display: none;">
-            <div class="modal-confirm-content">
-                <h3>Confirm Delete Expense</h3>
-                <p id="expenseDeleteMessage">Are you sure you want to delete this expense?</p>
-                <p id="expenseDeleteError" class="error-text" style="display: none; color: red;"></p>
-                <button id="expenseConfirmDelete" class="confirm-action deny-action">Delete</button>
-                <button class="cancel-action" onclick="closeExpenseDeleteModal()">Cancel</button>
-            </div>
-        </div>
-        <div id="budgetDeleteModal" class="modal-confirm" style="display: none;">
-            <div class="modal-confirm-content">
-                <h3>Confirm Delete Budget</h3>
-                <p id="budgetDeleteMessage">Are you sure you want to delete this budget request?</p>
-                <p id="budgetDeleteError" class="error-text" style="display: none; color: red;"></p>
-                <button id="budgetConfirmDelete" class="confirm-action deny-action">Delete</button>
-                <button class="cancel-action" onclick="closeBudgetDeleteModal()">Cancel</button>
-            </div>
-        </div>
-    </div>
+
 </div>
 
 <div id="toast" class="toast" style="display: none;"></div>
