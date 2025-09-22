@@ -75,11 +75,22 @@
                 </div>
                 <div class="chart-card">
                     <h4>Today's Routes</h4>
-                    <canvas id="categoryChart" style="max-height: 250px;"></canvas>
+                    <table id="todays-routes-table">
+                        <thead>
+                        <tr>
+                            <th>Route</th>
+                            <th>Shuttle</th>
+                            <th>Driver</th>
+                            <th>Capacity</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
                 <div class="chart-card">
                     <h4>Recent Activity</h4>
-                    <canvas id="userChart" style="max-height: 250px;"></canvas>
+                    <ul id="recent-activity-list"></ul>
                 </div>
             </div>
         </div>
@@ -122,10 +133,10 @@
                 </thead>
                 <tbody id="shuttles-table">
                 <tr>
-                    <td>Shuttle 101</td>
+                    <td>Shuttle #1</td>
                     <td>John Doe</td>
-                    <td>Route A - Downtown</td>
-                    <td><span class="status-badge badge-active">Active</span></td>
+                    <td>Downtown → University</td>
+                    <td><span class="status-badge badge-active">On Time</span></td>
                     <td>15/30</td>
                     <td>Main Street</td>
                     <td>Central Station</td>
@@ -135,40 +146,40 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>Shuttle 102</td>
+                    <td>Shuttle #2</td>
                     <td>Jane Smith</td>
-                    <td>Route B - Uptown</td>
-                    <td><span class="status-badge badge-maintenance">Maintenance</span></td>
-                    <td>0/30</td>
-                    <td>Garage</td>
-                    <td>N/A</td>
-                    <td>N/A</td>
+                    <td>Residential → Campus</td>
+                    <td><span class="status-badge badge-denied">Delayed</span></td>
+                    <td>10/30</td>
+                    <td>Elm Street</td>
+                    <td>Campus Gate</td>
+                    <td>10 min</td>
                     <td>
                         <button class="action-btn track-btn">Track Details</button>
                     </td>
                 </tr>
                 <tr>
-                    <td>Shuttle 103</td>
+                    <td>Shuttle #3</td>
                     <td>Mike Johnson</td>
-                    <td>Route C - Suburbs</td>
+                    <td>Sports Complex → Library</td>
+                    <td><span class="status-badge badge-active">On Time</span></td>
+                    <td>20/30</td>
+                    <td>Sports Arena</td>
+                    <td>Library</td>
+                    <td>3 min</td>
+                    <td>
+                        <button class="action-btn track-btn">Track Details</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Shuttle #4</td>
+                    <td>Emily Davis</td>
+                    <td>Campus → Downtown</td>
                     <td><span class="status-badge badge-inactive">Inactive</span></td>
                     <td>0/30</td>
                     <td>Parking Lot</td>
                     <td>N/A</td>
                     <td>N/A</td>
-                    <td>
-                        <button class="action-btn track-btn">Track Details</button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Shuttle 104</td>
-                    <td>Emily Davis</td>
-                    <td>Route D - Campus</td>
-                    <td><span class="status-badge badge-active">Active</span></td>
-                    <td>22/30</td>
-                    <td>University Blvd</td>
-                    <td>Library</td>
-                    <td>3 min</td>
                     <td>
                         <button class="action-btn track-btn">Track Details</button>
                     </td>
@@ -214,25 +225,25 @@
                 </thead>
                 <tbody id="students-table">
                 <tr>
-                    <td>Emma Johnson<br><small>Grade 10 - Section A</small></td>
+                    <td>Sarah Johnson<br><small>Grade 10 - Section A</small></td>
                     <td>Michael Johnson</td>
-                    <td><i class="fa-solid fa-phone"></i> 098087556<br><i class="fa-solid fa-envelope"></i> emma.johnson@example.com</td>
-                    <td>Campus Express</td>
+                    <td><i class="fa-solid fa-phone"></i> 098087556<br><i class="fa-solid fa-envelope"></i> sarah.johnson@example.com</td>
+                    <td>Shuttle #3</td>
                     <td><span class="status-badge badge-checked-in">Checked in</span></td>
-                    <td>7:45 AM</td>
-                    <td>Main Street & 5th Ave</td>
+                    <td>12:16 PM</td>
+                    <td>Sports Arena</td>
                     <td>
                         <button class="action-btn track-btn">Track Details</button>
                     </td>
                 </tr>
                 <tr>
-                    <td>Liam Smith<br><small>Grade 11 - Section B</small></td>
-                    <td>Jane Smith</td>
-                    <td><i class="fa-solid fa-phone"></i> 0971234567<br><i class="fa-solid fa-envelope"></i> liam.smith@example.com</td>
-                    <td>Uptown Shuttle</td>
-                    <td><span class="status-badge badge-not-boarded">Not boarded</span></td>
-                    <td>N/A</td>
-                    <td>N/A</td>
+                    <td>Mike Chen<br><small>Grade 11 - Section B</small></td>
+                    <td>Jane Chen</td>
+                    <td><i class="fa-solid fa-phone"></i> 0971234567<br><i class="fa-solid fa-envelope"></i> mike.chen@example.com</td>
+                    <td>Shuttle #2</td>
+                    <td><span class="status-badge badge-checked-out">Checked out</span></td>
+                    <td>12:10 PM</td>
+                    <td>Campus Gate</td>
                     <td>
                         <button class="action-btn track-btn">Track Details</button>
                     </td>
@@ -241,10 +252,10 @@
                     <td>Olivia Brown<br><small>Grade 9 - Section C</small></td>
                     <td>Mike Brown</td>
                     <td><i class="fa-solid fa-phone"></i> 0967890123<br><i class="fa-solid fa-envelope"></i> olivia.brown@example.com</td>
-                    <td>Suburbs Route</td>
+                    <td>Shuttle #1</td>
                     <td><span class="status-badge badge-checked-in">Checked in</span></td>
-                    <td>8:00 AM</td>
-                    <td>Park Avenue</td>
+                    <td>12:00 PM</td>
+                    <td>Main Street</td>
                     <td>
                         <button class="action-btn track-btn">Track Details</button>
                     </td>
@@ -253,10 +264,10 @@
                     <td>Noah Davis<br><small>Grade 12 - Section A</small></td>
                     <td>Emily Davis</td>
                     <td><i class="fa-solid fa-phone"></i> 0952345678<br><i class="fa-solid fa-envelope"></i> noah.davis@example.com</td>
-                    <td>Campus Express</td>
-                    <td><span class="status-badge badge-checked-out">Checked out</span></td>
-                    <td>7:30 AM</td>
-                    <td>University Blvd</td>
+                    <td>Shuttle #4</td>
+                    <td><span class="status-badge badge-not-boarded">Not boarded</span></td>
+                    <td>N/A</td>
+                    <td>N/A</td>
                     <td>
                         <button class="action-btn track-btn">Track Details</button>
                     </td>
@@ -299,23 +310,23 @@
                 </thead>
                 <tbody id="notifications-table">
                 <tr>
-                    <td>Jessica Martinez checked in to Shuttle #1</td>
-                    <td>2025-09-21 17:30:00</td>
+                    <td>Sarah Johnson checked in to Shuttle #3</td>
+                    <td>2025-09-22 12:16:00</td>
                     <td><span class="status-badge badge-unread">Unread</span></td>
                 </tr>
                 <tr>
-                    <td>Shuttle #2 reported maintenance issue</td>
-                    <td>2025-09-21 17:15:00</td>
+                    <td>Shuttle #2 is running 5 minutes behind schedule</td>
+                    <td>2025-09-22 12:13:00</td>
                     <td><span class="status-badge badge-read">Read</span></td>
                 </tr>
                 <tr>
-                    <td>Liam Smith checked out from Shuttle #3</td>
-                    <td>2025-09-21 17:00:00</td>
+                    <td>Mike Chen checked out from Shuttle #2</td>
+                    <td>2025-09-22 12:10:00</td>
                     <td><span class="status-badge badge-unread">Unread</span></td>
                 </tr>
                 <tr>
                     <td>Route A delayed by 10 minutes</td>
-                    <td>2025-09-21 16:45:00</td>
+                    <td>2025-09-22 12:00:00</td>
                     <td><span class="status-badge badge-read">Read</span></td>
                 </tr>
                 </tbody>
@@ -347,20 +358,20 @@
                     <p>Live Location Tracking</p>
                     <div class="shuttle-list">
                         <div class="shuttle-item">
-                            <p><strong>Campus Express</strong> - Active<br>Lat: 14.5995, Lng: 120.9842</p>
-                            <button class="action-btn track-btn" onclick="trackShuttle('Campus Express')">Track Shuttle</button>
+                            <p><strong>Shuttle #1</strong> - On Time<br>Lat: 14.5995, Lng: 120.9842</p>
+                            <button class="action-btn track-btn" onclick="trackShuttle('Shuttle #1')">Track Shuttle</button>
                         </div>
                         <div class="shuttle-item">
-                            <p><strong>Uptown Shuttle</strong> - Active<br>Lat: 14.6760, Lng: 121.0437</p>
-                            <button class="action-btn track-btn" onclick="trackShuttle('Uptown Shuttle')">Track Shuttle</button>
+                            <p><strong>Shuttle #2</strong> - Delayed<br>Lat: 14.6760, Lng: 121.0437</p>
+                            <button class="action-btn track-btn" onclick="trackShuttle('Shuttle #2')">Track Shuttle</button>
                         </div>
                         <div class="shuttle-item">
-                            <p><strong>Suburbs Route</strong> - Active<br>Lat: 14.5580, Lng: 121.0813</p>
-                            <button class="action-btn track-btn" onclick="trackShuttle('Suburbs Route')">Track Shuttle</button>
+                            <p><strong>Shuttle #3</strong> - On Time<br>Lat: 14.5580, Lng: 121.0813</p>
+                            <button class="action-btn track-btn" onclick="trackShuttle('Shuttle #3')">Track Shuttle</button>
                         </div>
                         <div class="shuttle-item">
-                            <p><strong>Downtown Shuttle</strong> - Inactive<br>Lat: 14.5547, Lng: 121.0244</p>
-                            <button class="action-btn track-btn" onclick="trackShuttle('Downtown Shuttle')">Track Shuttle</button>
+                            <p><strong>Shuttle #4</strong> - Inactive<br>Lat: 14.5547, Lng: 121.0244</p>
+                            <button class="action-btn track-btn" onclick="trackShuttle('Shuttle #4')">Track Shuttle</button>
                         </div>
                     </div>
                 </div>
@@ -378,10 +389,10 @@
                 map.addControl(new mapboxgl.FullscreenControl());
 
                 const shuttles = [
-                    { name: 'Campus Express', coordinates: [120.9842, 14.5995], status: 'Active' },
-                    { name: 'Uptown Shuttle', coordinates: [121.0437, 14.6760], status: 'Active' },
-                    { name: 'Suburbs Route', coordinates: [121.0813, 14.5580], status: 'Active' },
-                    { name: 'Downtown Shuttle', coordinates: [121.0244, 14.5547], status: 'Inactive' }
+                    { name: 'Shuttle #1', coordinates: [120.9842, 14.5995], status: 'On Time' },
+                    { name: 'Shuttle #2', coordinates: [121.0437, 14.6760], status: 'Delayed' },
+                    { name: 'Shuttle #3', coordinates: [121.0813, 14.5580], status: 'On Time' },
+                    { name: 'Shuttle #4', coordinates: [121.0244, 14.5547], status: 'Inactive' }
                 ];
 
                 shuttles.forEach(shuttle => {

@@ -127,6 +127,9 @@ function showTab(tabId) {
         document.getElementById('admin-reset-password-form').reset();
         document.getElementById('admin-reset-error').style.display = 'none';
     }
+    if (tabId === 'home') {
+        updateDashboard();
+    }
 }
 
 function toggleSidebar() {
@@ -273,17 +276,93 @@ document.getElementById("admin-reset-password-form").addEventListener('submit', 
 document.getElementById("profile-picture-input").addEventListener("change", uploadProfilePicture);
 
 // =================== DASHBOARD UPDATE ===================
+function relativeTime(timestamp) {
+    const date = new Date(timestamp.replace(' ', 'T') + 'Z');
+    const now = new Date('2025-09-22T12:24:00-07:00'); // Current time: 12:24 PM PST
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+    if (diffSec < 60) return `${diffSec} seconds ago`;
+    if (diffMin < 60) return `${diffMin} minutes ago`;
+    if (diffHr < 24) return `${diffHr} hours ago`;
+    return `${diffDay} days ago`;
+}
+
 async function updateDashboard() {
     if (!token) return;
-    // Static dashboard data (no expense-related fetches)
+
+    // Populate Today's Routes from Shuttles tab
+    const shuttleRows = document.querySelectorAll('#shuttles-table tr');
+    let activeShuttles = 0;
+    let routes = new Set();
+    const todaysTbody = document.querySelector('#todays-routes-table tbody');
+    todaysTbody.innerHTML = '';
+    shuttleRows.forEach(row => {
+        const statusText = row.querySelector('td:nth-child(4) span')?.textContent || '';
+        const statusClass = row.querySelector('td:nth-child(4) span')?.className || '';
+        const route = row.querySelector('td:nth-child(3)')?.textContent || '';
+        const shuttle = row.querySelector('td:nth-child(1)')?.textContent || '';
+        const driver = row.querySelector('td:nth-child(2)')?.textContent || '';
+        const occupancy = row.querySelector('td:nth-child(5)')?.textContent || '';
+        const capacity = occupancy.split('/')[1] || '';
+        routes.add(route);
+        if (statusText === 'On Time' || statusText === 'Delayed') {
+            activeShuttles++;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${sanitizeHTML(route)}</td>
+                <td>${sanitizeHTML(shuttle)}</td>
+                <td>${sanitizeHTML(driver)}</td>
+                <td>${sanitizeHTML(capacity)}</td>
+                <td><span class="${statusClass}">${sanitizeHTML(statusText)}</span></td>
+            `;
+            todaysTbody.appendChild(tr);
+        }
+    });
+    const activeRoutes = routes.size;
+
+    // Populate Students Checked In from Students tab
+    const studentRows = document.querySelectorAll('#students-table tr');
+    let checkedInStudents = 0;
+    studentRows.forEach(row => {
+        const status = row.querySelector('td:nth-child(5) span')?.textContent || '';
+        if (status === 'Checked in') checkedInStudents++;
+    });
+
+    // Populate Recent Activity from Notifications tab
+    const notifRows = document.querySelectorAll('#notifications-table tr');
+    const activityList = document.getElementById('recent-activity-list');
+    activityList.innerHTML = '';
+    notifRows.forEach(row => {
+        const msg = row.querySelector('td:nth-child(1)')?.textContent || '';
+        const ts = row.querySelector('td:nth-child(2)')?.textContent || '';
+        let statusClass = '';
+        if (msg.includes('checked in')) statusClass = 'badge-checked-in';
+        else if (msg.includes('checked out')) statusClass = 'badge-checked-out';
+        else if (msg.includes('delayed')) statusClass = 'badge-denied';
+        const rel = relativeTime(ts);
+        const li = document.createElement('li');
+        li.innerHTML = `${sanitizeHTML(msg)} <span class="status-badge ${statusClass}">${sanitizeHTML(rel)}</span>`;
+        activityList.appendChild(li);
+    });
+
+    // Calculate On Time Performance
+    let delayed = 0;
+    shuttleRows.forEach(row => {
+        const statusText = row.querySelector('td:nth-child(4) span')?.textContent || '';
+        if (statusText === 'Delayed') delayed++;
+    });
+    const onTimePerf = activeRoutes > 0 ? Math.round((activeRoutes - delayed) / activeRoutes * 100) : 0;
+
+    // Update Balance Cards
     const balanceCards = document.querySelectorAll(".balance-card h1");
-    balanceCards[0].textContent = 0; // Active Shuttles
-    balanceCards[1].textContent = 0; // Students Checked In
-    balanceCards[2].textContent = "0%"; // On time Performance
-    balanceCards[3].textContent = 0; // Routes Active
-    // Charts can be left empty or removed; here we destroy if exist
-    if (categoryChart) categoryChart.destroy();
-    if (userChart) userChart.destroy();
+    balanceCards[0].textContent = activeShuttles;
+    balanceCards[1].textContent = checkedInStudents;
+    balanceCards[2].textContent = `${onTimePerf}%`;
+    balanceCards[3].textContent = activeRoutes;
+
     showProfile();
 }
 
@@ -372,6 +451,7 @@ function markAllAsRead() {
         status.classList.add("badge-read");
     });
     showToast("All notifications marked as read");
+    updateDashboard(); // Update recent activity after change
 }
 
 function clearAllNotifications() {
@@ -379,4 +459,5 @@ function clearAllNotifications() {
     tbody.innerHTML = "";
     document.getElementById("no-notifications-message").style.display = "block";
     showToast("All notifications cleared");
+    updateDashboard(); // Update recent activity after change
 }
