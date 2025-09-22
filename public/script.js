@@ -331,22 +331,21 @@ async function updateDashboard() {
         if (status === 'Checked in') checkedInStudents++;
     });
 
-    // Populate Recent Activity from Notifications tab
-    const notifRows = document.querySelectorAll('#notifications-table tr');
-    const activityList = document.getElementById('recent-activity-list');
-    activityList.innerHTML = '';
-    notifRows.forEach(row => {
-        const msg = row.querySelector('td:nth-child(1)')?.textContent || '';
-        const ts = row.querySelector('td:nth-child(2)')?.textContent || '';
-        let statusClass = '';
-        if (msg.includes('checked in')) statusClass = 'badge-checked-in';
-        else if (msg.includes('checked out')) statusClass = 'badge-checked-out';
-        else if (msg.includes('delayed')) statusClass = 'badge-denied';
-        const rel = relativeTime(ts);
-        const li = document.createElement('li');
-        li.innerHTML = `${sanitizeHTML(msg)} <span class="status-badge ${statusClass}">${sanitizeHTML(rel)}</span>`;
-        activityList.appendChild(li);
-    });
+// Populate Recent Activity from Notifications tab
+const notifRows = document.querySelectorAll('#notifications-table tr');
+const activityList = document.getElementById('recent-activity-list');
+activityList.innerHTML = '';
+notifRows.forEach(row => {
+    const msg = row.querySelector('td:nth-child(1)')?.textContent || '';
+    const ts = row.querySelector('td:nth-child(2)')?.textContent || '';
+    const rel = relativeTime(ts);
+    const li = document.createElement('li');
+    li.innerHTML = `
+        <div>${sanitizeHTML(msg)}</div>
+        <div class="activity-subtitle">${sanitizeHTML(rel)}</div>
+    `;
+    activityList.appendChild(li);
+});
 
     // Calculate On Time Performance
     let delayed = 0;

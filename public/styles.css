@@ -191,10 +191,36 @@ body, html {
     display: block;
 }
 
-header h2 {
+/* === Unified Header Styling for All Tabs === */
+.tab header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-left: 40px;
+}
+
+.tab header .title-container {
+    display: flex;
+    align-items: center;
+}
+
+.tab header i {
+    margin-right: 0.5rem;
     font-size: 1.5rem;
     color: #003A6C; /* Ateneo Blue */
-    margin-bottom: 1.5rem;
+}
+
+.tab header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #003A6C; /* Ateneo Blue */
+}
+
+.tab header p {
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
+    color: #003A6C; /* Ateneo Blue */
 }
 
 /* === Cards and Tables === */
@@ -262,6 +288,14 @@ header h2 {
 .chart-card h4, .notifications-card h4 {
     margin: 0 0 1rem;
     color: #003A6C; /* Ateneo Blue */
+}
+
+/* === Recent Activity Subtitle === */
+.activity-subtitle {
+    font-size: 0.8rem;
+    color: #666; /* Medium gray for subtitle text */
+    margin-top: 0.25rem;
+    font-style: italic; /* Optional: makes subtitle distinct */
 }
 
 /* === Notification Items === */
@@ -708,37 +742,6 @@ tbody tr:hover {
 }
 
 /* === Shuttles Tab Specific Styles === */
-#shuttles header {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-    padding-left: 40px;
-}
-
-#shuttles header .title-container {
-    display: flex;
-    align-items: center;
-}
-
-#shuttles header i {
-    margin-right: 0.5rem;
-    font-size: 1.5rem;
-    color: #003A6C;
-}
-
-#shuttles header h2 {
-    margin: 0;
-    font-size: 1.5rem;
-    color: #003A6C;
-}
-
-#shuttles header p {
-    margin: 0.5rem 0 0 0;
-    font-size: 1rem;
-    color: #003A6C;
-}
-
 #shuttles .table-header {
     display: flex;
     flex-direction: column;
@@ -783,39 +786,7 @@ tbody tr:hover {
     font-size: 0.9rem;
 }
 
-
 /* === Students Tab Specific Styles === */
-#students header {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-    padding-left: 40px;
-}
-
-#students header .title-container {
-    display: flex;
-    align-items: center;
-}
-
-#students header i {
-    margin-right: 0.5rem;
-    font-size: 1.5rem;
-    color: #003A6C;
-}
-
-#students header h2 {
-    margin: 0;
-    font-size: 1.5rem;
-    color: #003A6C;
-}
-
-#students header p {
-    margin: 0.5rem 0 0 0;
-    font-size: 1rem;
-    color: #003A6C;
-}
-
 #students .table-header {
     display: flex;
     flex-direction: column;
@@ -918,37 +889,6 @@ tbody tr:hover {
 }
 
 /* === Notifications Tab Specific Styles === */
-#notifications header {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-    padding-left: 40px;
-}
-
-#notifications header .title-container {
-    display: flex;
-    align-items: center;
-}
-
-#notifications header i {
-    margin-right: 0.5rem;
-    font-size: 1.5rem;
-    color: #003A6C;
-}
-
-#notifications header h2 {
-    margin: 0;
-    font-size: 1.5rem;
-    color: #003A6C;
-}
-
-#notifications header p {
-    margin: 0.5rem 0 0 0;
-    font-size: 1rem;
-    color: #003A6C;
-}
-
 #notifications .table-header {
     display: flex;
     justify-content: space-between;
@@ -1028,37 +968,6 @@ tbody tr:hover {
 }
 
 /* === Live Map Tracking Tab Specific Styles === */
-#live-map header {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-    padding-left: 40px;
-}
-
-#live-map header .title-container {
-    display: flex;
-    align-items: center;
-}
-
-#live-map header i {
-    margin-right: 0.5rem;
-    font-size: 1.5rem;
-    color: #003A6C;
-}
-
-#live-map header h2 {
-    margin: 0;
-    font-size: 1.5rem;
-    color: #003A6C;
-}
-
-#live-map header p {
-    margin: 0.5rem 0 0 0;
-    font-size: 1rem;
-    color: #003A6C;
-}
-
 #live-map .table-header {
     display: flex;
     justify-content: space-between;
@@ -1141,6 +1050,22 @@ tbody tr:hover {
     font-size: 0.85rem;
 }
 
+/* === Recent Activity List === */
+#recent-activity-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#recent-activity-list li {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #D1D5DB; /* Medium Gray */
+    color: #003A6C; /* Ateneo Blue for main text */
+}
+
+#recent-activity-list li:last-child {
+    border-bottom: none;
+}
 
 /* === Responsive Adjustments === */
 @media (max-width: 768px) {
