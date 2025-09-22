@@ -50,7 +50,11 @@
     <div id="content" class="content">
         <div id="home" class="tab active">
             <header>
-                <h2>Welcome, Admin</h2>
+                <div class="title-container">
+                    <i class="fa-solid fa-house"></i>
+                    <h2>Dashboard Overview</h2>
+                </div>
+                <p>Real-time shuttle monitoring and management</p>
             </header>
             <div class="balance-section">
                 <div class="balance-card">
@@ -176,7 +180,7 @@
         <div id="students" class="tab users-tab">
             <header>
                 <div class="title-container">
-                    <i class="fa-solid fa-bus"></i>
+                    <i class="fa-solid fa-users"></i>
                     <h2>Student Management</h2>
                 </div>
                 <p>Monitor and manage all student shuttle operations</p>
@@ -194,7 +198,7 @@
                     <option value="not-boarded">Not boarded</option>
                 </select>
             </div>
-            <p id="no-shuttles-message" style="display:none; color: red; margin-top: 10px;">No students found.</p>
+            <p id="no-students-message" style="display:none; color: red; margin-top: 10px;">No students found.</p>
             <table>
                 <thead>
                 <tr>
@@ -321,7 +325,7 @@
         <div id="live-map" class="tab">
             <header>
                 <div class="title-container">
-                    <i class="fa-solid fa-map"></i>
+                    <i class="fa-solid fa-map-location-dot"></i>
                     <h2>Live Map Tracking</h2>
                 </div>
                 <p>Real-time shuttle locations and routes</p>
@@ -370,13 +374,9 @@
                     zoom: 5
                 });
 
-                // Add navigation control (zoom and rotation)
                 map.addControl(new mapboxgl.NavigationControl());
-
-                // Add fullscreen control
                 map.addControl(new mapboxgl.FullscreenControl());
 
-                // Mock shuttle markers
                 const shuttles = [
                     { name: 'Campus Express', coordinates: [120.9842, 14.5995], status: 'Active' },
                     { name: 'Uptown Shuttle', coordinates: [121.0437, 14.6760], status: 'Active' },
@@ -392,12 +392,10 @@
                 });
 
                 function refreshMap() {
-                    // Placeholder for refreshing map data
                     alert('Map refreshed!');
                 }
 
                 function toggleLayers() {
-                    // Placeholder for toggling map layers
                     alert('Toggling layers!');
                 }
 
@@ -418,8 +416,6 @@
                 }
 
                 function toggleFullScreen() {
-                    // Fullscreen is handled by Mapbox FullscreenControl
-                    // This function is a fallback for manual triggering if needed
                     const mapContainer = document.getElementById('map');
                     if (!document.fullscreenElement) {
                         mapContainer.requestFullscreen().catch(err => {
@@ -483,7 +479,6 @@
             </div>
         </div>
 
-
         <div id="logoutConfirmModal" class="modal-confirm" style="display: none;">
             <div class="modal-confirm-content">
                 <h3>Confirm Logout</h3>
@@ -492,33 +487,32 @@
                 <button class="cancel-action" onclick="cancelLogout()">Cancel</button>
             </div>
         </div>
+    </div>
 
-</div>
+    <div id="toast" class="toast" style="display: none;"></div>
 
-<div id="toast" class="toast" style="display: none;"></div>
-
-<script src="script.js"></script>
-<script>
-    function togglePassword(id, iconSpan) {
-        const input = document.getElementById(id);
-        const icon = iconSpan.querySelector('i');
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
-        } else {
-            input.type = 'password';
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
+    <script src="script.js"></script>
+    <script>
+        function togglePassword(id, iconSpan) {
+            const input = document.getElementById(id);
+            const icon = iconSpan.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
         }
-    }
 
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.style.display = 'block';
-        setTimeout(() => toast.style.display = 'none', 4000);
-    }
-</script>
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 4000);
+        }
+    </script>
 </body>
 </html>
