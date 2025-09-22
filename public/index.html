@@ -396,7 +396,28 @@
                 ];
 
                 shuttles.forEach(shuttle => {
-                    new mapboxgl.Marker()
+                    // Create a custom marker element with a bus icon
+                    const markerElement = document.createElement('div');
+                    markerElement.style.backgroundColor = '#003A6C'; // Ateneo Blue to match theme
+                    markerElement.style.width = '30px'; // Match default marker size
+                    markerElement.style.height = '30px';
+                    markerElement.style.borderRadius = '50%'; // Circular like default pin
+                    markerElement.style.display = 'flex';
+                    markerElement.style.alignItems = 'center';
+                    markerElement.style.justifyContent = 'center';
+                    markerElement.style.cursor = 'pointer';
+                    markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)'; // Match default marker shadow
+                    markerElement.innerHTML = '<i class="fa-solid fa-bus" style="color: #F5F5F5; font-size: 18px;"></i>'; // Font Awesome bus icon
+
+                    // Add hover effect to mimic default marker
+                    markerElement.addEventListener('mouseenter', () => {
+                        markerElement.style.backgroundColor = '#0066CC'; // Lighter Ateneo Blue on hover
+                    });
+                    markerElement.addEventListener('mouseleave', () => {
+                        markerElement.style.backgroundColor = '#003A6C'; // Original color
+                    });
+
+                    new mapboxgl.Marker({ element: markerElement })
                         .setLngLat(shuttle.coordinates)
                         .setPopup(new mapboxgl.Popup().setHTML(`<h3>${shuttle.name}</h3><p>Status: ${shuttle.status}</p>`))
                         .addTo(map);
