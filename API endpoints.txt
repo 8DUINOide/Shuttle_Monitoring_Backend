@@ -1,0 +1,178 @@
+API endpoints:
+POST http://localhost:8080/api/auth/sign-in
+{
+    "usernameOrEmail": "admin",
+    "password": "admin"
+}
+{
+    "access_token": "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX0FETUlOIl0sInN1YiI6ImFkbWluIiwiaWF0IjoxNzU4NjA4OTE1LCJleHAiOjE3NTg2MjY5MTV9.4xG-yovcla6aKvERIm_ivXLQvzBDDha5TsOM_c-FetQ",
+    "user_id": 3,
+    "refresh_token": "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX0FETUlOIl0sInN1YiI6ImFkbWluIiwiaWF0IjoxNzU4NjA4OTE2LCJleHAiOjE3NTkyMTM3MTZ9.F81RWrJY9_al3B9hE_tOU-3xOqRxKCa1UAYYfDITDdQ",
+    "status": "success",
+    "username": "admin",
+    "email": "admin@gmail.com"
+}
+
+POST http://localhost:8080/api/forgotPassword/verifyMail
+{
+    "email": "admin@gmail.com"
+}
+
+POST http://localhost:8080/api/forgotPassword/verifyOtp
+{
+    "email": "admin@gmail.com",
+    "otp": <otp_from_verifyMail>
+}
+
+POST http://localhost:8080/api/forgotPassword/changePassword
+{
+    "email": "admin@gmail.com",
+    "otp": <otp_from_verifyMail>,
+    "password": "newpassword",
+    "repeatPassword": "newpassword"
+}
+
+POST http://localhost:8080/api/forgotPassword/reset-password?email=admin@gmail.com
+{
+    "currentPassword": "admin",
+    "newPassword": "admin123",
+    "repeatPassword": "admin123"
+}
+{
+    "message": "Password reset successfully!"
+}
+
+GET http://localhost:8080/api/users/3
+{
+    "userId": 3,
+    "username": "admin",
+    "password": "$2a$10$MwLkEK3awpRm80agLg4bGuv2d9IpihagxB3JJvHNO6PVyDynrZfpm",
+    "email": "admin@gmail.com",
+    "role": "ADMIN",
+    "createdAt": "2025-09-23T13:55:04.523991",
+    "profilePicturePath": "Uploads/profile-pictures/a2aef213-3e4d-4916-98e7-6940a0c2064d.jpg"
+}
+
+POST http://localhost:8080/api/admin/users
+{
+    "username": "user4",
+    "email": "user4@gmail.com",
+    "password": "user4pass123",
+    "role": "USER"
+}
+{
+    "message": "User created successfully"
+}
+
+POST http://localhost:8080/api/admin/users
+{
+    "username": "driver1",
+    "email": "driver1@gmail.com",
+    "password": "driver1@gmail.com",
+    "role": "DRIVER"
+}
+POST http://localhost:8080/api/drivers
+{
+    "user": {
+        "username": "driver2",
+        "email": "driver2@gmail.com",
+        "password": "driver2pass123",
+        "role": "DRIVER"
+    },
+    "licenseNumber": "DRV-54321",
+    "contactPhone": "+63-912-345-6789",
+    "emergencyContact": "+63-912-345-6790"
+}
+{
+    "message": "Driver created successfully"
+}
+
+GET http://localhost:8080/api/drivers/9
+{
+    "userId": 9,
+    "user": {
+        "userId": 9,
+        "username": "driver2",
+        "password": "$2a$10$H0e/Ban2gKLtci3j0CM0BeZMhNTX.bpbEYCDMNOhEugOJEw4wktfO",
+        "email": "driver2@gmail.com",
+        "role": "DRIVER",
+        "createdAt": "2025-09-23T15:01:11.011133",
+        "profilePicturePath": null
+    },
+    "licenseNumber": "DRV-54321",
+    "contactPhone": "+63-912-345-6789",
+    "emergencyContact": "+63-912-345-6790"
+}
+
+POST http://localhost:8080/api/parents
+{
+    "user": {
+        "username": "parent2",
+        "email": "parent2@gmail.com",
+        "password": "parent2pass123",
+        "role": "PARENT"
+    },
+    "fullName": "John Doe",
+    "contactPhone": "+63-912-345-6791"
+}
+{
+    "message": "Parent created successfully"
+}
+
+POST http://localhost:8080/api/students
+{
+    "user": {
+        "username": "student2",
+        "email": "student2@gmail.com",
+        "password": "student2pass123",
+        "role": "STUDENT"
+    },
+    "fullName": "Jane Doe",
+    "grade": "Grade 10",
+    "section": "Section A",
+    "rfidTag": "RFID-001",
+    "fingerprintHash": "fingerprint_hash_001",
+    "parent": {
+        "userId": 15
+    }
+}
+
+GET http://localhost:8080/api/students/16
+GET http://localhost:8080/api/students/rfid/RFID-001
+{
+    "userId": 16,
+    "user": {
+        "userId": 16,
+        "username": "student2",
+        "password": "student2pass123",
+        "email": "student2@gmail.com",
+        "role": "STUDENT",
+        "createdAt": "2025-09-23T15:15:28.438082",
+        "profilePicturePath": null
+    },
+    "fullName": "Jane Doe",
+    "grade": "Grade 10",
+    "section": "Section A",
+    "rfidTag": "RFID-001",
+    "fingerprintHash": "fingerprint_hash_001",
+    "parent": {
+        "userId": 15,
+        "user": {
+            "userId": 15,
+            "username": "parent4",
+            "password": "$2a$10$ppyDUkEuH0rU75zj1UDmRepXGSRqDbdXvriUehm1Def6QiNhgg/ay",
+            "email": "parent4@gmail.com",
+            "role": "PARENT",
+            "createdAt": "2025-09-23T15:14:58.461835",
+            "profilePicturePath": null
+        },
+        "fullName": "John Doe",
+        "contactPhone": "+63-912-345-6791"
+    }
+}
+
+POST http://localhost:8080/api/auth/sign-in
+{
+    "usernameOrEmail": "driver2",
+    "password": "driver2pass123"
+}
