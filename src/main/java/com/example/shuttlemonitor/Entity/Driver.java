@@ -1,27 +1,31 @@
 package com.example.shuttlemonitor.Entity;
 
 import jakarta.persistence.*;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Data
-@Table(name = "drivers")
+@AllArgsConstructor
+@NoArgsConstructor
 public class Driver {
     @Id
-    @Column(name = "user_id")
-    private Long userId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long driverId;
 
     @OneToOne
-    @MapsId
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column
     private String licenseNumber;
 
-    @Column
     private String contactPhone;
 
-    @Column
     private String emergencyContact;
+
+    @ManyToOne
+    @JoinColumn(name = "operator_id")
+    private Operator operator;
 }

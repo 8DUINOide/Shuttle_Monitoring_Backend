@@ -1,5 +1,6 @@
 package com.example.shuttlemonitor;
 
+import com.example.shuttlemonitor.Entity.Role;
 import com.example.shuttlemonitor.Entity.User;
 import com.example.shuttlemonitor.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,13 +26,14 @@ public class ShuttleMonitoringApplication {
 	@Bean
 	public CommandLineRunner initAdminUser() {
 		return args -> {
-			if (userRepository.findByUsername("admin").isEmpty()) {
+			if (userRepository.findByUsername("admin") == null) {
 				User admin = new User();
 				admin.setUsername("admin");
 				admin.setEmail("admin@gmail.com");
 				admin.setPassword(passwordEncoder.encode("admin"));
-				admin.setRole("ADMIN");
+				admin.setRole(Role.ADMIN);
 				userRepository.save(admin);
+				System.out.println("Admin user created: username=admin, email=admin@gmail.com, password=admin");
 			}
 		};
 	}

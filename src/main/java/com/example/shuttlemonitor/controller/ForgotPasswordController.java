@@ -139,7 +139,6 @@ public class ForgotPasswordController {
     }
 
     private ForgotPassword validateOtp(String email, Integer otp) {
-        Map<String, String> response = new HashMap<>();
         User user = userRepository.findByEmail(email)
                 .orElse(null);
         if (user == null) {
@@ -167,18 +166,18 @@ public class ForgotPasswordController {
     public ResponseEntity<Map<String, String>> resetPassword(@RequestBody ChangePassword changePassword,
                                                              @RequestParam("email") String email) {
         Map<String, String> response = new HashMap<>();
-        User user = userRepository.findByEmail(email) // Line 177
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
                     response.put("error", "Invalid email: " + email);
                     return new UsernameNotFoundException("Invalid email");
                 });
 
         String currentUsername = getCurrentUsername();
-        User currentUser = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> {
-                    response.put("error", "Current user not authenticated");
-                    return new UsernameNotFoundException("Current user not authenticated");
-                });
+        User currentUser = userRepository.findByUsername(currentUsername);
+        if (currentUser == null) {
+            response.put("error", "Current user not authenticated");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }
 
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities()
                 .stream().anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));

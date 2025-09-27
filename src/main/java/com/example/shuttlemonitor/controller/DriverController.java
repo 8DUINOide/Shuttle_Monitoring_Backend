@@ -1,19 +1,17 @@
 package com.example.shuttlemonitor.controller;
 
 import com.example.shuttlemonitor.Entity.Driver;
-import com.example.shuttlemonitor.Entity.User;
+import com.example.shuttlemonitor.Entity.Role;
 import com.example.shuttlemonitor.Repository.DriverRepository;
 import com.example.shuttlemonitor.Repository.UserRepository;
+import com.example.shuttlemonitor.exception.UnauthorizedAccessException;
+import com.example.shuttlemonitor.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/drivers")
@@ -26,47 +24,37 @@ public class DriverController {
     private UserRepository userRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private UserService userService;
 
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, String>> createDriver(@RequestBody Driver driver) {
-        Map<String, String> response = new HashMap<>();
-
-        // Validate input
-        if (driver.getUser() == null || driver.getLicenseNumber() == null) {
-            response.put("error", "User and license number are required");
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-        }
-
-        // Check for existing username or email
-        Optional<User> existingUser = userRepository.findByUsernameOrEmail(
-                driver.getUser().getUsername(), driver.getUser().getEmail());
-        if (existingUser.isPresent()) {
-            response.put("error", "Username or email already exists");
-            return new ResponseEntity<>(response, HttpStatus.CONFLICT);
-        }
-
-        // Encode password and set role
-        User user = driver.getUser();
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRole("DRIVER");
-        userRepository.save(user);
-
-        // Save driver
-        driver.setUser(user);
-        driverRepository.save(driver);
-
-        response.put("message", "Driver created successfully");
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    @GetMapping("/{id}")
+    public ResponseEntity<Driver> getDriver(@PathVariable Long id) {
+        Driver driver = driverRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
+        userService.checkAccessForDriver(driver);
+        return ResponseEntity.ok(driver);
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<?> getDriver(@PathVariable Long userId) {
-        Optional<Driver> driver = driverRepository.findById(userId);
-        if (driver.isEmpty()) {
-            return new ResponseEntity<>(Map.of("error", "Driver not found"), HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(driver.get(), HttpStatus.OK);
+    @PutMapping("/{id}")
+    @PreAuthorize("@userService.isOwnerOrAdminOrOperatorForDriver(#id)")
+    public ResponseEntity<Driver> updateDriver(@PathVariable Long id, @RequestBody Driver updatedDriver) {
+        Driver driver = driverRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
+        // Update fields as needed
+        driver.setContactPhone(updatedDriver.getContactPhone());
+        driver.setLicenseNumber(updatedDriver.getLicenseNumber());
+        driver.setEmergencyContact(updatedDriver.getEmergencyContact());
+        // etc.
+        driverRepository.save(driver);
+        return ResponseEntity.ok(driver);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteDriver(@PathVariable Long id) {
+        Driver driver = driverRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
+        userRepository.delete(driver.getUser());
+        driverRepository.delete(driver);
+        return ResponseEntity.ok(Map.of("message", "Driver deleted successfully"));
     }
 }

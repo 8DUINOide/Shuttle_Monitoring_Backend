@@ -28,20 +28,15 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.addAllowedOrigin("http://localhost:8080");
+                    config.addAllowedOrigin("*");
                     config.addAllowedMethod("*");
                     config.addAllowedHeader("*");
                     return config;
                 }))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/sign-in", "/api/forgotPassword/**", "/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/users/**", "/api/forgotPassword/reset-password").authenticated()
+                        .requestMatchers("/api/auth/**", "/api/forgotPassword/**", "/**").permitAll()
                         .requestMatchers("/api/users/{userId}/profile-picture").authenticated()
-                        .requestMatchers("/api/driver/**").hasRole("DRIVER")
-                        .requestMatchers("/api/parent/**").hasRole("PARENT")
-                        .requestMatchers("/api/student/**").hasRole("STUDENT")
-
+                        .requestMatchers("/api/students/**", "/api/parents/**", "/api/operators/**", "/api/drivers/**").authenticated()
                         .anyRequest().authenticated())
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))

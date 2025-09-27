@@ -1,19 +1,23 @@
 package com.example.shuttlemonitor.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Student {
+public class Operator {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long studentId;
+    private Long operatorId;
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -23,17 +27,7 @@ public class Student {
 
     private String contactPhone;
 
-    private String currentAddress;
-
-    private String grade;
-
-    private String section;
-
-    private String rfidTag;
-
-    private String fingerprintHash;
-
-    @ManyToOne
-    @JoinColumn(name = "parent_id")
-    private Parent parent;
+    @OneToMany(mappedBy = "operator", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Driver> drivers = new ArrayList<>();
 }

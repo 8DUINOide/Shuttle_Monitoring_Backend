@@ -1,14 +1,14 @@
 package com.example.shuttlemonitor.controller;
 
 import com.example.shuttlemonitor.Entity.Student;
-import com.example.shuttlemonitor.service.StudentService;
+import com.example.shuttlemonitor.Repository.StudentRepository;
+import com.example.shuttlemonitor.Repository.UserRepository;
+import com.example.shuttlemonitor.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -16,28 +16,53 @@ import java.util.Map;
 public class StudentController {
 
     @Autowired
-    private StudentService studentService;
+    private StudentRepository studentRepository;
 
-    @PostMapping
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private UserService userService;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Student> getStudent(@PathVariable Long id) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+        userService.checkAccessForStudent(student);
+        return ResponseEntity.ok(student);
+    }
+
+    @GetMapping("/rfid/{rfid}")
+    public ResponseEntity<Student> getStudentByRfid(@PathVariable String rfid) {
+        Student student = studentRepository.findByRfidTag(rfid)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found by RFID"));
+        userService.checkAccessForStudent(student);
+        return ResponseEntity.ok(student);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("@userService.isOwnerOrAdminOrParentForStudent(#id)")
+    public ResponseEntity<Student> updateStudent(@PathVariable Long id, @RequestBody Student updatedStudent) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+        // Update fields
+        student.setCurrentAddress(updatedStudent.getCurrentAddress());
+        student.setFullName(updatedStudent.getFullName());
+        student.setContactPhone(updatedStudent.getContactPhone());
+        student.setGrade(updatedStudent.getGrade());
+        student.setSection(updatedStudent.getSection());
+        // etc.
+        studentRepository.save(student);
+        return ResponseEntity.ok(student);
+    }
+
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, String>> createStudent(@RequestBody Student student) {
-        Map<String, String> response = new HashMap<>();
-        ResponseEntity<Student> result = studentService.createStudent(student);
-        if (result.getStatusCode() == HttpStatus.CREATED) {
-            response.put("message", "Student created successfully");
-        } else {
-            response.put("error", "Failed to create student");
-        }
-        return new ResponseEntity<>(response, result.getStatusCode());
-    }
-
-    @GetMapping("/{userId}")
-    public ResponseEntity<Student> getStudent(@PathVariable Long userId) {
-        return studentService.getStudent(userId);
-    }
-
-    @GetMapping("/rfid/{rfidTag}")
-    public ResponseEntity<Student> getStudentByRfidTag(@PathVariable String rfidTag) {
-        return studentService.getStudentByRfidTag(rfidTag);
+    public ResponseEntity<?> deleteStudent(@PathVariable Long id) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+        userRepository.delete(student.getUser());
+        studentRepository.delete(student);
+        return ResponseEntity.ok(Map.of("message", "Student deleted successfully"));
     }
 }

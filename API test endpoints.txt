@@ -1,0 +1,316 @@
+1. Authentication
+POST http://localhost:8080/api/auth/sign-in
+{
+    "usernameOrEmail": "admin",
+    "password": "admin"
+}
+{
+    "access_token": "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX0FETUlOIl0sInN1YiI6ImFkbWluIiwiaWF0IjoxNzU4OTgwMjYwLCJleHAiOjE3NTg5OTgyNjB9.UtlFxF23HnoSTU40a6bgogi8nxskkloO02mAuKZY1Bk",
+    "user_id": 1,
+    "refresh_token": "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlcyI6WyJST0xFX0FETUlOIl0sInN1YiI6ImFkbWluIiwiaWF0IjoxNzU4OTgwMjYwLCJleHAiOjE3NTk1ODUwNjB9.IHYl8lrGtRbdbZwaJaylvcjWB2octm5HX9XF-kjls6U",
+    "status": "success",
+    "username": "admin",
+    "email": "admin@gmail.com"
+}
+
+2. Forgot Password
+
+POST http://localhost:8080/api/forgotPassword/verifyMail
+{
+    "email": "admin@gmail.com"
+}
+
+POST http://localhost:8080/api/forgotPassword/verifyOtp
+{
+    "email": "admin@gmail.com",
+    "otp": 123456
+}
+
+POST http://localhost:8080/api/forgotPassword/changePassword
+{
+    "email": "admin@gmail.com",
+    "otp": 123456,
+    "password": "newpassword",
+    "repeatPassword": "newpassword"
+}
+
+POST http://localhost:8080/api/forgotPassword/reset-password?email=admin@gmail.com
+{
+    "currentPassword": "admin",
+    "newPassword": "admin123",
+    "repeatPassword": "admin123"
+}
+
+3. Sign-Up (Parents with Linked Students)
+POST http://localhost:8080/api/auth/sign-up/parents
+
+{
+    "parent": {
+        "username": "parent1",
+        "email": "parent1@gmail.com",
+        "password": "parent1pass123",
+        "role": "PARENT",
+        "currentAddress": "New York",
+        "fullName": "John Doe",
+        "contactPhone": "+63-912-345-6791"
+    },
+    "students": [
+        {
+            "username": "student1",
+            "email": "student1@gmail.com",
+            "password": "student1pass123",
+            "role": "STUDENT",
+            "currentAddress": "New York",
+            "fullName": "Jane Doe",
+            "grade": "Grade 10",
+            "section": "Section A"
+        },
+        {
+            "username": "student2",
+            "email": "student2@gmail.com",
+            "password": "student2pass123",
+            "role": "STUDENT",
+            "currentAddress": "New York",
+            "fullName": "Mane Doe",
+            "grade": "Grade 11",
+            "section": "Section B"
+        }
+    ]
+}
+OUTPUT: 
+{
+    "parent": {
+        "parentId": 1,
+        "user": {
+            "userId": 2,
+            "username": "parent1",
+            "email": "parent1@gmail.com",
+            "role": "PARENT",
+            "createdAt": "2025-09-27T22:25:11.2659947",
+            "profilePicturePath": null
+        },
+        "fullName": "John Doe",
+        "contactPhone": "+63-912-345-6791",
+        "currentAddress": "New York"
+    },
+    "students": [
+        {
+            "studentId": 1,
+            "user": {
+                "userId": 3,
+                "username": "student1",
+                "email": "student1@gmail.com",
+                "role": "STUDENT",
+                "createdAt": "2025-09-27T22:25:11.4758827",
+                "profilePicturePath": null
+            },
+            "fullName": "Jane Doe",
+            "contactPhone": null,
+            "currentAddress": "New York",
+            "grade": "Grade 10",
+            "section": "Section A",
+            "rfidTag": null,
+            "fingerprintHash": null,
+            "parent": {
+                "parentId": 1,
+                "user": {
+                    "userId": 2,
+                    "username": "parent1",
+                    "email": "parent1@gmail.com",
+                    "role": "PARENT",
+                    "createdAt": "2025-09-27T22:25:11.2659947",
+                    "profilePicturePath": null
+                },
+                "fullName": "John Doe",
+                "contactPhone": "+63-912-345-6791",
+                "currentAddress": "New York"
+            }
+        },
+        {
+            "studentId": 2,
+            "user": {
+                "userId": 4,
+                "username": "student2",
+                "email": "student2@gmail.com",
+                "role": "STUDENT",
+                "createdAt": "2025-09-27T22:25:11.580786",
+                "profilePicturePath": null
+            },
+            "fullName": "Mane Doe",
+            "contactPhone": null,
+            "currentAddress": "New York",
+            "grade": "Grade 11",
+            "section": "Section B",
+            "rfidTag": null,
+            "fingerprintHash": null,
+            "parent": {
+                "parentId": 1,
+                "user": {
+                    "userId": 2,
+                    "username": "parent1",
+                    "email": "parent1@gmail.com",
+                    "role": "PARENT",
+                    "createdAt": "2025-09-27T22:25:11.2659947",
+                    "profilePicturePath": null
+                },
+                "fullName": "John Doe",
+                "contactPhone": "+63-912-345-6791",
+                "currentAddress": "New York"
+            }
+        }
+    ]
+}
+StudentController:
+GET http://localhost:8080/api/students/1
+GET http://localhost:8080/api/students/rfid/RFID-021
+PUT http://localhost:8080/api/students/1
+{
+    "fullName": "Jane Updated Doe",
+    "contactPhone": "+63-912-345-6792",
+    "currentAddress": "Updated Address",
+    "grade": "Grade 11",
+    "section": "Section B"
+}
+DELETE http://localhost:8080/api/students/1 (ADMIN only)
+
+ParentController:
+GET http://localhost:8080/api/parents/1
+PUT http://localhost:8080/api/parents/1
+{
+    "fullName": "John Updated Doe",
+    "contactPhone": "+63-912-345-6792",
+    "currentAddress": "Updated Address"
+}
+DELETE http://localhost:8080/api/parents/1 (ADMIN only)
+
+4. Sign-Up (Operators with Linked Drivers)
+POST http://localhost:8080/api/auth/sign-up/operators
+{
+    "operator": {
+        "username": "operator2",
+        "email": "operator2@gmail.com",
+        "password": "operator2pass123",
+        "role": "OPERATOR",
+        "fullName": "Joseph Doe",
+        "contactPhone": "+63-912-345-6791"
+    },
+    "drivers": [
+        {
+            "username": "driver2",
+            "email": "driver2@gmail.com",
+            "password": "driver2pass123",
+            "role": "DRIVER",
+            "licenseNumber": "DRV-54321",
+            "contactPhone": "+63-912-345-6789",
+            "emergencyContact": "+63-912-345-6790"
+        },
+        {
+            "username": "driver3",
+            "email": "driver3@gmail.com",
+            "password": "driver3pass123",
+            "role": "DRIVER",
+            "licenseNumber": "ABC-54321",
+            "contactPhone": "+63-912-345-6789",
+            "emergencyContact": "+63-912-345-6790"
+        }
+    ]
+}
+
+OUTPUT:
+{
+    "drivers": [
+        {
+            "driverId": 1,
+            "user": {
+                "userId": 11,
+                "username": "driver2",
+                "email": "driver2@gmail.com",
+                "role": "DRIVER",
+                "createdAt": "2025-09-27T22:37:31.654476",
+                "profilePicturePath": null
+            },
+            "licenseNumber": "DRV-54321",
+            "contactPhone": "+63-912-345-6789",
+            "emergencyContact": "+63-912-345-6790",
+            "operator": {
+                "operatorId": 1,
+                "user": {
+                    "userId": 10,
+                    "username": "operator2",
+                    "email": "operator2@gmail.com",
+                    "role": "OPERATOR",
+                    "createdAt": "2025-09-27T22:37:31.5186133",
+                    "profilePicturePath": null
+                },
+                "fullName": "Joseph Doe",
+                "contactPhone": "+63-912-345-6791"
+            }
+        },
+        {
+            "driverId": 2,
+            "user": {
+                "userId": 12,
+                "username": "driver3",
+                "email": "driver3@gmail.com",
+                "role": "DRIVER",
+                "createdAt": "2025-09-27T22:37:31.7481585",
+                "profilePicturePath": null
+            },
+            "licenseNumber": "ABC-54321",
+            "contactPhone": "+63-912-345-6789",
+            "emergencyContact": "+63-912-345-6790",
+            "operator": {
+                "operatorId": 1,
+                "user": {
+                    "userId": 10,
+                    "username": "operator2",
+                    "email": "operator2@gmail.com",
+                    "role": "OPERATOR",
+                    "createdAt": "2025-09-27T22:37:31.5186133",
+                    "profilePicturePath": null
+                },
+                "fullName": "Joseph Doe",
+                "contactPhone": "+63-912-345-6791"
+            }
+        }
+    ],
+    "operator": {
+        "operatorId": 1,
+        "user": {
+            "userId": 10,
+            "username": "operator2",
+            "email": "operator2@gmail.com",
+            "role": "OPERATOR",
+            "createdAt": "2025-09-27T22:37:31.5186133",
+            "profilePicturePath": null
+        },
+        "fullName": "Joseph Doe",
+        "contactPhone": "+63-912-345-6791"
+    }
+}
+
+DriverController:
+GET http://localhost:8080/api/drivers/1
+PUT http://localhost:8080/api/drivers/1
+{
+    "fullName": "Driver Updated",
+    "contactPhone": "+63-912-345-6792",
+    "licenseNumber": "DRV-54322",
+    "emergencyContact": "+63-912-345-6793"
+}
+DELETE http://localhost:8080/api/drivers/1 (ADMIN only)
+
+OperatorController:
+GET http://localhost:8080/api/operators/1
+PUT http://localhost:8080/api/operators/1
+{
+    "fullName": "Joseph Updated Doe",
+    "contactPhone": "+63-912-345-6792"
+}
+DELETE http://localhost:8080/api/operators/1 (ADMIN only)
+
+UserController:
+GET http://localhost:8080/api/users/1
+POST http://localhost:8080/api/users/2/profile-picture
+GET http://localhost:8080/api/users/2/profile-picture
+

@@ -23,19 +23,20 @@ public class User {
     private String username;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String password;
 
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
-    private String role; // 'ADMIN', 'DRIVER', 'PARENT', 'STUDENT'
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     @Column(nullable = true)
     private LocalDateTime createdAt;
 
     @Column
-    private String profilePicturePath;
+    private String profilePicturePath; // New field for profile picture
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

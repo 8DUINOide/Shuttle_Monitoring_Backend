@@ -1,5 +1,11 @@
+We will have to update on how our API endpoints work, I created it. I want you to follow on how I want it to work, some of the unneeded files of codes should be deleted or updated, just let me know about it. Give me the full updated code for the files of code that needed changes. 
+
 API endpoints:
+
+1. Authentication
 POST http://localhost:8080/api/auth/sign-in
+POST http://localhost:8080/api/auth/refresh-token
+
 {
     "usernameOrEmail": "admin",
     "password": "admin"
@@ -12,6 +18,8 @@ POST http://localhost:8080/api/auth/sign-in
     "username": "admin",
     "email": "admin@gmail.com"
 }
+
+2. Password Reset (Forgot Password Flow)
 
 POST http://localhost:8080/api/forgotPassword/verifyMail
 {
@@ -42,137 +50,88 @@ POST http://localhost:8080/api/forgotPassword/reset-password?email=admin@gmail.c
     "message": "Password reset successfully!"
 }
 
-GET http://localhost:8080/api/users/3
+3. Sign-Up(for Parents with linked students)
+POST http://localhost:8080/api/auth/sign-up/parents
 {
-    "userId": 3,
-    "username": "admin",
-    "password": "$2a$10$MwLkEK3awpRm80agLg4bGuv2d9IpihagxB3JJvHNO6PVyDynrZfpm",
-    "email": "admin@gmail.com",
-    "role": "ADMIN",
-    "createdAt": "2025-09-23T13:55:04.523991",
-    "profilePicturePath": "Uploads/profile-pictures/a2aef213-3e4d-4916-98e7-6940a0c2064d.jpg"
-}
+    "parent": {
+        "username": "parent2",
+        "email": "parent2@gmail.com",
+        "password": "parent2pass123",
+        "role": "PARENT",
+	"currentAddress": "New York",
+    	"fullName": "John Doe",
+    	"contactPhone": "+63-912-345-6791"
+    },
+     "student": {
+        "username": "student2",
+        "email": "student2@gmail.com",
+        "password": "student2pass123",
+        "role": "STUDENT",
+	"currentAddress": "New York",
+    	"fullName": "Jane Doe",
+    	"grade": "Grade 10",
+    	"section": "Section A",
+    },
+        "username": "student3",
+        "email": "student3@gmail.com",
+        "password": "student3pass123",
+        "role": "STUDENT",
+	"currentAddress": "New York",
+    	"fullName": "Mane Doe",
+    	"grade": "Grade 11",
+    	"section": "Section B",
 
-POST http://localhost:8080/api/admin/users
-{
-    "username": "user4",
-    "email": "user4@gmail.com",
-    "password": "user4pass123",
-    "role": "USER"
+	}
 }
+4. POST http://localhost:8080/api/auth/sign-up/students (ADMIN only, its just an additional for the students. since the hardware for RFID and fingerprintHash is just accessible by the ADMIN for registration. Its just a follow up for a complete account setup for the students)
 {
-    "message": "User created successfully"
+	"studentId": 2,
+    	"rfidTag": "RFID-021",
+    	"fingerprintHash": "fingerprint_hash_021"
 }
+Ensure it has the other methods for POST, PUT, GET, but DELETE is for ADMIN only. All methods that a user can accessed should automatically be accessed also by the ADMIN.
+It has a GET /studentId , parentId, etc.
+(GET http://localhost:8080/api/students/2,
+GET http://localhost:8080/api/parents/2
+GET http://localhost:8080/api/students/rfid/RFID-001)	
 
-POST http://localhost:8080/api/admin/users
+5. Sign-Up(for Operators with linked drivers)
+POST http://localhost:8080/api/auth/sign-up/operators
 {
-    "username": "driver1",
-    "email": "driver1@gmail.com",
-    "password": "driver1@gmail.com",
-    "role": "DRIVER"
-}
-POST http://localhost:8080/api/drivers
-{
-    "user": {
+    "operators": {
+        "username": "operator2",
+        "email": "operator2@gmail.com",
+        "password": "operator2pass123",
+        "role": "OPERATOR",
+    	"fullName": "Joseph Doe",
+    	"contactPhone": "+63-912-345-6791"
+    },
+     "driver": {
         "username": "driver2",
         "email": "driver2@gmail.com",
         "password": "driver2pass123",
         "role": "DRIVER"
+    	"licenseNumber": "DRV-54321",
+    	"contactPhone": "+63-912-345-6789",
+    	"emergencyContact": "+63-912-345-6790"
     },
-    "licenseNumber": "DRV-54321",
-    "contactPhone": "+63-912-345-6789",
-    "emergencyContact": "+63-912-345-6790"
+        "username": "driver3",
+        "email": "driver3@gmail.com",
+        "password": "driver3pass123",
+        "role": "DRIVER"
+    	"licenseNumber": "ABC-54321",
+    	"contactPhone": "+63-912-345-6789",
+    	"emergencyContact": "+63-912-345-6790"
+	}
 }
-{
-    "message": "Driver created successfully"
-}
+Ensure it has the other methods for POST, PUT, GET, but DELETE is for ADMIN only. All methods that a user can accessed should automatically be accessed also by the ADMIN.
+It has a GET /driverId , operatorId, etc.
+(GET http://localhost:8080/api/drivers/2,
+GET http://localhost:8080/api/operators/2)
 
-GET http://localhost:8080/api/drivers/9
-{
-    "userId": 9,
-    "user": {
-        "userId": 9,
-        "username": "driver2",
-        "password": "$2a$10$H0e/Ban2gKLtci3j0CM0BeZMhNTX.bpbEYCDMNOhEugOJEw4wktfO",
-        "email": "driver2@gmail.com",
-        "role": "DRIVER",
-        "createdAt": "2025-09-23T15:01:11.011133",
-        "profilePicturePath": null
-    },
-    "licenseNumber": "DRV-54321",
-    "contactPhone": "+63-912-345-6789",
-    "emergencyContact": "+63-912-345-6790"
-}
+the response in all of the API endpoints, should be detailed that it will output all of the inputs. Also analyze each code, dont delete in the code if you think its relevant in the program like profilePicturePath, etc.
 
-POST http://localhost:8080/api/parents
-{
-    "user": {
-        "username": "parent2",
-        "email": "parent2@gmail.com",
-        "password": "parent2pass123",
-        "role": "PARENT"
-    },
-    "fullName": "John Doe",
-    "contactPhone": "+63-912-345-6791"
-}
-{
-    "message": "Parent created successfully"
-}
 
-POST http://localhost:8080/api/students
-{
-    "user": {
-        "username": "student2",
-        "email": "student2@gmail.com",
-        "password": "student2pass123",
-        "role": "STUDENT"
-    },
-    "fullName": "Jane Doe",
-    "grade": "Grade 10",
-    "section": "Section A",
-    "rfidTag": "RFID-001",
-    "fingerprintHash": "fingerprint_hash_001",
-    "parent": {
-        "userId": 15
-    }
-}
+Please give me the full updated code, I mean all the files and separate it into folders (config, controller, dto, Entity, exception, Repository, service, util, etc.)
 
-GET http://localhost:8080/api/students/16
-GET http://localhost:8080/api/students/rfid/RFID-001
-{
-    "userId": 16,
-    "user": {
-        "userId": 16,
-        "username": "student2",
-        "password": "student2pass123",
-        "email": "student2@gmail.com",
-        "role": "STUDENT",
-        "createdAt": "2025-09-23T15:15:28.438082",
-        "profilePicturePath": null
-    },
-    "fullName": "Jane Doe",
-    "grade": "Grade 10",
-    "section": "Section A",
-    "rfidTag": "RFID-001",
-    "fingerprintHash": "fingerprint_hash_001",
-    "parent": {
-        "userId": 15,
-        "user": {
-            "userId": 15,
-            "username": "parent4",
-            "password": "$2a$10$ppyDUkEuH0rU75zj1UDmRepXGSRqDbdXvriUehm1Def6QiNhgg/ay",
-            "email": "parent4@gmail.com",
-            "role": "PARENT",
-            "createdAt": "2025-09-23T15:14:58.461835",
-            "profilePicturePath": null
-        },
-        "fullName": "John Doe",
-        "contactPhone": "+63-912-345-6791"
-    }
-}
 
-POST http://localhost:8080/api/auth/sign-in
-{
-    "usernameOrEmail": "driver2",
-    "password": "driver2pass123"
-}
