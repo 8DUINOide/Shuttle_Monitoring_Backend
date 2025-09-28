@@ -174,6 +174,7 @@ PUT http://localhost:8080/api/students/1
 DELETE http://localhost:8080/api/students/1 (ADMIN only)
 
 ParentController:
+GET http://localhost:8080/api/parents/all (ADMIN only)
 GET http://localhost:8080/api/parents/1
 PUT http://localhost:8080/api/parents/1
 {
@@ -290,6 +291,7 @@ OUTPUT:
 }
 
 DriverController:
+GET http://localhost:8080/api/drivers/all (ADMIN only)
 GET http://localhost:8080/api/drivers/1
 PUT http://localhost:8080/api/drivers/1
 {
@@ -301,7 +303,8 @@ PUT http://localhost:8080/api/drivers/1
 DELETE http://localhost:8080/api/drivers/1 (ADMIN only)
 
 OperatorController:
-GET http://localhost:8080/api/operators/1
+GET http://localhost:8080/api/operators/all (ADMIN only)
+GET http://localhost:8080/api/operators/1 (ADMIN only)
 PUT http://localhost:8080/api/operators/1
 {
     "fullName": "Joseph Updated Doe",
@@ -310,6 +313,7 @@ PUT http://localhost:8080/api/operators/1
 DELETE http://localhost:8080/api/operators/1 (ADMIN only)
 
 UserController:
+GET http://localhost:8080/api/users/all (ADMIN only)
 GET http://localhost:8080/api/users/1
 POST http://localhost:8080/api/users/2/profile-picture
 GET http://localhost:8080/api/users/2/profile-picture

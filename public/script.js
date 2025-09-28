@@ -13,7 +13,7 @@ function sanitizeHTML(str) {
 }
 
 // Check for stored token on page load
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const storedToken = localStorage.getItem('authToken');
     const storedUser = localStorage.getItem('currentUser');
     const storedUserId = localStorage.getItem('currentUserId');
@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUserId = storedUserId;
         document.getElementById("login-screen").style.display = "none";
         document.getElementById("dashboard").style.display = "flex";
+        await loadAllData();
         updateDashboard();
         showProfile();
     }
@@ -78,6 +79,7 @@ async function login() {
                 localStorage.setItem('currentUserId', currentUserId);
                 document.getElementById("login-screen").style.display = "none";
                 document.getElementById("dashboard").style.display = "flex";
+                await loadAllData();
                 updateDashboard();
                 loadProfilePicture();
             } else {
@@ -139,6 +141,83 @@ function toggleSidebar() {
     const content = document.getElementById("content");
     sidebar.classList.toggle("active");
     content.classList.toggle("content-shift");
+}
+
+// =================== DATA LOADING ===================
+async function loadAllData() {
+    await Promise.all([
+        loadShuttles(),
+        loadStudents()
+    ]);
+}
+
+async function loadShuttles() {
+    if (!token) return;
+    try {
+        const response = await fetch(`${SERVER_URL}/api/drivers/all`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch drivers');
+        }
+        const drivers = await response.json();
+        const tbody = document.getElementById('shuttles-table');
+        tbody.innerHTML = '';
+        drivers.forEach((driver, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td></td>
+                <td>${sanitizeHTML(driver.user.username)}</td>
+                <td></td>
+                <td><span class="status-badge"></span></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>
+                    <button class="action-btn track-btn">Track Details</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error loading shuttles:', error);
+        showToast('Error loading shuttles data');
+    }
+}
+
+async function loadStudents() {
+    if (!token) return;
+    try {
+        const response = await fetch(`${SERVER_URL}/api/students/all`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch students');
+        }
+        const students = await response.json();
+        const tbody = document.getElementById('students-table');
+        tbody.innerHTML = '';
+        students.forEach(student => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${sanitizeHTML(student.fullName)}<br><small>${sanitizeHTML(student.grade)} - ${sanitizeHTML(student.section)}</small></td>
+                <td>${sanitizeHTML(student.parent.fullName)}</td>
+                <td><i class="fa-solid fa-phone"></i> ${sanitizeHTML(student.parent.contactPhone)}<br><i class="fa-solid fa-envelope"></i> ${sanitizeHTML(student.parent.user.email)}</td>
+                <td></td>
+                <td><span class="status-badge"></span></td>
+                <td></td>
+                <td>${sanitizeHTML(student.currentAddress)}</td>
+                <td>
+                    <button class="action-btn track-btn">Track Details</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error loading students:', error);
+        showToast('Error loading students data');
+    }
 }
 
 // =================== PROFILE ===================
@@ -688,7 +767,8 @@ document.getElementById('addParentForm').addEventListener('submit', async (e) =>
         if (response.ok) {
             showToast('Parent and students registered successfully!');
             closeAddParentModal();
-            // Optionally refresh the students table here
+            await loadStudents(); // Refresh students table
+            updateDashboard();
         } else {
             errorElement.textContent = result.error || 'Failed to register parent and students';
             errorElement.style.display = 'block';
@@ -896,7 +976,8 @@ document.getElementById('addOperatorForm').addEventListener('submit', async (e) 
         if (response.ok) {
             showToast('Operator and drivers registered successfully!');
             closeAddOperatorModal();
-            // Optionally refresh the shuttles table here
+            await loadShuttles(); // Refresh shuttles table
+            updateDashboard();
         } else {
             errorElement.textContent = result.error || 'Failed to register operator and drivers';
             errorElement.style.display = 'block';
