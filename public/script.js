@@ -146,8 +146,8 @@ function toggleSidebar() {
 // =================== DATA LOADING ===================
 async function loadAllData() {
     await Promise.all([
-        loadShuttles(),
-        loadStudents()
+        loadStudents(),
+        loadDrivers()
     ]);
 }
 
@@ -219,6 +219,42 @@ async function loadStudents() {
         showToast('Error loading students data');
     }
 }
+
+// Add this function to script.js
+async function loadDrivers() {
+    if (!token) return;
+    try {
+        const response = await fetch(`${SERVER_URL}/api/drivers/all`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch drivers');
+        }
+        const drivers = await response.json();
+        const tbody = document.getElementById('drivers-table');
+        tbody.innerHTML = '';
+        drivers.forEach(driver => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${sanitizeHTML(driver.user.username)}</td>
+                <td>${sanitizeHTML(driver.operator.fullName)}</td>
+                <td><i class="fa-solid fa-phone"></i> ${sanitizeHTML(driver.contactPhone)}<br><i class="fa-solid fa-envelope"></i> ${sanitizeHTML(driver.user.email)}</td>
+                <td>${sanitizeHTML(driver.licenseNumber)}</td>
+                <td>${sanitizeHTML(driver.emergencyContact)}</td>
+                <td><span class="status-badge"></span></td>
+                <td>
+                    <button class="action-btn track-btn">Track Details</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error loading drivers:', error);
+        showToast('Error loading drivers data');
+    }
+}
+
+
 
 // =================== PROFILE ===================
 function showProfile() {
@@ -497,6 +533,33 @@ function filterStudents() {
     });
 
     document.getElementById("no-students-message").style.display = visibleCount === 0 ? "block" : "none";
+}
+
+// Add this function to script.js
+function filterDrivers() {
+    const searchValue = document.getElementById("searchDrivers").value.toLowerCase();
+    const statusFilter = document.getElementById("statusFilterDrivers").value.toLowerCase();
+    const rows = document.querySelectorAll("#drivers-table tr");
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const driver = row.querySelector("td:nth-child(1)")?.textContent.toLowerCase() || "";
+        const operator = row.querySelector("td:nth-child(2)")?.textContent.toLowerCase() || "";
+        const license = row.querySelector("td:nth-child(4)")?.textContent.toLowerCase() || "";
+        const status = row.querySelector("td:nth-child(6) span")?.textContent.toLowerCase() || "";
+
+        const matchesSearch = driver.includes(searchValue) || operator.includes(searchValue) || license.includes(searchValue);
+        const matchesStatus = statusFilter === "all" || status === statusFilter;
+
+        if (matchesSearch && matchesStatus) {
+            row.style.display = "";
+            visibleCount++;
+        } else {
+            row.style.display = "none";
+        }
+    });
+
+    document.getElementById("no-drivers-message").style.display = visibleCount === 0 ? "block" : "none";
 }
 
 function filterNotifications() {
@@ -976,7 +1039,7 @@ document.getElementById('addOperatorForm').addEventListener('submit', async (e) 
         if (response.ok) {
             showToast('Operator and drivers registered successfully!');
             closeAddOperatorModal();
-            await loadShuttles(); // Refresh shuttles table
+            await loadDrivers(); // Refresh shuttles table
             updateDashboard();
         } else {
             errorElement.textContent = result.error || 'Failed to register operator and drivers';

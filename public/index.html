@@ -39,8 +39,9 @@
         <ul>
             <li onclick="showTab('home')"><i class="fa-solid fa-house"></i> Dashboard</li>
             <li onclick="showTab('live-map')"><i class="fa-solid fa-map-location-dot"></i> Live Map</li>
-            <li onclick="showTab('shuttles')"><i class="fa-solid fa-bus"></i> Shuttles</li>
             <li onclick="showTab('students')"><i class="fa-solid fa-users"></i> Students</li>
+            <li onclick="showTab('drivers')"><i class="fa-solid fa-id-card"></i> Drivers</li>
+            <li onclick="showTab('shuttles')"><i class="fa-solid fa-bus"></i> Shuttles</li>
             <li onclick="showTab('notifications')"><i class="fa-solid fa-bell"></i> Notifications</li>
             <li onclick="showTab('profile')"><i class="fa-solid fa-user"></i> Profile</li>
             <li onclick="showLogoutConfirmModal()"><i class="fa-solid fa-sign-out-alt"></i> Logout</li>
@@ -108,11 +109,6 @@
                 <div class="table-title-section">
                     <h3>Active Shuttles</h3>
                     <p>Real time shuttle tracking and status monitoring</p>
-                </div>
-                <div class="table-actions">
-                    <button class="add-btn" onclick="showAddOperatorModal()">
-                        <i class="fa-solid fa-plus"></i> Add Operator & Drivers
-                    </button>
                 </div>
             </div>
             <div class="search-container">
@@ -186,6 +182,51 @@
                 </tr>
                 </thead>
                 <tbody id="students-table"></tbody>
+            </table>
+        </div>
+
+        <div id="drivers" class="tab users-tab">
+            <header>
+                <div class="title-container">
+                    <i class="fa-solid fa-id-card"></i>
+                    <h2>Driver Management</h2>
+                </div>
+                <p>Monitor and manage all driver operations</p>
+            </header>
+            <div class="table-header">
+                <div class="table-title-section">
+                    <h3>Active Drivers</h3>
+                    <p>Real-time driver tracking and status monitoring</p>
+                </div>
+                <div class="table-actions">
+                    <button class="add-btn" onclick="showAddOperatorModal()">
+                        <i class="fa-solid fa-plus"></i> Add Operator & Drivers
+                    </button>
+                </div>
+            </div>
+            <div class="search-container">
+                <input id="searchDrivers" type="text" placeholder="Search drivers, operators, or licenses..." oninput="filterDrivers()">
+                <select id="statusFilterDrivers" onchange="filterDrivers()">
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+            </div>
+            <p id="no-drivers-message" style="display:none; color: red; margin-top: 10px;">No drivers found.</p>
+            <table>
+                <thead>
+                <tr>
+                    <th><i class="fa-solid fa-user"></i> Driver</th>
+                    <th><i class="fa-solid fa-user-tie"></i> Operator</th>
+                    <th><i class="fa-solid fa-address-book"></i> Contact</th>
+                    <th><i class="fa-solid fa-id-card"></i> License</th>
+                    <th><i class="fa-solid fa-phone-volume"></i> Emergency Contact</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="drivers-table"></tbody>
             </table>
         </div>
 
