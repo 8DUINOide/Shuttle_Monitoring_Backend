@@ -3,11 +3,13 @@ const SERVER_URL = "http://localhost:8080"; // Change to "http://152.42.192.226:
 let token = null;
 let currentUser = null;
 let currentUserId = null;
+let studentCounter = 1;
+let driverCounter = 1;
 
 // Function to sanitize input to prevent XSS
 function sanitizeHTML(str) {
     if (typeof str !== 'string') return str;
-    return str.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/&/g, '&amp;');
+    return str.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/&amp;/g, '&amp;');
 }
 
 // Check for stored token on page load
@@ -460,3 +462,449 @@ function clearAllNotifications() {
     showToast("All notifications cleared");
     updateDashboard(); // Update recent activity after change
 }
+
+// =================== ADD PARENT & STUDENTS MODAL ===================
+function showAddParentModal() {
+    document.getElementById('addParentModal').style.display = 'flex';
+    resetParentForm();
+}
+
+function closeAddParentModal() {
+    document.getElementById('addParentModal').style.display = 'none';
+    resetParentForm();
+}
+
+function resetParentForm() {
+    document.getElementById('addParentForm').reset();
+    document.getElementById('add-parent-error').style.display = 'none';
+
+    // Reset students container to show only one student
+    const container = document.getElementById('students-container');
+    container.innerHTML = `
+        <div class="student-form" data-student="1">
+            <div class="student-header">
+                <h5>Student 1</h5>
+                <button type="button" class="remove-student-btn" onclick="removeStudentForm(1)" style="display: none;">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="student-1-username">Username *</label>
+                    <input type="text" id="student-1-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="student-1-email">Email *</label>
+                    <input type="email" id="student-1-email" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group password-wrapper">
+                    <label for="student-1-password">Password *</label>
+                    <input type="password" id="student-1-password" required>
+                    <span class="toggle-password" onclick="togglePassword('student-1-password', this)">
+                        <i class="fa-solid fa-eye-slash"></i>
+                    </span>
+                </div>
+                <div class="form-group">
+                    <label for="student-1-fullname">Full Name *</label>
+                    <input type="text" id="student-1-fullname" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="student-1-address">Current Address *</label>
+                    <input type="text" id="student-1-address" required>
+                </div>
+                <div class="form-group">
+                    <label for="student-1-grade">Grade *</label>
+                    <select id="student-1-grade" required>
+                        <option value="">Select Grade</option>
+                        <option value="Grade 7">Grade 7</option>
+                        <option value="Grade 8">Grade 8</option>
+                        <option value="Grade 9">Grade 9</option>
+                        <option value="Grade 10">Grade 10</option>
+                        <option value="Grade 11">Grade 11</option>
+                        <option value="Grade 12">Grade 12</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="student-1-section">Section *</label>
+                    <input type="text" id="student-1-section" placeholder="e.g., Section A" required>
+                </div>
+            </div>
+        </div>
+    `;
+    studentCounter = 1;
+}
+
+function addStudentForm() {
+    studentCounter++;
+    const container = document.getElementById('students-container');
+    const studentForm = document.createElement('div');
+    studentForm.className = 'student-form';
+    studentForm.setAttribute('data-student', studentCounter);
+
+    studentForm.innerHTML = `
+        <div class="student-header">
+            <h5>Student ${studentCounter}</h5>
+            <button type="button" class="remove-student-btn" onclick="removeStudentForm(${studentCounter})">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="student-${studentCounter}-username">Username *</label>
+                <input type="text" id="student-${studentCounter}-username" required>
+            </div>
+            <div class="form-group">
+                <label for="student-${studentCounter}-email">Email *</label>
+                <input type="email" id="student-${studentCounter}-email" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group password-wrapper">
+                <label for="student-${studentCounter}-password">Password *</label>
+                <input type="password" id="student-${studentCounter}-password" required>
+                <span class="toggle-password" onclick="togglePassword('student-${studentCounter}-password', this)">
+                    <i class="fa-solid fa-eye-slash"></i>
+                </span>
+            </div>
+            <div class="form-group">
+                <label for="student-${studentCounter}-fullname">Full Name *</label>
+                <input type="text" id="student-${studentCounter}-fullname" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="student-${studentCounter}-address">Current Address *</label>
+                <input type="text" id="student-${studentCounter}-address" required>
+            </div>
+            <div class="form-group">
+                <label for="student-${studentCounter}-grade">Grade *</label>
+                <select id="student-${studentCounter}-grade" required>
+                    <option value="">Select Grade</option>
+                    <option value="Grade 7">Grade 7</option>
+                    <option value="Grade 8">Grade 8</option>
+                    <option value="Grade 9">Grade 9</option>
+                    <option value="Grade 10">Grade 10</option>
+                    <option value="Grade 11">Grade 11</option>
+                    <option value="Grade 12">Grade 12</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="student-${studentCounter}-section">Section *</label>
+                <input type="text" id="student-${studentCounter}-section" placeholder="e.g., Section A" required>
+            </div>
+        </div>
+    `;
+
+    container.appendChild(studentForm);
+
+    // Show remove buttons for all students except the first one
+    updateStudentRemoveButtons();
+}
+
+function removeStudentForm(studentId) {
+    const studentForm = document.querySelector(`[data-student="${studentId}"]`);
+    if (studentForm) {
+        studentForm.remove();
+        updateStudentRemoveButtons();
+    }
+}
+
+function updateStudentRemoveButtons() {
+    const studentForms = document.querySelectorAll('.student-form');
+    studentForms.forEach((form, index) => {
+        const removeBtn = form.querySelector('.remove-student-btn');
+        if (index === 0 && studentForms.length === 1) {
+            removeBtn.style.display = 'none';
+        } else {
+            removeBtn.style.display = 'block';
+        }
+    });
+}
+
+// Handle parent form submission
+document.getElementById('addParentForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorElement = document.getElementById('add-parent-error');
+    const submitButton = e.target.querySelector('.submit-btn');
+
+    errorElement.style.display = 'none';
+    submitButton.disabled = true;
+
+    try {
+        // Collect parent data
+        const parentData = {
+            username: document.getElementById('parent-username').value,
+            email: document.getElementById('parent-email').value,
+            password: document.getElementById('parent-password').value,
+            role: "PARENT",
+            currentAddress: document.getElementById('parent-address').value,
+            fullName: document.getElementById('parent-fullname').value,
+            contactPhone: document.getElementById('parent-phone').value
+        };
+
+        // Collect students data
+        const studentsData = [];
+        const studentForms = document.querySelectorAll('.student-form');
+
+        studentForms.forEach(form => {
+            const studentId = form.getAttribute('data-student');
+            const studentData = {
+                username: document.getElementById(`student-${studentId}-username`).value,
+                email: document.getElementById(`student-${studentId}-email`).value,
+                password: document.getElementById(`student-${studentId}-password`).value,
+                role: "STUDENT",
+                currentAddress: document.getElementById(`student-${studentId}-address`).value,
+                fullName: document.getElementById(`student-${studentId}-fullname`).value,
+                grade: document.getElementById(`student-${studentId}-grade`).value,
+                section: document.getElementById(`student-${studentId}-section`).value
+            };
+            studentsData.push(studentData);
+        });
+
+        const requestBody = {
+            parent: parentData,
+            students: studentsData
+        };
+
+        const response = await fetch(`${SERVER_URL}/api/auth/sign-up/parents`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('Parent and students registered successfully!');
+            closeAddParentModal();
+            // Optionally refresh the students table here
+        } else {
+            errorElement.textContent = result.error || 'Failed to register parent and students';
+            errorElement.style.display = 'block';
+        }
+    } catch (error) {
+        errorElement.textContent = 'Network error: ' + error.message;
+        errorElement.style.display = 'block';
+    } finally {
+        submitButton.disabled = false;
+    }
+});
+
+// =================== ADD OPERATOR & DRIVERS MODAL ===================
+function showAddOperatorModal() {
+    document.getElementById('addOperatorModal').style.display = 'flex';
+    resetOperatorForm();
+}
+
+function closeAddOperatorModal() {
+    document.getElementById('addOperatorModal').style.display = 'none';
+    resetOperatorForm();
+}
+
+function resetOperatorForm() {
+    document.getElementById('addOperatorForm').reset();
+    document.getElementById('add-operator-error').style.display = 'none';
+
+    // Reset drivers container to show only one driver
+    const container = document.getElementById('drivers-container');
+    container.innerHTML = `
+        <div class="driver-form" data-driver="1">
+            <div class="driver-header">
+                <h5>Driver 1</h5>
+                <button type="button" class="remove-driver-btn" onclick="removeDriverForm(1)" style="display: none;">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="driver-1-username">Username *</label>
+                    <input type="text" id="driver-1-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="driver-1-email">Email *</label>
+                    <input type="email" id="driver-1-email" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group password-wrapper">
+                    <label for="driver-1-password">Password *</label>
+                    <input type="password" id="driver-1-password" required>
+                    <span class="toggle-password" onclick="togglePassword('driver-1-password', this)">
+                        <i class="fa-solid fa-eye-slash"></i>
+                    </span>
+                </div>
+                <div class="form-group">
+                    <label for="driver-1-license">License Number *</label>
+                    <input type="text" id="driver-1-license" placeholder="e.g., DRV-12345" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="driver-1-phone">Contact Phone *</label>
+                    <input type="tel" id="driver-1-phone" placeholder="+63-912-345-6789" required>
+                </div>
+                <div class="form-group">
+                    <label for="driver-1-emergency">Emergency Contact *</label>
+                    <input type="tel" id="driver-1-emergency" placeholder="+63-912-345-6789" required>
+                </div>
+            </div>
+        </div>
+    `;
+    driverCounter = 1;
+}
+
+function addDriverForm() {
+    driverCounter++;
+    const container = document.getElementById('drivers-container');
+    const driverForm = document.createElement('div');
+    driverForm.className = 'driver-form';
+    driverForm.setAttribute('data-driver', driverCounter);
+
+    driverForm.innerHTML = `
+        <div class="driver-header">
+            <h5>Driver ${driverCounter}</h5>
+            <button type="button" class="remove-driver-btn" onclick="removeDriverForm(${driverCounter})">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="driver-${driverCounter}-username">Username *</label>
+                <input type="text" id="driver-${driverCounter}-username" required>
+            </div>
+            <div class="form-group">
+                <label for="driver-${driverCounter}-email">Email *</label>
+                <input type="email" id="driver-${driverCounter}-email" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group password-wrapper">
+                <label for="driver-${driverCounter}-password">Password *</label>
+                <input type="password" id="driver-${driverCounter}-password" required>
+                <span class="toggle-password" onclick="togglePassword('driver-${driverCounter}-password', this)">
+                    <i class="fa-solid fa-eye-slash"></i>
+                </span>
+            </div>
+            <div class="form-group">
+                <label for="driver-${driverCounter}-license">License Number *</label>
+                <input type="text" id="driver-${driverCounter}-license" placeholder="e.g., DRV-12345" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="driver-${driverCounter}-phone">Contact Phone *</label>
+                <input type="tel" id="driver-${driverCounter}-phone" placeholder="+63-912-345-6789" required>
+            </div>
+            <div class="form-group">
+                <label for="driver-${driverCounter}-emergency">Emergency Contact *</label>
+                <input type="tel" id="driver-${driverCounter}-emergency" placeholder="+63-912-345-6789" required>
+            </div>
+        </div>
+    `;
+
+    container.appendChild(driverForm);
+
+    // Show remove buttons for all drivers except the first one
+    updateDriverRemoveButtons();
+}
+
+function removeDriverForm(driverId) {
+    const driverForm = document.querySelector(`[data-driver="${driverId}"]`);
+    if (driverForm) {
+        driverForm.remove();
+        updateDriverRemoveButtons();
+    }
+}
+
+function updateDriverRemoveButtons() {
+    const driverForms = document.querySelectorAll('.driver-form');
+    driverForms.forEach((form, index) => {
+        const removeBtn = form.querySelector('.remove-driver-btn');
+        if (index === 0 && driverForms.length === 1) {
+            removeBtn.style.display = 'none';
+        } else {
+            removeBtn.style.display = 'block';
+        }
+    });
+}
+
+// Handle operator form submission
+document.getElementById('addOperatorForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorElement = document.getElementById('add-operator-error');
+    const submitButton = e.target.querySelector('.submit-btn');
+
+    errorElement.style.display = 'none';
+    submitButton.disabled = true;
+
+    try {
+        // Collect operator data
+        const operatorData = {
+            username: document.getElementById('operator-username').value,
+            email: document.getElementById('operator-email').value,
+            password: document.getElementById('operator-password').value,
+            role: "OPERATOR",
+            fullName: document.getElementById('operator-fullname').value,
+            contactPhone: document.getElementById('operator-phone').value
+        };
+
+        // Collect drivers data
+        const driversData = [];
+        const driverForms = document.querySelectorAll('.driver-form');
+
+        driverForms.forEach(form => {
+            const driverId = form.getAttribute('data-driver');
+            const driverData = {
+                username: document.getElementById(`driver-${driverId}-username`).value,
+                email: document.getElementById(`driver-${driverId}-email`).value,
+                password: document.getElementById(`driver-${driverId}-password`).value,
+                role: "DRIVER",
+                licenseNumber: document.getElementById(`driver-${driverId}-license`).value,
+                contactPhone: document.getElementById(`driver-${driverId}-phone`).value,
+                emergencyContact: document.getElementById(`driver-${driverId}-emergency`).value
+            };
+            driversData.push(driverData);
+        });
+
+        const requestBody = {
+            operator: operatorData,
+            drivers: driversData
+        };
+
+        const response = await fetch(`${SERVER_URL}/api/auth/sign-up/operators`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('Operator and drivers registered successfully!');
+            closeAddOperatorModal();
+            // Optionally refresh the shuttles table here
+        } else {
+            errorElement.textContent = result.error || 'Failed to register operator and drivers';
+            errorElement.style.display = 'block';
+        }
+    } catch (error) {
+        errorElement.textContent = 'Network error: ' + error.message;
+        errorElement.style.display = 'block';
+    } finally {
+        submitButton.disabled = false;
+    }
+});
