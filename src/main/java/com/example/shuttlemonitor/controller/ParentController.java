@@ -5,10 +5,12 @@ import com.example.shuttlemonitor.Repository.ParentRepository;
 import com.example.shuttlemonitor.Repository.UserRepository;
 import com.example.shuttlemonitor.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -30,6 +32,16 @@ public class ParentController {
                 .orElseThrow(() -> new IllegalArgumentException("Parent not found"));
         userService.checkAccessForParent(parent);
         return ResponseEntity.ok(parent);
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Parent>> getAllParents(
+            @RequestParam(defaultValue = "parentId") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortOrder) {
+        Sort sort = Sort.by(sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
+        List<Parent> parents = parentRepository.findAll(sort);
+        return ResponseEntity.ok(parents);
     }
 
     @PutMapping("/{id}")

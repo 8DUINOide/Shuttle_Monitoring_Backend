@@ -5,10 +5,12 @@ import com.example.shuttlemonitor.Repository.StudentRepository;
 import com.example.shuttlemonitor.Repository.UserRepository;
 import com.example.shuttlemonitor.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -38,6 +40,16 @@ public class StudentController {
                 .orElseThrow(() -> new IllegalArgumentException("Student not found by RFID"));
         userService.checkAccessForStudent(student);
         return ResponseEntity.ok(student);
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Student>> getAllStudents(
+            @RequestParam(defaultValue = "studentId") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortOrder) {
+        Sort sort = Sort.by(sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
+        List<Student> students = studentRepository.findAll(sort);
+        return ResponseEntity.ok(students);
     }
 
     @PutMapping("/{id}")
