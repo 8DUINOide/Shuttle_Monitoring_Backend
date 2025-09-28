@@ -744,7 +744,6 @@ tbody tr:hover {
     cursor: pointer;
     font-size: 1rem;
     color: #003A6C; /* Ateneo Blue */
-    margin-top: 10px;
 }
 
 .toggle-password:hover {
@@ -754,6 +753,11 @@ tbody tr:hover {
 .form-group .password-wrapper .toggle-password {
     top: 65%;
     transform: translateY(-50%);
+}
+
+.login-container .password-wrapper .toggle-password {
+    right: 45px; /* Adjusted to align within login input field */
+    top: 35%; /* Adjusted to vertically center in login input */
 }
 
 /* === Profile Tab === */
@@ -1289,6 +1293,73 @@ tbody tr:hover {
     list-style: none;
     padding: 0;
     margin: 0;
+}
+
+/* === Drivers Tab Specific Styles === */
+#drivers .search-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 40px;
+    margin-bottom: 1rem;
+}
+
+#drivers .search-container input {
+    flex: 1;
+    width: 100%;
+    min-width: 300px;
+    max-width: 1200px; /* Extended width for better visibility */
+}
+
+#drivers .search-container select {
+    padding: 10px;
+    border: 1px solid #003A6C;
+    border-radius: 6px;
+    background: #fff;
+    color: #003A6C;
+    font-size: 0.9rem;
+}
+
+/* === Drivers Table Column Widths === */
+#drivers table th:nth-child(1), #drivers table td:nth-child(1) { /* Driver */
+    width: 15%;
+    max-width: 150px;
+}
+#drivers table th:nth-child(2), #drivers table td:nth-child(2) { /* Operator */
+    width: 20%;
+    max-width: 200px;
+}
+#drivers table th:nth-child(3), #drivers table td:nth-child(3) { /* Contact */
+    width: 20%;
+    max-width: 200px;
+}
+#drivers table th:nth-child(4), #drivers table td:nth-child(4) { /* License Number */
+    width: 15%;
+    max-width: 150px;
+}
+#drivers table th:nth-child(5), #drivers table td:nth-child(5) { /* Emergency Contact */
+    width: 15%;
+    max-width: 150px;
+}
+#drivers table th:nth-child(6), #drivers table td:nth-child(6) { /* Status */
+    width: 10%;
+    max-width: 100px;
+}
+#drivers table th:nth-child(7), #drivers table td:nth-child(7) { /* Actions */
+    width: 10%;
+    max-width: 100px;
+}
+
+/* === Drivers Tab Contact and Operator Column Icons === */
+#drivers td i.fa-phone,
+#drivers td i.fa-envelope {
+    margin-right: 8px;
+    width: 16px;
+    text-align: center;
+}
+#drivers td small {
+    color: #666;
+    font-size: 0.85rem;
 }
 
 #recent-activity-list li {

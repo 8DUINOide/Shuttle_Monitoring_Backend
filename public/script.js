@@ -134,6 +134,16 @@ function showTab(tabId) {
     if (tabId === 'home') {
         updateDashboard();
     }
+    // Reset status filters to "All Status" when switching tabs
+    const statusFilters = document.querySelectorAll('select[id$="statusFilter"], select[id$="statusFilterDrivers"]');
+    statusFilters.forEach(filter => {
+        filter.value = "all";
+    });
+    // Trigger filter functions to refresh displayed data
+    if (tabId === 'shuttles') filterShuttles();
+    if (tabId === 'students') filterStudents();
+    if (tabId === 'drivers') filterDrivers();
+    if (tabId === 'notifications') filterNotifications();
 }
 
 function toggleSidebar() {
@@ -220,7 +230,7 @@ async function loadStudents() {
     }
 }
 
-// Add this function to script.js
+// =================== DATA LOADING ===================
 async function loadDrivers() {
     if (!token) return;
     try {
@@ -237,10 +247,10 @@ async function loadDrivers() {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${sanitizeHTML(driver.user.username)}</td>
-                <td>${sanitizeHTML(driver.operator.fullName)}</td>
+                <td>${sanitizeHTML(driver.operator.fullName)}<br><small><i class="fa-solid fa-envelope"></i> ${sanitizeHTML(driver.operator.user.email)}</small></td>
                 <td><i class="fa-solid fa-phone"></i> ${sanitizeHTML(driver.contactPhone)}<br><i class="fa-solid fa-envelope"></i> ${sanitizeHTML(driver.user.email)}</td>
                 <td>${sanitizeHTML(driver.licenseNumber)}</td>
-                <td>${sanitizeHTML(driver.emergencyContact)}</td>
+                <td><i class="fa-solid fa-phone"></i> ${sanitizeHTML(driver.emergencyContact)}</td>
                 <td><span class="status-badge"></span></td>
                 <td>
                     <button class="action-btn track-btn">Track Details</button>
