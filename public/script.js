@@ -1183,14 +1183,29 @@ document.getElementById('bulkUploadForm').addEventListener('submit', async (e) =
 
 // =================== ELLIPSIS DROPDOWN ===================
 function toggleDropdown(btn) {
-    // Close all other dropdowns
-    document.querySelectorAll('.dropdown-menu').forEach(menu => {
-        menu.style.display = 'none';
-    });
-    // Toggle current
+    // Get the dropdown menu associated with the clicked button
     const menu = btn.parentElement.querySelector('.dropdown-menu');
+
+    // Close all other dropdowns
+    document.querySelectorAll('.dropdown-menu').forEach(otherMenu => {
+        if (otherMenu !== menu) {
+            otherMenu.style.display = 'none';
+        }
+    });
+
+    // Toggle the current dropdown
     menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
 }
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', (e) => {
+    // Check if the click is outside any dropdown menu or ellipsis button
+    if (!e.target.closest('.actions-dropdown') && !e.target.closest('.ellipsis-btn')) {
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            menu.style.display = 'none';
+        });
+    }
+});
 
 // =================== STUDENT ACTIONS ===================
 async function editStudent(id) {
