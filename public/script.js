@@ -121,6 +121,32 @@ function cancelLogout() {
     document.getElementById("logoutConfirmModal").style.display = "none";
 }
 
+// =================== DELETE CONFIRMATION ===================
+function showDeleteConfirm(id, type) {
+    document.getElementById('deleteItemId').value = id;
+    document.getElementById('deleteItemType').value = type;
+    const message = type === 'student'
+        ? 'Are you sure you want to delete this student? This will also delete their user account.'
+        : 'Are you sure you want to delete this driver? This will also delete their user account.';
+    document.getElementById('deleteConfirmMessage').textContent = message;
+    document.getElementById("deleteConfirmModal").style.display = "flex";
+}
+
+function confirmDelete() {
+    const id = document.getElementById('deleteItemId').value;
+    const type = document.getElementById('deleteItemType').value;
+    document.getElementById("deleteConfirmModal").style.display = "none";
+    if (type === 'student') {
+        deleteStudent(id);
+    } else if (type === 'driver') {
+        deleteDriver(id);
+    }
+}
+
+function cancelDelete() {
+    document.getElementById("deleteConfirmModal").style.display = "none";
+}
+
 //=================== UI CONTROL ===================
 function showTab(tabId) {
     const tabs = document.querySelectorAll(".tab");
@@ -210,6 +236,7 @@ async function loadStudents() {
         tbody.innerHTML = '';
         students.forEach(student => {
             const tr = document.createElement('tr');
+            tr.dataset.studentId = student.studentId;
             tr.innerHTML = `
                 <td>${sanitizeHTML(student.fullName)}<br><small>${sanitizeHTML(student.grade)} - ${sanitizeHTML(student.section)}</small></td>
                 <td>${sanitizeHTML(student.parent.fullName)}</td>
@@ -219,7 +246,16 @@ async function loadStudents() {
                 <td></td>
                 <td>${sanitizeHTML(student.currentAddress)}</td>
                 <td>
-                    <button class="action-btn track-btn">Track Details</button>
+                    <div style="display: inline-flex; gap: 5px; align-items: center;">
+                        <button class="action-btn track-btn">Track Details</button>
+                        <div class="actions-dropdown">
+                            <button class="ellipsis-btn" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                            <div class="dropdown-menu" style="display: none;">
+                                <button class="dropdown-item" onclick="editStudent(${student.studentId}); toggleDropdown(this.parentElement.previousElementSibling)"><i class="fa-solid fa-edit"></i> Edit</button>
+                                <button class="dropdown-item delete" onclick="showDeleteConfirm(${student.studentId}, 'student'); toggleDropdown(this.parentElement.previousElementSibling)"><i class="fa-solid fa-trash"></i> Delete</button>
+                            </div>
+                        </div>
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -245,6 +281,7 @@ async function loadDrivers() {
         tbody.innerHTML = '';
         drivers.forEach(driver => {
             const tr = document.createElement('tr');
+            tr.dataset.driverId = driver.driverId;
             tr.innerHTML = `
                 <td>${sanitizeHTML(driver.user.username)}</td>
                 <td>${sanitizeHTML(driver.operator.fullName)}<br><small><i class="fa-solid fa-envelope"></i> ${sanitizeHTML(driver.operator.user.email)}</small></td>
@@ -253,7 +290,16 @@ async function loadDrivers() {
                 <td><i class="fa-solid fa-phone"></i> ${sanitizeHTML(driver.emergencyContact)}</td>
                 <td><span class="status-badge"></span></td>
                 <td>
-                    <button class="action-btn track-btn">Track Details</button>
+                    <div style="display: inline-flex; gap: 5px; align-items: center;">
+                        <button class="action-btn track-btn">Track Details</button>
+                        <div class="actions-dropdown">
+                            <button class="ellipsis-btn" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                            <div class="dropdown-menu" style="display: none;">
+                                <button class="dropdown-item" onclick="editDriver(${driver.driverId}); toggleDropdown(this.parentElement.previousElementSibling)"><i class="fa-solid fa-edit"></i> Edit</button>
+                                <button class="dropdown-item delete" onclick="showDeleteConfirm(${driver.driverId}, 'driver'); toggleDropdown(this.parentElement.previousElementSibling)"><i class="fa-solid fa-trash"></i> Delete</button>
+                            </div>
+                        </div>
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -1062,3 +1108,218 @@ document.getElementById('addOperatorForm').addEventListener('submit', async (e) 
         submitButton.disabled = false;
     }
 });
+
+// =================== ELLIPSIS DROPDOWN ===================
+function toggleDropdown(btn) {
+    // Close all other dropdowns
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        menu.style.display = 'none';
+    });
+    // Toggle current
+    const menu = btn.parentElement.querySelector('.dropdown-menu');
+    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+}
+
+// =================== STUDENT ACTIONS ===================
+async function editStudent(id) {
+    try {
+        const response = await fetch(`${SERVER_URL}/api/students/${id}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch student');
+        const student = await response.json();
+        document.getElementById('edit-student-id').value = id;
+        document.getElementById('edit-student-fullname').value = student.fullName || '';
+        document.getElementById('edit-student-grade').value = student.grade || '';
+        document.getElementById('edit-student-section').value = student.section || '';
+        document.getElementById('edit-student-address').value = student.currentAddress || '';
+        // Parent fields
+        document.getElementById('edit-parent-id').value = student.parent.parentId;
+        document.getElementById('edit-parent-fullname').value = student.parent.fullName || '';
+        document.getElementById('edit-parent-phone').value = student.parent.contactPhone || '';
+        document.getElementById('edit-parent-address').value = student.parent.currentAddress || '';
+        document.getElementById('editStudentModal').style.display = 'flex';
+    } catch (error) {
+        showToast('Error loading student data: ' + error.message);
+    }
+}
+
+function closeEditStudentModal() {
+    document.getElementById('editStudentModal').style.display = 'none';
+    document.getElementById('editStudentForm').reset();
+    document.getElementById('edit-student-error').style.display = 'none';
+}
+
+document.getElementById('editStudentForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit-student-id').value;
+    const parentId = document.getElementById('edit-parent-id').value;
+    const updatedStudent = {
+        fullName: document.getElementById('edit-student-fullname').value,
+        grade: document.getElementById('edit-student-grade').value,
+        section: document.getElementById('edit-student-section').value,
+        currentAddress: document.getElementById('edit-student-address').value
+    };
+    const updatedParent = {
+        fullName: document.getElementById('edit-parent-fullname').value,
+        contactPhone: document.getElementById('edit-parent-phone').value,
+        currentAddress: document.getElementById('edit-parent-address').value
+    };
+    const errorElement = document.getElementById('edit-student-error');
+    const submitButton = e.target.querySelector('.submit-btn');
+    submitButton.disabled = true;
+    errorElement.style.display = 'none';
+
+    try {
+        // Update student
+        const studentResponse = await fetch(`${SERVER_URL}/api/students/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(updatedStudent)
+        });
+        if (!studentResponse.ok) throw new Error('Failed to update student');
+
+        // Update parent
+        const parentResponse = await fetch(`${SERVER_URL}/api/parents/${parentId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(updatedParent)
+        });
+        if (!parentResponse.ok) throw new Error('Failed to update parent');
+
+        showToast('Student and parent updated successfully');
+        closeEditStudentModal();
+        await loadStudents();
+        updateDashboard();
+    } catch (error) {
+        errorElement.textContent = error.message;
+        errorElement.style.display = 'block';
+    } finally {
+        submitButton.disabled = false;
+    }
+});
+
+async function deleteStudent(id) {
+    try {
+        const response = await fetch(`${SERVER_URL}/api/students/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            showToast('Student deleted successfully');
+            await loadStudents();
+            updateDashboard();
+        } else {
+            const data = await response.json();
+            showToast('Failed to delete student: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        showToast('Error deleting student: ' + error.message);
+    }
+}
+
+// =================== DRIVER ACTIONS ===================
+async function editDriver(id) {
+    try {
+        const response = await fetch(`${SERVER_URL}/api/drivers/${id}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch driver');
+        const driver = await response.json();
+        document.getElementById('edit-driver-id').value = id;
+        document.getElementById('edit-driver-contact').value = driver.contactPhone || '';
+        document.getElementById('edit-driver-license').value = driver.licenseNumber || '';
+        document.getElementById('edit-driver-emergency').value = driver.emergencyContact || '';
+        // Operator fields
+        document.getElementById('edit-operator-id').value = driver.operator.operatorId;
+        document.getElementById('edit-operator-fullname').value = driver.operator.fullName || '';
+        document.getElementById('edit-operator-phone').value = driver.operator.contactPhone || '';
+        document.getElementById('editDriverModal').style.display = 'flex';
+    } catch (error) {
+        showToast('Error loading driver data: ' + error.message);
+    }
+}
+
+function closeEditDriverModal() {
+    document.getElementById('editDriverModal').style.display = 'none';
+    document.getElementById('editDriverForm').reset();
+    document.getElementById('edit-driver-error').style.display = 'none';
+}
+
+document.getElementById('editDriverForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit-driver-id').value;
+    const operatorId = document.getElementById('edit-operator-id').value;
+    const updatedDriver = {
+        contactPhone: document.getElementById('edit-driver-contact').value,
+        licenseNumber: document.getElementById('edit-driver-license').value,
+        emergencyContact: document.getElementById('edit-driver-emergency').value
+    };
+    const updatedOperator = {
+        fullName: document.getElementById('edit-operator-fullname').value,
+        contactPhone: document.getElementById('edit-operator-phone').value
+    };
+    const errorElement = document.getElementById('edit-driver-error');
+    const submitButton = e.target.querySelector('.submit-btn');
+    submitButton.disabled = true;
+    errorElement.style.display = 'none';
+
+    try {
+        // Update driver
+        const driverResponse = await fetch(`${SERVER_URL}/api/drivers/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(updatedDriver)
+        });
+        if (!driverResponse.ok) throw new Error('Failed to update driver');
+
+        // Update operator
+        const operatorResponse = await fetch(`${SERVER_URL}/api/operators/${operatorId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(updatedOperator)
+        });
+        if (!operatorResponse.ok) throw new Error('Failed to update operator');
+
+        showToast('Driver and operator updated successfully');
+        closeEditDriverModal();
+        await loadDrivers();
+        updateDashboard();
+    } catch (error) {
+        errorElement.textContent = error.message;
+        errorElement.style.display = 'block';
+    } finally {
+        submitButton.disabled = false;
+    }
+});
+
+async function deleteDriver(id) {
+    try {
+        const response = await fetch(`${SERVER_URL}/api/drivers/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            showToast('Driver deleted successfully');
+            await loadDrivers();
+            updateDashboard();
+        } else {
+            const data = await response.json();
+            showToast('Failed to delete driver: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        showToast('Error deleting driver: ' + error.message);
+    }
+}

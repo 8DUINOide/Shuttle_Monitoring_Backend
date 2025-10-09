@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -60,11 +61,12 @@ public class ParentController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> deleteParent(@PathVariable Long id) {
         Parent parent = parentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Parent not found"));
-        userRepository.delete(parent.getUser());
         parentRepository.delete(parent);
+        userRepository.delete(parent.getUser());
         return ResponseEntity.ok(Map.of("message", "Parent deleted successfully"));
     }
 }

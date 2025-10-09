@@ -248,12 +248,16 @@ body, html {
     flex-direction: column;
 }
 
-.balance-card .amount {
-    font-size: clamp(0.8rem, 2.5vw, 1.2rem); /* Auto-adjust font size */
-    white-space: nowrap; /* Keep on one line */
-    overflow: hidden; /* Clip if scaling fails */
-    max-width: 100%; /* Respect card width */
-    color: #F5F5F5; /* Light Grayish-White to match card text */
+.balance-card .label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+}
+
+.balance-card h1 {
+    font-size: 2rem;
+    margin: 0;
+    font-weight: bold;
 }
 
 .chart-card {
@@ -689,6 +693,16 @@ tbody tr:hover {
     width: 400px;
 }
 
+.modal-confirm-content h3 {
+    margin: 0 0 1rem 0;
+    color: #003A6C;
+}
+
+.modal-confirm-content p {
+    margin-bottom: 1.5rem;
+    color: #666;
+}
+
 .modal-confirm-content button {
     margin: 0 0.5rem;
     padding: 0.5rem 1rem;
@@ -699,36 +713,13 @@ tbody tr:hover {
 }
 
 .confirm-action {
-    background: #5cb85c;
-    color: white;
-}
-
-.deny-action {
     background: #d9534f;
     color: white;
 }
 
 .cancel-action {
-    background: #ccc;
-    color: black;
-}
-
-.modal-confirm-content textarea {
-    width: 100%;
-    padding: 0.5rem;
-    margin: 0.5rem 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    resize: vertical;
-}
-
-.confirm-delete {
-    background: #d9534f;
-    color: white;
-}
-
-.cancel-delete {
     background: #D1D5DB;
+    color: #333;
 }
 
 /* === Password Toggle === */
@@ -1017,6 +1008,67 @@ tbody tr:hover {
 
 .track-btn {
     background: linear-gradient(135deg, #337ab7, #286090);
+}
+
+/* === Ellipsis Dropdown === */
+.actions-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.ellipsis-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    padding: 5px;
+    font-size: 1rem;
+}
+
+.ellipsis-btn:hover {
+    color: #003A6C;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 10;
+    min-width: 120px;
+}
+
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.dropdown-item i {
+    margin-right: 8px;
+    width: 12px;
+}
+
+.dropdown-item:hover {
+    background: #f5f5f5;
+}
+
+.dropdown-item.delete {
+    color: #d9534f;
+    border-top: 1px solid #eee;
+}
+
+.dropdown-item.delete:hover {
+    background: #f8d7da;
 }
 
 /* === Shuttles Tab Specific Styles === */
@@ -1417,5 +1469,15 @@ tbody tr:hover {
     .modal-actions {
         flex-direction: column;
         gap: 0.5rem;
+    }
+    .dropdown-menu {
+        right: -50px;
+        min-width: 140px;
+    }
+    .sidebar {
+        left: -100%;
+    }
+    .content.content-shift {
+        margin-left: 0;
     }
 }

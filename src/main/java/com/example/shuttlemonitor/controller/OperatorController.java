@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -59,11 +60,12 @@ public class OperatorController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> deleteOperator(@PathVariable Long id) {
         Operator operator = operatorRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Operator not found"));
-        userRepository.delete(operator.getUser());
         operatorRepository.delete(operator);
+        userRepository.delete(operator.getUser());
         return ResponseEntity.ok(Map.of("message", "Operator deleted successfully"));
     }
 }

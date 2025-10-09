@@ -966,6 +966,142 @@
             </div>
         </div>
 
+        <!-- Edit Student Modal -->
+        <div id="editStudentModal" class="modal" style="display: none;">
+            <div class="modal-content add-form-modal">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-user-edit"></i> Edit Student</h3>
+                    <span class="close-modal" onclick="closeEditStudentModal()">&times;</span>
+                </div>
+                <form id="editStudentForm">
+                    <input type="hidden" id="edit-student-id">
+                    <div class="form-section">
+                        <h4><i class="fa-solid fa-graduation-cap"></i> Student Information</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-student-fullname">Full Name *</label>
+                                <input type="text" id="edit-student-fullname" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-student-grade">Grade *</label>
+                                <select id="edit-student-grade" required>
+                                    <option value="">Select Grade</option>
+                                    <option value="Grade 7">Grade 7</option>
+                                    <option value="Grade 8">Grade 8</option>
+                                    <option value="Grade 9">Grade 9</option>
+                                    <option value="Grade 10">Grade 10</option>
+                                    <option value="Grade 11">Grade 11</option>
+                                    <option value="Grade 12">Grade 12</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-student-section">Section *</label>
+                                <input type="text" id="edit-student-section" placeholder="e.g., Section A" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-student-address">Current Address *</label>
+                                <input type="text" id="edit-student-address" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <h4><i class="fa-solid fa-user"></i> Parent Information</h4>
+                        <input type="hidden" id="edit-parent-id">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-parent-fullname">Full Name *</label>
+                                <input type="text" id="edit-parent-fullname" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-parent-phone">Contact Phone *</label>
+                                <input type="tel" id="edit-parent-phone" placeholder="+63-912-345-6789" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-parent-address">Current Address *</label>
+                                <input type="text" id="edit-parent-address" required>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="edit-student-error" class="error-text" style="display: none;"></p>
+                    <div class="modal-actions">
+                        <button type="button" class="cancel-btn" onclick="closeEditStudentModal()">Cancel</button>
+                        <button type="submit" class="submit-btn">
+                            <i class="fa-solid fa-save"></i> Update Student & Parent
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit Driver Modal -->
+        <div id="editDriverModal" class="modal" style="display: none;">
+            <div class="modal-content add-form-modal">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-user-edit"></i> Edit Driver</h3>
+                    <span class="close-modal" onclick="closeEditDriverModal()">&times;</span>
+                </div>
+                <form id="editDriverForm">
+                    <input type="hidden" id="edit-driver-id">
+                    <div class="form-section">
+                        <h4><i class="fa-solid fa-id-card"></i> Driver Information</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-driver-contact">Contact Phone *</label>
+                                <input type="tel" id="edit-driver-contact" placeholder="+63-912-345-6789" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-driver-license">License Number *</label>
+                                <input type="text" id="edit-driver-license" placeholder="e.g., DRV-12345" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-driver-emergency">Emergency Contact *</label>
+                                <input type="tel" id="edit-driver-emergency" placeholder="+63-912-345-6789" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <h4><i class="fa-solid fa-user-tie"></i> Operator Information</h4>
+                        <input type="hidden" id="edit-operator-id">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-operator-fullname">Full Name *</label>
+                                <input type="text" id="edit-operator-fullname" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-operator-phone">Contact Phone *</label>
+                                <input type="tel" id="edit-operator-phone" placeholder="+63-912-345-6789" required>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="edit-driver-error" class="error-text" style="display: none;"></p>
+                    <div class="modal-actions">
+                        <button type="button" class="cancel-btn" onclick="closeEditDriverModal()">Cancel</button>
+                        <button type="submit" class="submit-btn">
+                            <i class="fa-solid fa-save"></i> Update Driver & Operator
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="deleteConfirmModal" class="modal-confirm" style="display: none;">
+            <div class="modal-confirm-content">
+                <h3>Confirm Delete</h3>
+                <p id="deleteConfirmMessage">Are you sure you want to delete this item? This action cannot be undone.</p>
+                <input type="hidden" id="deleteItemId">
+                <input type="hidden" id="deleteItemType">
+                <button class="confirm-action" onclick="confirmDelete()">Delete</button>
+                <button class="cancel-action" onclick="cancelDelete()">Cancel</button>
+            </div>
+        </div>
+
         <div id="logoutConfirmModal" class="modal-confirm" style="display: none;">
             <div class="modal-confirm-content">
                 <h3>Confirm Logout</h3>

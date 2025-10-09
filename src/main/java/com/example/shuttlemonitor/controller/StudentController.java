@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -70,11 +71,12 @@ public class StudentController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> deleteStudent(@PathVariable Long id) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found"));
-        userRepository.delete(student.getUser());
         studentRepository.delete(student);
+        userRepository.delete(student.getUser());
         return ResponseEntity.ok(Map.of("message", "Student deleted successfully"));
     }
 }

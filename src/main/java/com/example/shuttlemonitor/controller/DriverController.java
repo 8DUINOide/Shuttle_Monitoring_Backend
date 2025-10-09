@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -62,11 +63,12 @@ public class DriverController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> deleteDriver(@PathVariable Long id) {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
-        userRepository.delete(driver.getUser());
         driverRepository.delete(driver);
+        userRepository.delete(driver.getUser());
         return ResponseEntity.ok(Map.of("message", "Driver deleted successfully"));
     }
 }
