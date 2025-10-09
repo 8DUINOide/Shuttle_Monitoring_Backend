@@ -218,6 +218,9 @@
                     <button class="add-btn" onclick="showAddParentModal()">
                         <i class="fa-solid fa-plus"></i> Add Parent & Students
                     </button>
+                    <button class="add-btn bulk-btn" onclick="showBulkUploadModal('students')">
+                        <i class="fa-solid fa-file-excel"></i> Bulk Upload
+                    </button>
                 </div>
             </div>
             <div class="search-container">
@@ -263,6 +266,9 @@
                 <div class="table-actions">
                     <button class="add-btn" onclick="showAddOperatorModal()">
                         <i class="fa-solid fa-plus"></i> Add Operator & Drivers
+                    </button>
+                    <button class="add-btn bulk-btn" onclick="showBulkUploadModal('drivers')">
+                        <i class="fa-solid fa-file-excel"></i> Bulk Upload
                     </button>
                 </div>
             </div>
@@ -960,6 +966,30 @@
                         <button type="button" class="cancel-btn" onclick="closeAddOperatorModal()">Cancel</button>
                         <button type="submit" class="submit-btn">
                             <i class="fa-solid fa-save"></i> Register Operator & Drivers
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Bulk Upload Modal -->
+        <div id="bulkUploadModal" class="modal" style="display: none;">
+            <div class="modal-content bulk-upload-modal">
+                <div class="modal-header">
+                    <h3 id="bulk-title"><i class="fa-solid fa-upload"></i> Bulk Upload</h3>
+                    <span class="close-modal" onclick="closeBulkUploadModal()">&times;</span>
+                </div>
+                <form id="bulkUploadForm">
+                    <div class="form-group">
+                        <label for="bulk-file">Select XLSX File *</label>
+                        <input type="file" id="bulk-file" accept=".xlsx" required>
+                        <small>Upload an Excel file with user data.</small>
+                    </div>
+                    <p id="bulk-error" class="error-text" style="display: none;"></p>
+                    <div class="modal-actions">
+                        <button type="button" class="cancel-btn" onclick="closeBulkUploadModal()">Cancel</button>
+                        <button type="submit" class="submit-btn">
+                            <i class="fa-solid fa-upload"></i> Upload File
                         </button>
                     </div>
                 </form>

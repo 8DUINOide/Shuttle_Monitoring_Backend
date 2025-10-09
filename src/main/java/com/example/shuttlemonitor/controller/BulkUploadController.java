@@ -21,9 +21,9 @@ public class BulkUploadController {
     @Autowired
     private BulkUploadService bulkUploadService;
 
-    @PostMapping("/users")
+    @PostMapping("/parents-students")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, Object>> uploadBulkUsers(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, Object>> uploadBulkParentsStudents(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "File is required"));
         }
@@ -33,7 +33,26 @@ public class BulkUploadController {
         }
 
         try {
-            Map<String, Object> result = bulkUploadService.processBulkUpload(file);
+            Map<String, Object> result = bulkUploadService.processBulkParentsStudents(file);
+            return ResponseEntity.ok(result);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to process file: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/operators-drivers")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> uploadBulkOperatorsDrivers(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "File is required"));
+        }
+        if (!file.getContentType().startsWith("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") &&
+                !file.getContentType().startsWith("application/vnd.ms-excel")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Only Excel files are allowed"));
+        }
+
+        try {
+            Map<String, Object> result = bulkUploadService.processBulkOperatorsDrivers(file);
             return ResponseEntity.ok(result);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to process file: " + e.getMessage()));

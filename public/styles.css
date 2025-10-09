@@ -378,6 +378,15 @@ body, html {
     font-size: 0.9rem;
 }
 
+/* === Bulk Upload Button === */
+.bulk-btn {
+    background: linear-gradient(135deg, #f0ad4e, #ec971f); /* Orange for bulk */
+}
+
+.bulk-btn:hover {
+    opacity: 0.9;
+}
+
 /* === Table === */
 table {
     width: 100%;
@@ -455,6 +464,20 @@ tbody tr:hover {
 .modal-content button:last-child {
     background: linear-gradient(135deg, #D1D5DB, #D1D5DB); /* Medium Gray */
     color: black;
+}
+
+/* === Bulk Upload Modal === */
+.bulk-upload-modal {
+    width: 400px;
+    text-align: center;
+}
+
+#bulk-file {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #003A6C;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
 }
 
 /* === Add Form Modal === */

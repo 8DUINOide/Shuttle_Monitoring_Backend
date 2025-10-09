@@ -5,6 +5,7 @@ let currentUser = null;
 let currentUserId = null;
 let studentCounter = 1;
 let driverCounter = 1;
+let bulkType = '';
 
 // Function to sanitize input to prevent XSS
 function sanitizeHTML(str) {
@@ -1099,6 +1100,77 @@ document.getElementById('addOperatorForm').addEventListener('submit', async (e) 
             updateDashboard();
         } else {
             errorElement.textContent = result.error || 'Failed to register operator and drivers';
+            errorElement.style.display = 'block';
+        }
+    } catch (error) {
+        errorElement.textContent = 'Network error: ' + error.message;
+        errorElement.style.display = 'block';
+    } finally {
+        submitButton.disabled = false;
+    }
+});
+
+// =================== BULK UPLOAD MODAL ===================
+function showBulkUploadModal(type) {
+    bulkType = type;
+    const title = type === 'students' ? 'Parents & Students' : 'Operators & Drivers';
+    document.getElementById('bulk-title').innerHTML = `<i class="fa-solid fa-upload"></i> Bulk Upload ${title}`;
+    document.getElementById('bulkUploadModal').style.display = 'flex';
+    document.getElementById('bulkUploadForm').reset();
+    document.getElementById('bulk-error').style.display = 'none';
+}
+
+function closeBulkUploadModal() {
+    document.getElementById('bulkUploadModal').style.display = 'none';
+    bulkType = '';
+}
+
+// Handle bulk upload form submission
+document.getElementById('bulkUploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fileInput = document.getElementById('bulk-file');
+    const errorElement = document.getElementById('bulk-error');
+    const submitButton = e.target.querySelector('.submit-btn');
+
+    if (!fileInput.files[0]) {
+        errorElement.textContent = 'Please select a file';
+        errorElement.style.display = 'block';
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    submitButton.disabled = true;
+    errorElement.style.display = 'none';
+
+    try {
+        // Determine the endpoint based on bulkType
+        const endpoint = bulkType === 'students'
+            ? `${SERVER_URL}/api/admin/bulk-upload/parents-students`
+            : `${SERVER_URL}/api/admin/bulk-upload/operators-drivers`;
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast(`Bulk upload successful: ${result.successful || 'Multiple'} users added`);
+            closeBulkUploadModal();
+            if (bulkType === 'students') {
+                await loadStudents();
+            } else {
+                await loadDrivers();
+            }
+            updateDashboard();
+        } else {
+            errorElement.textContent = result.error || 'Failed to upload file';
             errorElement.style.display = 'block';
         }
     } catch (error) {
