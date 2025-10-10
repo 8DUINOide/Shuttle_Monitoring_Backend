@@ -68,4 +68,14 @@ public class ShuttleService {
         List<CheckIn> recentCheckIns = checkInRepository.findByStudentIdAndDate(studentId, LocalDateTime.now().minusHours(1));
         return recentCheckIns.stream().anyMatch(c -> c.getType().equals(type) && c.getStatus().equals("success"));
     }
+
+    public void deleteShuttle(Long shuttleId) {
+        Shuttle shuttle = getShuttleById(shuttleId);
+        List<Student> assignedStudents = studentRepository.findByAssignedShuttle(shuttle);
+        for (Student student : assignedStudents) {
+            student.setAssignedShuttle(null);
+            studentRepository.save(student);
+        }
+        shuttleRepository.delete(shuttle);
+    }
 }

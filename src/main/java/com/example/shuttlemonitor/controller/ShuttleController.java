@@ -175,9 +175,7 @@ public class ShuttleController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> deleteShuttle(@PathVariable Long id) {
-        Shuttle shuttle = shuttleRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Shuttle not found"));
-        shuttleRepository.delete(shuttle);
+        shuttleService.deleteShuttle(id);
 
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Shuttle deleted successfully");

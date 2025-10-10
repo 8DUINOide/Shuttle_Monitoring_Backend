@@ -10,7 +10,7 @@ let allDrivers = [];
 
 const studentStatuses = ['Checked in', 'Checked out', 'Not boarded'];
 const studentStatusClasses = ['badge-checked-in', 'badge-checked-out', 'badge-not-boarded'];
-const shuttleStatuses = ['Active', 'Inactive', 'Maintenance'];
+const shuttleStatuses = ['ACTIVE', 'INACTIVE', 'MAINTENANCE'];
 const shuttleStatusClasses = ['badge-active', 'badge-inactive', 'badge-maintenance'];
 
 // Function to sanitize input to prevent XSS
@@ -215,10 +215,11 @@ async function loadShuttles() {
         const tbody = document.getElementById('shuttles-table');
         tbody.innerHTML = '';
         shuttles.forEach((shuttle) => {
-            const statusIndex = Math.floor(Math.random() * shuttleStatuses.length);
-            const statusText = shuttleStatuses[statusIndex];
-            const statusClass = shuttleStatusClasses[statusIndex];
-            const occupancy = `${Math.floor(Math.random() * 51)}/50`;
+            const statusText = shuttle.status;
+            const statusClass = shuttleStatusClasses[shuttleStatuses.indexOf(statusText)] || 'badge-active';
+            const maxCapacity = shuttle.maxCapacity || 50;
+            const currentOccupancy = Math.floor(Math.random() * (maxCapacity + 1));
+            const occupancy = `${currentOccupancy}/${maxCapacity}`;
             const lat = (14.5 + Math.random() * 0.2).toFixed(4);
             const lng = (121.0 + Math.random() * 0.2).toFixed(4);
             const nextStop = `Stop ${Math.floor(Math.random() * 5) + 1}`;
@@ -226,7 +227,7 @@ async function loadShuttles() {
             const tr = document.createElement('tr');
             tr.dataset.shuttleId = shuttle.shuttleId;
             tr.innerHTML = `
-                <td>Shuttle #${shuttle.shuttleId}</td>
+                <td>${sanitizeHTML(shuttle.name)}</td>
                 <td>${sanitizeHTML(shuttle.driver.user.username)}</td>
                 <td>${sanitizeHTML(shuttle.route)}</td>
                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
@@ -521,7 +522,7 @@ async function updateDashboard() {
         const occupancy = row.querySelector('td:nth-child(5)')?.textContent || '';
         const capacity = occupancy.split('/')[1] || '';
         routes.add(route);
-        if (statusText === 'Active') {
+        if (statusText === 'ACTIVE') {
             activeShuttles++;
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -564,7 +565,7 @@ async function updateDashboard() {
     let delayed = 0;
     shuttleRows.forEach(row => {
         const statusText = row.querySelector('td:nth-child(4) span')?.textContent || '';
-        if (statusText !== 'Active') delayed++;
+        if (statusText !== 'ACTIVE') delayed++;
     });
     const onTimePerf = activeRoutes > 0 ? Math.round((activeRoutes - delayed) / activeRoutes * 100) : 0;
 
@@ -718,6 +719,7 @@ function loadDriversForOperator(opIdElem, driverIdElem) {
 async function showAddShuttleModal() {
     document.getElementById('addShuttleModal').style.display = 'flex';
     document.getElementById('addShuttleForm').reset();
+    document.getElementById('addShuttleForm').querySelector('#maxCapacityInput').value = 50;
     document.getElementById('add-shuttle-error').style.display = 'none';
     if (!allDrivers.length) {
         await loadDrivers();
@@ -740,6 +742,7 @@ async function showAddShuttleModal() {
 function closeAddShuttleModal() {
     document.getElementById('addShuttleModal').style.display = 'none';
     document.getElementById('addShuttleForm').reset();
+    document.getElementById('addShuttleForm').querySelector('#maxCapacityInput').value = 50;
     document.getElementById('add-shuttle-error').style.display = 'none';
 }
 
@@ -751,7 +754,10 @@ async function editShuttle(id) {
         if (!response.ok) throw new Error('Failed to fetch shuttle');
         const shuttle = await response.json();
         document.getElementById('edit-shuttle-id').value = shuttle.shuttleId;
+        document.getElementById('edit-name-input').value = shuttle.name || '';
+        document.getElementById('edit-status-select').value = shuttle.status;
         document.getElementById('edit-route-input').value = shuttle.route || '';
+        document.getElementById('edit-max-capacity-input').value = shuttle.maxCapacity || 50;
         if (!allDrivers.length) await loadDrivers();
         const uniqueOps = {};
         allDrivers.forEach(d => {
@@ -762,7 +768,7 @@ async function editShuttle(id) {
         const opSelect = document.getElementById('edit-operator-select');
         opSelect.innerHTML = '<option value="">Select Operator</option>';
         Object.values(uniqueOps).sort((a, b) => a.fullName.localeCompare(b.fullName)).forEach(op => {
-            const opt = new Option(op.fullName, op.operator.operatorId);
+            const opt = new Option(op.fullName, op.operatorId);
             opSelect.add(opt);
         });
         opSelect.value = shuttle.operator.operatorId;
@@ -778,6 +784,7 @@ async function editShuttle(id) {
 function closeEditShuttleModal() {
     document.getElementById('editShuttleModal').style.display = 'none';
     document.getElementById('editShuttleForm').reset();
+    document.getElementById('editShuttleForm').querySelector('#edit-max-capacity-input').value = 50;
     document.getElementById('edit-shuttle-error').style.display = 'none';
 }
 
@@ -787,20 +794,24 @@ document.getElementById('addShuttleForm').addEventListener('submit', async (e) =
     const submitBtn = e.target.querySelector('.submit-btn');
     submitBtn.disabled = true;
     errorEl.style.display = 'none';
+    const name = document.getElementById('nameInput').value.trim();
     const opId = document.getElementById('operatorSelect').value;
     const driverId = document.getElementById('driverSelect').value;
     const route = document.getElementById('routeInput').value.trim();
-    if (!opId || !driverId || !route) {
-        errorEl.textContent = 'All fields are required';
+    const maxCapacity = parseInt(document.getElementById('maxCapacityInput').value);
+    if (!opId || !driverId || !route || !maxCapacity) {
+        errorEl.textContent = 'All required fields must be filled';
         errorEl.style.display = 'block';
         submitBtn.disabled = false;
         return;
     }
     try {
         const body = JSON.stringify({
+            name: name || undefined,
             operatorId: parseInt(opId),
             driverId: parseInt(driverId),
-            route
+            route,
+            maxCapacity
         });
         const res = await fetch(`${SERVER_URL}/api/shuttles`, {
             method: 'POST',
@@ -832,20 +843,26 @@ document.getElementById('editShuttleForm').addEventListener('submit', async (e) 
     submitBtn.disabled = true;
     errorEl.style.display = 'none';
     const id = document.getElementById('edit-shuttle-id').value;
+    const name = document.getElementById('edit-name-input').value.trim();
+    const status = document.getElementById('edit-status-select').value;
     const opId = document.getElementById('edit-operator-select').value;
     const driverId = document.getElementById('edit-driver-select').value;
     const route = document.getElementById('edit-route-input').value.trim();
-    if (!opId || !driverId || !route) {
-        errorEl.textContent = 'All fields are required';
+    const maxCapacity = parseInt(document.getElementById('edit-max-capacity-input').value);
+    if (!status || !opId || !driverId || !route || !maxCapacity) {
+        errorEl.textContent = 'All required fields must be filled';
         errorEl.style.display = 'block';
         submitBtn.disabled = false;
         return;
     }
     try {
         const body = JSON.stringify({
+            name: name || undefined,
+            status,
             operatorId: parseInt(opId),
             driverId: parseInt(driverId),
-            route
+            route,
+            maxCapacity
         });
         const res = await fetch(`${SERVER_URL}/api/shuttles/${id}`, {
             method: 'PUT',
