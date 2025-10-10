@@ -1,5 +1,6 @@
 package com.example.shuttlemonitor.controller;
 
+import com.example.shuttlemonitor.Entity.Shuttle;
 import com.example.shuttlemonitor.Entity.Student;
 import com.example.shuttlemonitor.Repository.StudentRepository;
 import com.example.shuttlemonitor.Repository.UserRepository;
@@ -8,9 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -53,6 +54,48 @@ public class StudentController {
         return ResponseEntity.ok(students);
     }
 
+    // New: Assign or update shuttle for student (admin-only)
+    @PutMapping("/{studentId}/assigned-shuttle")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> assignShuttle(@PathVariable Long studentId, @RequestBody Map<String, Long> request) {
+        Long shuttleId = request.get("shuttleId");
+        if (shuttleId == null) {
+            Map<String, Object> errorResponse = Map.of("error", "Shuttle ID is required");
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+
+        Student updatedStudent = userService.assignShuttleToStudent(studentId, shuttleId);
+
+        Map<String, Object> response = Map.of(
+                "message", "Shuttle assigned successfully",
+                "studentId", studentId,
+                "assignedShuttleId", updatedStudent.getAssignedShuttle() != null ? updatedStudent.getAssignedShuttle().getShuttleId() : null,
+                "route", updatedStudent.getAssignedShuttle() != null ? updatedStudent.getAssignedShuttle().getRoute() : null
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    // New: Get assigned shuttle for student (admin, student, or parent)
+    @GetMapping("/{studentId}/assigned-shuttle")
+    public ResponseEntity<Map<String, Object>> getAssignedShuttle(@PathVariable Long studentId) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+        userService.checkAccessForStudent(student);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("studentId", studentId);
+        if (student.getAssignedShuttle() != null) {
+            Shuttle shuttle = student.getAssignedShuttle();
+            response.put("assignedShuttleId", shuttle.getShuttleId());
+            response.put("route", shuttle.getRoute());
+            response.put("driverId", shuttle.getDriver() != null ? shuttle.getDriver().getDriverId() : null);
+            response.put("operatorId", shuttle.getOperator() != null ? shuttle.getOperator().getOperatorId() : null);
+        } else {
+            response.put("message", "No shuttle assigned");
+        }
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("@userService.isOwnerOrAdminOrParentForStudent(#id)")
     public ResponseEntity<Student> updateStudent(@PathVariable Long id, @RequestBody Student updatedStudent) {
@@ -71,12 +114,11 @@ public class StudentController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Transactional
     public ResponseEntity<?> deleteStudent(@PathVariable Long id) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found"));
-        studentRepository.delete(student);
         userRepository.delete(student.getUser());
+        studentRepository.delete(student);
         return ResponseEntity.ok(Map.of("message", "Student deleted successfully"));
     }
 }

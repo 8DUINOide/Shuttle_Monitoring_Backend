@@ -1,16 +1,7 @@
 package com.example.shuttlemonitor.service;
 
-import com.example.shuttlemonitor.Entity.Driver;
-import com.example.shuttlemonitor.Entity.Operator;
-import com.example.shuttlemonitor.Entity.Parent;
-import com.example.shuttlemonitor.Entity.Role;
-import com.example.shuttlemonitor.Entity.Student;
-import com.example.shuttlemonitor.Entity.User;
-import com.example.shuttlemonitor.Repository.DriverRepository;
-import com.example.shuttlemonitor.Repository.OperatorRepository;
-import com.example.shuttlemonitor.Repository.ParentRepository;
-import com.example.shuttlemonitor.Repository.StudentRepository;
-import com.example.shuttlemonitor.Repository.UserRepository;
+import com.example.shuttlemonitor.Entity.*;
+import com.example.shuttlemonitor.Repository.*;
 import com.example.shuttlemonitor.exception.UnauthorizedAccessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -40,6 +31,9 @@ public class UserService {
 
     @Autowired
     private DriverRepository driverRepository;
+
+    @Autowired
+    private ShuttleRepository shuttleRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -237,5 +231,16 @@ public class UserService {
         if (!isOwnerOrAdminOrOperatorForDriver(driver.getDriverId())) {
             throw new UnauthorizedAccessException("Unauthorized");
         }
+    }
+    public Student assignShuttleToStudent(Long studentId, Long shuttleId) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+        checkAccessForStudent(student);  // Existing access check
+
+        Shuttle shuttle = shuttleRepository.findById(shuttleId)
+                .orElseThrow(() -> new IllegalArgumentException("Shuttle not found"));
+
+        student.setAssignedShuttle(shuttle);
+        return studentRepository.save(student);
     }
 }

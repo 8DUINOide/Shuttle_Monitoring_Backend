@@ -36,4 +36,8 @@ public class Student {
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Parent parent;
+
+    @ManyToOne
+    @JoinColumn(name = "assigned_shuttle_id")
+    private Shuttle assignedShuttle;  // New: Assigned shuttle for the student
 }
