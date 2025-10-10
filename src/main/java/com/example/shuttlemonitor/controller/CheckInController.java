@@ -1,0 +1,72 @@
+package com.example.shuttlemonitor.controller;
+
+import com.example.shuttlemonitor.Entity.CheckIn;
+import com.example.shuttlemonitor.Entity.Student;
+import com.example.shuttlemonitor.service.CheckInService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@SecurityRequirement(name = "bearerAuth") // For Swagger JWT
+@RestController
+@RequestMapping("/api/check-in")
+public class CheckInController {
+
+    @Autowired
+    private CheckInService checkInService;
+
+    @PostMapping("/register-device/{studentId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> registerDevice(@PathVariable Long studentId,
+                                                              @RequestBody Map<String, String> deviceData) {
+        String rfidTag = deviceData.get("rfidTag");
+        String fingerprintHash = deviceData.get("fingerprintHash");
+        if (rfidTag == null || fingerprintHash == null) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "RFID tag and fingerprint hash required");
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+
+        checkInService.registerDevice(studentId, rfidTag, fingerprintHash);
+
+        // Fetch updated student for detailed response
+        Student student = checkInService.getStudentById(studentId); // Add this method to CheckInService if needed
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Device registered successfully");
+        response.put("studentId", studentId);
+        response.put("studentUsername", student.getUser().getUsername());
+        response.put("rfidTag", rfidTag);
+        response.put("fingerprintHash", fingerprintHash);
+        response.put("timestamp", java.time.LocalDateTime.now().toString());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/log")
+    public ResponseEntity<Map<String, Object>> logCheckIn(@RequestBody Map<String, Object> request) {
+        Long studentId = Long.parseLong(request.get("studentId").toString());
+        Long shuttleId = Long.parseLong(request.get("shuttleId").toString());
+        String rfidTag = (String) request.get("rfidTag");
+        String fingerprintHash = (String) request.get("fingerprintHash");
+        String type = (String) request.get("type"); // "in" or "out"
+
+        CheckIn checkIn = checkInService.logCheckIn(studentId, shuttleId, rfidTag, fingerprintHash, type);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", checkIn.getStatus().equals("success") ? "Check-in successful" : "Check-in failed (invalid credentials)");
+        response.put("checkInId", checkIn.getCheckInId());
+        response.put("studentId", studentId);
+        response.put("shuttleId", shuttleId);
+        response.put("type", type);
+        response.put("status", checkIn.getStatus());
+        response.put("timestamp", checkIn.getTimestamp().toString());
+
+        return ResponseEntity.ok(response);
+    }
+}

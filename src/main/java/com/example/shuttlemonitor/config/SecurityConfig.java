@@ -39,6 +39,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/students/**", "/api/parents/**", "/api/operators/**", "/api/drivers/**").authenticated()
                         .requestMatchers("/api/admin/bulk-upload/**").hasRole("ADMIN")
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/check-in/log").permitAll()
+                        .requestMatchers("/api/shuttles/**").authenticated()
                         .anyRequest().authenticated())
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
