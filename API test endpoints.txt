@@ -322,3 +322,29 @@ GET http://localhost:8080/api/users/2/profile-picture
 POST http://localhost:8080/api/admin/bulk-upload/parents-students(ADMIN ONLY) 
 POST http://localhost:8080/api/admin/bulk-upload/operators-drivers(ADMIN ONLY)
 
+6. CheckInController
+POST http://localhost:8080/api/check-in/register-device/{studentId} (ADMIN ONLY)
+{
+    "rfidTag": "RFID-DEF123", 
+    "fingerprintHash": "HASH-ABC789"
+}
+
+POST http://localhost:8080/api/check-in/log
+{
+    "studentId": 101, 
+    "shuttleId": 1, 
+    "rfidTag": "RFID-DEF123", 
+    "fingerprintHash": "HASH-ABC789", 
+    "type": "in"
+    }
+
+7. ShuttleController
+POST http://localhost:8080/api/shuttles (ADMIN ONLY)
+{
+    "driverId": 151, 
+    "operatorId": 88, 
+    "route": "ADNU to Barangay X"
+    }
+
+GET http://localhost:8080/api/shuttles/1 
+GET http://localhost:8080/api/shuttles/all (ADMIN ONLY)

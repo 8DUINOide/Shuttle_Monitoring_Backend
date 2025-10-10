@@ -6,6 +6,12 @@ let currentUserId = null;
 let studentCounter = 1;
 let driverCounter = 1;
 let bulkType = '';
+let allDrivers = [];
+
+const studentStatuses = ['Checked in', 'Checked out', 'Not boarded'];
+const studentStatusClasses = ['badge-checked-in', 'badge-checked-out', 'badge-not-boarded'];
+const shuttleStatuses = ['Active', 'Inactive', 'Maintenance'];
+const shuttleStatusClasses = ['badge-active', 'badge-inactive', 'badge-maintenance'];
 
 // Function to sanitize input to prevent XSS
 function sanitizeHTML(str) {
@@ -126,21 +132,28 @@ function cancelLogout() {
 function showDeleteConfirm(id, type) {
     document.getElementById('deleteItemId').value = id;
     document.getElementById('deleteItemType').value = type;
-    const message = type === 'student'
-        ? 'Are you sure you want to delete this student? This will also delete their user account.'
-        : 'Are you sure you want to delete this driver? This will also delete their user account.';
+    let message = 'Are you sure you want to delete this item? This action cannot be undone.';
+    if (type === 'student') {
+        message = 'Are you sure you want to delete this student? This will also delete their user account.';
+    } else if (type === 'driver') {
+        message = 'Are you sure you want to delete this driver? This will also delete their user account.';
+    } else if (type === 'shuttle') {
+        message = 'Are you sure you want to delete this shuttle? This will remove the shuttle assignment.';
+    }
     document.getElementById('deleteConfirmMessage').textContent = message;
     document.getElementById("deleteConfirmModal").style.display = "flex";
 }
 
-function confirmDelete() {
+async function confirmDelete() {
     const id = document.getElementById('deleteItemId').value;
     const type = document.getElementById('deleteItemType').value;
     document.getElementById("deleteConfirmModal").style.display = "none";
     if (type === 'student') {
-        deleteStudent(id);
+        await deleteStudent(id);
     } else if (type === 'driver') {
-        deleteDriver(id);
+        await deleteDriver(id);
+    } else if (type === 'shuttle') {
+        await deleteShuttle(id);
     }
 }
 
@@ -184,35 +197,54 @@ function toggleSidebar() {
 async function loadAllData() {
     await Promise.all([
         loadStudents(),
-        loadDrivers()
+        loadDrivers(),
+        loadShuttles()
     ]);
 }
 
 async function loadShuttles() {
     if (!token) return;
     try {
-        const response = await fetch(`${SERVER_URL}/api/drivers/all`, {
+        const response = await fetch(`${SERVER_URL}/api/shuttles/all`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         if (!response.ok) {
-            throw new Error('Failed to fetch drivers');
+            throw new Error('Failed to fetch shuttles');
         }
-        const drivers = await response.json();
+        const shuttles = await response.json();
         const tbody = document.getElementById('shuttles-table');
         tbody.innerHTML = '';
-        drivers.forEach((driver, index) => {
+        shuttles.forEach((shuttle) => {
+            const statusIndex = Math.floor(Math.random() * shuttleStatuses.length);
+            const statusText = shuttleStatuses[statusIndex];
+            const statusClass = shuttleStatusClasses[statusIndex];
+            const occupancy = `${Math.floor(Math.random() * 51)}/50`;
+            const lat = (14.5 + Math.random() * 0.2).toFixed(4);
+            const lng = (121.0 + Math.random() * 0.2).toFixed(4);
+            const nextStop = `Stop ${Math.floor(Math.random() * 5) + 1}`;
+            const eta = `${Math.floor(Math.random() * 25) + 5} min`;
             const tr = document.createElement('tr');
+            tr.dataset.shuttleId = shuttle.shuttleId;
             tr.innerHTML = `
-                <td></td>
-                <td>${sanitizeHTML(driver.user.username)}</td>
-                <td></td>
-                <td><span class="status-badge"></span></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
+                <td>Shuttle #${shuttle.shuttleId}</td>
+                <td>${sanitizeHTML(shuttle.driver.user.username)}</td>
+                <td>${sanitizeHTML(shuttle.route)}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>${occupancy}</td>
+                <td>Lat: ${lat}, Lng: ${lng}</td>
+                <td>${nextStop}</td>
+                <td>${eta}</td>
                 <td>
-                    <button class="action-btn track-btn">Track Details</button>
+                    <div style="display: inline-flex; gap: 5px; align-items: center;">
+                        <button class="action-btn track-btn" onclick="showToast('Tracking shuttle details')">Track Details</button>
+                        <div class="actions-dropdown">
+                            <button class="ellipsis-btn" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                            <div class="dropdown-menu" style="display: none;">
+                                <button class="dropdown-item" onclick="editShuttle(${shuttle.shuttleId}); toggleDropdown(this.parentElement.previousElementSibling)"><i class="fa-solid fa-edit"></i> Edit</button>
+                                <button class="dropdown-item delete" onclick="showDeleteConfirm(${shuttle.shuttleId}, 'shuttle'); toggleDropdown(this.parentElement.previousElementSibling)"><i class="fa-solid fa-trash"></i> Delete</button>
+                            </div>
+                        </div>
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -236,19 +268,29 @@ async function loadStudents() {
         const tbody = document.getElementById('students-table');
         tbody.innerHTML = '';
         students.forEach(student => {
+            const statusIndex = Math.floor(Math.random() * studentStatuses.length);
+            const statusText = studentStatuses[statusIndex];
+            const statusClass = studentStatusClasses[statusIndex];
+            let checkInTime = '-';
+            if (statusIndex !== 2) {
+                const hoursAgo = Math.floor(Math.random() * 8) + 1;
+                const checkInDate = new Date(Date.now() - hoursAgo * 3600000);
+                checkInTime = checkInDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+            }
+            const assignedShuttle = `Shuttle #${Math.floor(Math.random() * 4) + 1}`;
             const tr = document.createElement('tr');
             tr.dataset.studentId = student.studentId;
             tr.innerHTML = `
                 <td>${sanitizeHTML(student.fullName)}<br><small>${sanitizeHTML(student.grade)} - ${sanitizeHTML(student.section)}</small></td>
                 <td>${sanitizeHTML(student.parent.fullName)}</td>
                 <td><i class="fa-solid fa-phone"></i> ${sanitizeHTML(student.parent.contactPhone)}<br><i class="fa-solid fa-envelope"></i> ${sanitizeHTML(student.parent.user.email)}</td>
-                <td></td>
-                <td><span class="status-badge"></span></td>
-                <td></td>
+                <td>${assignedShuttle}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>${checkInTime}</td>
                 <td>${sanitizeHTML(student.currentAddress)}</td>
                 <td>
                     <div style="display: inline-flex; gap: 5px; align-items: center;">
-                        <button class="action-btn track-btn">Track Details</button>
+                        <button class="action-btn track-btn" onclick="showToast('Tracking student details')">Track Details</button>
                         <div class="actions-dropdown">
                             <button class="ellipsis-btn" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                             <div class="dropdown-menu" style="display: none;">
@@ -267,7 +309,6 @@ async function loadStudents() {
     }
 }
 
-// =================== DATA LOADING ===================
 async function loadDrivers() {
     if (!token) return;
     try {
@@ -277,10 +318,10 @@ async function loadDrivers() {
         if (!response.ok) {
             throw new Error('Failed to fetch drivers');
         }
-        const drivers = await response.json();
+        allDrivers = await response.json();
         const tbody = document.getElementById('drivers-table');
         tbody.innerHTML = '';
-        drivers.forEach(driver => {
+        allDrivers.forEach(driver => {
             const tr = document.createElement('tr');
             tr.dataset.driverId = driver.driverId;
             tr.innerHTML = `
@@ -289,10 +330,10 @@ async function loadDrivers() {
                 <td><i class="fa-solid fa-phone"></i> ${sanitizeHTML(driver.contactPhone)}<br><i class="fa-solid fa-envelope"></i> ${sanitizeHTML(driver.user.email)}</td>
                 <td>${sanitizeHTML(driver.licenseNumber)}</td>
                 <td><i class="fa-solid fa-phone"></i> ${sanitizeHTML(driver.emergencyContact)}</td>
-                <td><span class="status-badge"></span></td>
+                <td><span class="status-badge badge-active">Active</span></td>
                 <td>
                     <div style="display: inline-flex; gap: 5px; align-items: center;">
-                        <button class="action-btn track-btn">Track Details</button>
+                        <button class="action-btn track-btn" onclick="showToast('Tracking driver details')">Track Details</button>
                         <div class="actions-dropdown">
                             <button class="ellipsis-btn" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                             <div class="dropdown-menu" style="display: none;">
@@ -310,8 +351,6 @@ async function loadDrivers() {
         showToast('Error loading drivers data');
     }
 }
-
-
 
 // =================== PROFILE ===================
 function showProfile() {
@@ -482,7 +521,7 @@ async function updateDashboard() {
         const occupancy = row.querySelector('td:nth-child(5)')?.textContent || '';
         const capacity = occupancy.split('/')[1] || '';
         routes.add(route);
-        if (statusText === 'On Time' || statusText === 'Delayed') {
+        if (statusText === 'Active') {
             activeShuttles++;
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -505,27 +544,27 @@ async function updateDashboard() {
         if (status === 'Checked in') checkedInStudents++;
     });
 
-// Populate Recent Activity from Notifications tab
-const notifRows = document.querySelectorAll('#notifications-table tr');
-const activityList = document.getElementById('recent-activity-list');
-activityList.innerHTML = '';
-notifRows.forEach(row => {
-    const msg = row.querySelector('td:nth-child(1)')?.textContent || '';
-    const ts = row.querySelector('td:nth-child(2)')?.textContent || '';
-    const rel = relativeTime(ts);
-    const li = document.createElement('li');
-    li.innerHTML = `
-        <div>${sanitizeHTML(msg)}</div>
-        <div class="activity-subtitle">${sanitizeHTML(rel)}</div>
-    `;
-    activityList.appendChild(li);
-});
+    // Populate Recent Activity from Notifications tab
+    const notifRows = document.querySelectorAll('#notifications-table tr');
+    const activityList = document.getElementById('recent-activity-list');
+    activityList.innerHTML = '';
+    notifRows.forEach(row => {
+        const msg = row.querySelector('td:nth-child(1)')?.textContent || '';
+        const ts = row.querySelector('td:nth-child(2)')?.textContent || '';
+        const rel = relativeTime(ts);
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <div>${sanitizeHTML(msg)}</div>
+            <div class="activity-subtitle">${sanitizeHTML(rel)}</div>
+        `;
+        activityList.appendChild(li);
+    });
 
     // Calculate On Time Performance
     let delayed = 0;
     shuttleRows.forEach(row => {
         const statusText = row.querySelector('td:nth-child(4) span')?.textContent || '';
-        if (statusText === 'Delayed') delayed++;
+        if (statusText !== 'Active') delayed++;
     });
     const onTimePerf = activeRoutes > 0 ? Math.round((activeRoutes - delayed) / activeRoutes * 100) : 0;
 
@@ -579,7 +618,8 @@ function filterStudents() {
         const status = row.querySelector("td:nth-child(5) span")?.textContent.toLowerCase() || "";
 
         const matchesSearch = student.includes(searchValue) || parent.includes(searchValue) || shuttle.includes(searchValue);
-        const matchesStatus = statusFilter === "all" || status === statusFilter;
+        const normalizedStatus = status.replace(/\s+/g, '-');
+        const matchesStatus = statusFilter === "all" || normalizedStatus === statusFilter;
 
         if (matchesSearch && matchesStatus) {
             row.style.display = "";
@@ -592,7 +632,6 @@ function filterStudents() {
     document.getElementById("no-students-message").style.display = visibleCount === 0 ? "block" : "none";
 }
 
-// Add this function to script.js
 function filterDrivers() {
     const searchValue = document.getElementById("searchDrivers").value.toLowerCase();
     const statusFilter = document.getElementById("statusFilterDrivers").value.toLowerCase();
@@ -660,6 +699,194 @@ function clearAllNotifications() {
     document.getElementById("no-notifications-message").style.display = "block";
     showToast("All notifications cleared");
     updateDashboard(); // Update recent activity after change
+}
+
+// =================== SHUTTLE MODAL FUNCTIONS ===================
+function loadDriversForOperator(opIdElem, driverIdElem) {
+    const opValue = document.getElementById(opIdElem).value;
+    const dSelect = document.getElementById(driverIdElem);
+    dSelect.innerHTML = '<option value="">Select Driver</option>';
+    if (opValue && allDrivers.length) {
+        const filtered = allDrivers.filter(d => d.operator.operatorId.toString() === opValue);
+        filtered.sort((a, b) => a.user.username.localeCompare(b.user.username)).forEach(d => {
+            const opt = new Option(d.user.username, d.driverId);
+            dSelect.add(opt);
+        });
+    }
+}
+
+async function showAddShuttleModal() {
+    document.getElementById('addShuttleModal').style.display = 'flex';
+    document.getElementById('addShuttleForm').reset();
+    document.getElementById('add-shuttle-error').style.display = 'none';
+    if (!allDrivers.length) {
+        await loadDrivers();
+    }
+    const uniqueOps = {};
+    allDrivers.forEach(d => {
+        if (!uniqueOps[d.operator.operatorId]) {
+            uniqueOps[d.operator.operatorId] = d.operator;
+        }
+    });
+    const opSelect = document.getElementById('operatorSelect');
+    opSelect.innerHTML = '<option value="">Select Operator</option>';
+    Object.values(uniqueOps).sort((a, b) => a.fullName.localeCompare(b.fullName)).forEach(op => {
+        const opt = new Option(op.fullName, op.operatorId);
+        opSelect.add(opt);
+    });
+    document.getElementById('driverSelect').innerHTML = '<option value="">Select Driver</option>';
+}
+
+function closeAddShuttleModal() {
+    document.getElementById('addShuttleModal').style.display = 'none';
+    document.getElementById('addShuttleForm').reset();
+    document.getElementById('add-shuttle-error').style.display = 'none';
+}
+
+async function editShuttle(id) {
+    try {
+        const response = await fetch(`${SERVER_URL}/api/shuttles/${id}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch shuttle');
+        const shuttle = await response.json();
+        document.getElementById('edit-shuttle-id').value = shuttle.shuttleId;
+        document.getElementById('edit-route-input').value = shuttle.route || '';
+        if (!allDrivers.length) await loadDrivers();
+        const uniqueOps = {};
+        allDrivers.forEach(d => {
+            if (!uniqueOps[d.operator.operatorId]) {
+                uniqueOps[d.operator.operatorId] = d.operator;
+            }
+        });
+        const opSelect = document.getElementById('edit-operator-select');
+        opSelect.innerHTML = '<option value="">Select Operator</option>';
+        Object.values(uniqueOps).sort((a, b) => a.fullName.localeCompare(b.fullName)).forEach(op => {
+            const opt = new Option(op.fullName, op.operator.operatorId);
+            opSelect.add(opt);
+        });
+        opSelect.value = shuttle.operator.operatorId;
+        loadDriversForOperator('edit-operator-select', 'edit-driver-select');
+        document.getElementById('edit-driver-select').value = shuttle.driver.driverId;
+        document.getElementById('editShuttleModal').style.display = 'flex';
+        document.getElementById('edit-shuttle-error').style.display = 'none';
+    } catch (error) {
+        showToast('Error loading shuttle data: ' + error.message);
+    }
+}
+
+function closeEditShuttleModal() {
+    document.getElementById('editShuttleModal').style.display = 'none';
+    document.getElementById('editShuttleForm').reset();
+    document.getElementById('edit-shuttle-error').style.display = 'none';
+}
+
+document.getElementById('addShuttleForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById('add-shuttle-error');
+    const submitBtn = e.target.querySelector('.submit-btn');
+    submitBtn.disabled = true;
+    errorEl.style.display = 'none';
+    const opId = document.getElementById('operatorSelect').value;
+    const driverId = document.getElementById('driverSelect').value;
+    const route = document.getElementById('routeInput').value.trim();
+    if (!opId || !driverId || !route) {
+        errorEl.textContent = 'All fields are required';
+        errorEl.style.display = 'block';
+        submitBtn.disabled = false;
+        return;
+    }
+    try {
+        const body = JSON.stringify({
+            operatorId: parseInt(opId),
+            driverId: parseInt(driverId),
+            route
+        });
+        const res = await fetch(`${SERVER_URL}/api/shuttles`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast('Shuttle added successfully');
+            closeAddShuttleModal();
+            await loadShuttles();
+            updateDashboard();
+        } else {
+            errorEl.textContent = data.error || 'Failed to add shuttle';
+            errorEl.style.display = 'block';
+        }
+    } catch (err) {
+        errorEl.textContent = 'Network error: ' + err.message;
+        errorEl.style.display = 'block';
+    } finally {
+        submitBtn.disabled = false;
+    }
+});
+
+document.getElementById('editShuttleForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById('edit-shuttle-error');
+    const submitBtn = e.target.querySelector('.submit-btn');
+    submitBtn.disabled = true;
+    errorEl.style.display = 'none';
+    const id = document.getElementById('edit-shuttle-id').value;
+    const opId = document.getElementById('edit-operator-select').value;
+    const driverId = document.getElementById('edit-driver-select').value;
+    const route = document.getElementById('edit-route-input').value.trim();
+    if (!opId || !driverId || !route) {
+        errorEl.textContent = 'All fields are required';
+        errorEl.style.display = 'block';
+        submitBtn.disabled = false;
+        return;
+    }
+    try {
+        const body = JSON.stringify({
+            operatorId: parseInt(opId),
+            driverId: parseInt(driverId),
+            route
+        });
+        const res = await fetch(`${SERVER_URL}/api/shuttles/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast('Shuttle updated successfully');
+            closeEditShuttleModal();
+            await loadShuttles();
+            updateDashboard();
+        } else {
+            errorEl.textContent = data.error || 'Failed to update shuttle';
+            errorEl.style.display = 'block';
+        }
+    } catch (err) {
+        errorEl.textContent = 'Network error: ' + err.message;
+        errorEl.style.display = 'block';
+    } finally {
+        submitBtn.disabled = false;
+    }
+});
+
+async function deleteShuttle(id) {
+    try {
+        const response = await fetch(`${SERVER_URL}/api/shuttles/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            showToast('Shuttle deleted successfully');
+            await loadShuttles();
+            updateDashboard();
+        } else {
+            const data = await response.json();
+            showToast('Failed to delete shuttle: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        showToast('Error deleting shuttle: ' + error.message);
+    }
 }
 
 // =================== ADD PARENT & STUDENTS MODAL ===================

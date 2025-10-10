@@ -172,6 +172,11 @@
                     <h3>Active Shuttles</h3>
                     <p>Real time shuttle tracking and status monitoring</p>
                 </div>
+                <div class="table-actions">
+                    <button class="add-btn" onclick="showAddShuttleModal()">
+                        <i class="fa-solid fa-plus"></i> Add Shuttle
+                    </button>
+                </div>
             </div>
             <div class="search-container">
                 <input id="searchShuttles" type="text" placeholder="Search shuttles, drivers, or routes..." oninput="filterShuttles()">
@@ -743,6 +748,77 @@
                         <button type="submit" class="profile-button">Reset Password</button>
                     </form>
                 </div>
+            </div>
+        </div>
+
+        <!-- Add Shuttle Modal -->
+        <div id="addShuttleModal" class="modal" style="display: none;">
+            <div class="modal-content add-form-modal">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-bus"></i> Add Shuttle</h3>
+                    <span class="close-modal" onclick="closeAddShuttleModal()">&times;</span>
+                </div>
+                <form id="addShuttleForm">
+                    <div class="form-group">
+                        <label for="operatorSelect">Operator *</label>
+                        <select id="operatorSelect" required onchange="loadDriversForOperator('operatorSelect', 'driverSelect')">
+                            <option value="">Select Operator</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="driverSelect">Driver *</label>
+                        <select id="driverSelect" required>
+                            <option value="">Select Driver</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="routeInput">Route *</label>
+                        <input type="text" id="routeInput" required placeholder="e.g., Route A">
+                    </div>
+                    <p id="add-shuttle-error" class="error-text" style="display: none;"></p>
+                    <div class="modal-actions">
+                        <button type="button" class="cancel-btn" onclick="closeAddShuttleModal()">Cancel</button>
+                        <button type="submit" class="submit-btn">
+                            <i class="fa-solid fa-save"></i> Add Shuttle
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit Shuttle Modal -->
+        <div id="editShuttleModal" class="modal" style="display: none;">
+            <div class="modal-content add-form-modal">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-edit"></i> Edit Shuttle</h3>
+                    <span class="close-modal" onclick="closeEditShuttleModal()">&times;</span>
+                </div>
+                <form id="editShuttleForm">
+                    <input type="hidden" id="edit-shuttle-id">
+                    <div class="form-group">
+                        <label for="edit-operator-select">Operator *</label>
+                        <select id="edit-operator-select" required onchange="loadDriversForOperator('edit-operator-select', 'edit-driver-select')">
+                            <option value="">Select Operator</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-driver-select">Driver *</label>
+                        <select id="edit-driver-select" required>
+                            <option value="">Select Driver</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-route-input">Route *</label>
+                        <input type="text" id="edit-route-input" required placeholder="e.g., Route A">
+                    </div>
+                    <p id="edit-shuttle-error" class="error-text" style="display: none;"></p>
+                    <div class="modal-actions">
+                        <button type="button" class="cancel-btn" onclick="closeEditShuttleModal()">Cancel</button>
+                        <button type="submit" class="submit-btn">
+                            <i class="fa-solid fa-save"></i> Update Shuttle
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
