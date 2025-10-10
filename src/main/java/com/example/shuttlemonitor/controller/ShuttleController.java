@@ -3,9 +3,11 @@ package com.example.shuttlemonitor.controller;
 import com.example.shuttlemonitor.Entity.Driver;
 import com.example.shuttlemonitor.Entity.Operator;
 import com.example.shuttlemonitor.Entity.Shuttle;
+import com.example.shuttlemonitor.Entity.Status;
 import com.example.shuttlemonitor.Repository.DriverRepository;
 import com.example.shuttlemonitor.Repository.OperatorRepository;
 import com.example.shuttlemonitor.Repository.ShuttleRepository;
+import com.example.shuttlemonitor.service.ShuttleService;
 import com.example.shuttlemonitor.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,12 +37,17 @@ public class ShuttleController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private ShuttleService shuttleService;
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> createShuttle(@RequestBody Map<String, Object> request) {
         Long driverId = Long.parseLong(request.get("driverId").toString());
         Long operatorId = Long.parseLong(request.get("operatorId").toString());
         String route = (String) request.get("route");
+        String name = (String) request.get("name");
+        Integer maxCapacity = request.get("maxCapacity") != null ? Integer.parseInt(request.get("maxCapacity").toString()) : 50;
 
         if (route == null || route.trim().isEmpty()) {
             Map<String, Object> errorResponse = new HashMap<>();
@@ -50,13 +57,15 @@ public class ShuttleController {
 
         Driver driver = driverRepository.findById(driverId)
                 .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
-        userService.checkAccessForDriver(driver); // Ensure access
+        userService.checkAccessForDriver(driver);
 
         Operator operator = operatorRepository.findById(operatorId)
                 .orElseThrow(() -> new IllegalArgumentException("Operator not found"));
-        userService.checkAccessForOperator(operator); // Ensure access
+        userService.checkAccessForOperator(operator);
 
         Shuttle shuttle = new Shuttle();
+        shuttle.setName(name != null ? name : "Shuttle " + route);
+        shuttle.setMaxCapacity(maxCapacity);
         shuttle.setDriver(driver);
         shuttle.setOperator(operator);
         shuttle.setRoute(route);
@@ -65,7 +74,13 @@ public class ShuttleController {
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Shuttle created successfully");
         response.put("shuttleId", shuttle.getShuttleId());
+        response.put("name", shuttle.getName());
         response.put("route", shuttle.getRoute());
+        response.put("status", shuttle.getStatus());
+        response.put("maxCapacity", shuttle.getMaxCapacity());
+        response.put("occupancy", shuttleService.calculateOccupancy(shuttle));
+        response.put("nextStop", shuttleService.getNextStop(shuttle));
+        response.put("eta", shuttleService.getETA(shuttle));
         response.put("driverId", driverId);
         response.put("operatorId", operatorId);
         response.put("createdAt", shuttle.getCreatedAt().toString());
@@ -80,6 +95,12 @@ public class ShuttleController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("shuttleId", shuttle.getShuttleId());
+        response.put("name", shuttle.getName());
+        response.put("status", shuttle.getStatus());
+        response.put("maxCapacity", shuttle.getMaxCapacity() != null ? shuttle.getMaxCapacity() : 50);  // Fix: Fallback in response
+        response.put("occupancy", shuttleService.calculateOccupancy(shuttle));
+        response.put("nextStop", shuttleService.getNextStop(shuttle));
+        response.put("eta", shuttleService.getETA(shuttle));
         response.put("route", shuttle.getRoute());
         response.put("driver", Map.of(
                 "driverId", shuttle.getDriver().getDriverId(),
@@ -102,5 +123,66 @@ public class ShuttleController {
         Sort sort = Sort.by(sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
         List<Shuttle> shuttles = shuttleRepository.findAll(sort);
         return ResponseEntity.ok(shuttles);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') OR hasRole('DRIVER') OR hasRole('OPERATOR')")
+    public ResponseEntity<Map<String, Object>> updateShuttle(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        Shuttle shuttle = shuttleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Shuttle not found"));
+
+        // Editable fields: status, maxCapacity (by DRIVER/OPERATOR/ADMIN)
+        if (request.containsKey("status")) {
+            shuttle.setStatus(Status.valueOf((String) request.get("status")));
+        }
+        if (request.containsKey("maxCapacity")) {
+            shuttle.setMaxCapacity(Integer.parseInt(request.get("maxCapacity").toString()));
+        }
+
+        // Route/driver/operator updates (admin-only, but since PreAuthorize allows, add check if needed)
+        if (request.containsKey("route")) {
+            shuttle.setRoute((String) request.get("route"));
+        }
+        if (request.containsKey("driverId")) {
+            Long driverId = Long.parseLong(request.get("driverId").toString());
+            Driver driver = driverRepository.findById(driverId)
+                    .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
+            shuttle.setDriver(driver);
+        }
+        if (request.containsKey("operatorId")) {
+            Long operatorId = Long.parseLong(request.get("operatorId").toString());
+            Operator operator = operatorRepository.findById(operatorId)
+                    .orElseThrow(() -> new IllegalArgumentException("Operator not found"));
+            shuttle.setOperator(operator);
+        }
+
+        shuttle = shuttleRepository.save(shuttle);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Shuttle updated successfully");
+        response.put("shuttleId", shuttle.getShuttleId());
+        response.put("name", shuttle.getName());
+        response.put("status", shuttle.getStatus());
+        response.put("maxCapacity", shuttle.getMaxCapacity() != null ? shuttle.getMaxCapacity() : 50);  // Fix: Fallback in response
+        response.put("occupancy", shuttleService.calculateOccupancy(shuttle));
+        response.put("nextStop", shuttleService.getNextStop(shuttle));
+        response.put("eta", shuttleService.getETA(shuttle));
+        response.put("route", shuttle.getRoute());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> deleteShuttle(@PathVariable Long id) {
+        Shuttle shuttle = shuttleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Shuttle not found"));
+        shuttleRepository.delete(shuttle);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Shuttle deleted successfully");
+        response.put("shuttleId", id);
+
+        return ResponseEntity.ok(response);
     }
 }

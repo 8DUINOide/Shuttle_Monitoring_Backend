@@ -20,6 +20,13 @@ public class Shuttle {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long shuttleId;
 
+    private String name; // New: Shuttle Name (e.g., "Shuttle A")
+
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.ACTIVE; // New: Status (default ACTIVE)
+
+    private Integer maxCapacity = 50; // New: Max Capacity (default 50, editable)
+
     @ManyToOne
     @JoinColumn(name = "driver_id")
     private Driver driver;
