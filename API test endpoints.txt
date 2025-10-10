@@ -318,3 +318,7 @@ GET http://localhost:8080/api/users/1
 POST http://localhost:8080/api/users/2/profile-picture
 GET http://localhost:8080/api/users/2/profile-picture
 
+5. Bulk Sign-Up Upload using Excel
+POST http://localhost:8080/api/admin/bulk-upload/parents-students(ADMIN ONLY) 
+POST http://localhost:8080/api/admin/bulk-upload/operators-drivers(ADMIN ONLY)
+

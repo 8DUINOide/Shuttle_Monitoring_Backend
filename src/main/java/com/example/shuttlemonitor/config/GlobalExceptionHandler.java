@@ -1,6 +1,7 @@
 package com.example.shuttlemonitor.config;
 
 import com.example.shuttlemonitor.exception.UnauthorizedAccessException;
+import io.swagger.v3.oas.annotations.Hidden; // Add this import
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Hidden
 @ControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
