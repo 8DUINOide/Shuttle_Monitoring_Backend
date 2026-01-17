@@ -348,3 +348,9 @@ POST http://localhost:8080/api/shuttles (ADMIN ONLY)
 
 GET http://localhost:8080/api/shuttles/1 
 GET http://localhost:8080/api/shuttles/all (ADMIN ONLY)
+
+8. Assigned Shuttle:
+PUT http://localhost:8080/api/students/101/assigned-shuttle
+{
+    "shuttleId": 1
+}
