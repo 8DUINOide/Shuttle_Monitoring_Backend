@@ -1,0 +1,20 @@
+
+name: Google Chat Notification
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send message to Google Chat
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+            "text": "🚀 New push to *${{ github.repository }}* by *${{ github.actor }}*\nCommit: ${{ github.event.head_commit.message }}\nBranch: ${{ github.ref_name }}"
+          }' \
+          "https://chat.googleapis.com/v1/spaces/AAQAo3svJ20/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=VsHNbRhTIPUaP3h8_M6aG5rSH5R_Am0DPUxST2tRBPc"
+
