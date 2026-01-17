@@ -5,6 +5,7 @@ import com.example.shuttlemonitor.Entity.Student;
 import com.example.shuttlemonitor.Repository.StudentRepository;
 import com.example.shuttlemonitor.Repository.UserRepository;
 import com.example.shuttlemonitor.service.UserService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -114,11 +115,14 @@ public class StudentController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> deleteStudent(@PathVariable Long id) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found"));
-        userRepository.delete(student.getUser());
-        studentRepository.delete(student);
-        return ResponseEntity.ok(Map.of("message", "Student deleted successfully"));
+
+        studentRepository.delete(student);          // This now also deletes the User
+        // No need to delete user separately anymore
+
+        return ResponseEntity.ok(Map.of("message", "Student and associated user deleted successfully"));
     }
 }
