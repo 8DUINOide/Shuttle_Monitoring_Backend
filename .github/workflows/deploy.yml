@@ -8,8 +8,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -31,6 +32,10 @@ jobs:
         uses: google-github-actions/deploy-appengine@v2
         with:
           project_id: concise-rampart-484807-e5
-          version: "v${{ github.run_number }}"   # ← Forces new version name each time (helps debug)
-          deliverables: app.yaml,target/shuttlemonitor-0.0.1-SNAPSHOT.jar  # ← Include app.yaml explicitly again
+          version: v${{ github.run_number }}          # nice for debugging + avoids version conflict
           promote: true
+          # ────────────────────────────────────────
+          #   Critical: do NOT list app.yaml here!
+          #   Let the action discover it from root
+          # ────────────────────────────────────────
+          deliverables: target/shuttlemonitor-0.0.1-SNAPSHOT.jar
