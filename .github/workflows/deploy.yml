@@ -15,12 +15,12 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'  # Use 17 for build; App Engine runtime is separate
+          java-version: '17'
           distribution: 'temurin'
           cache: maven
 
       - name: Build with Maven
-        run: mvn clean package -DskipTests  # Skip tests to avoid local DB dependency during build
+        run: mvn clean package -DskipTests
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -31,5 +31,5 @@ jobs:
         uses: google-github-actions/deploy-appengine@v2
         with:
           project_id: concise-rampart-484807-e5
-          deliverables: app.yaml target/shuttlemonitor-0.0.1-SNAPSHOT.jar  # Now includes app.yaml
+          deliverables: target/shuttlemonitor-0.0.1-SNAPSHOT.jar  # ← Only the JAR; remove app.yaml
           promote: true
