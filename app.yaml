@@ -1,6 +1,10 @@
-runtime: java21
-instance_class: F1
+runtime: java21  # Matches your local Java version from logs; App Engine supports this
+instance_class: F2  # Start with F2 for more RAM (full-stack app may need it to avoid crashes)
+entrypoint: java -jar shuttlemonitor-0.0.1-SNAPSHOT.jar  # Explicitly run your JAR
 
 env_variables:
-  # This is the "on" switch for your cloud settings
-  SPRING_PROFILES_ACTIVE: "gcp"
+  SPRING_PROFILES_ACTIVE: gcp  # Activates application-gcp.properties; note no quotes needed here
+
+automatic_scaling:
+  max_instances: 1  # Keeps costs low for testing
+  min_instances: 0  # Allows scaling down to zero when idle
