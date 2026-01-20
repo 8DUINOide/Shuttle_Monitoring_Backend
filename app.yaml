@@ -1,5 +1,6 @@
-runtime: java21 # Changed to 21 because your logs show you are using Java 21
-instance_class: F2
+runtime: java21
+instance_class: F1
 
 env_variables:
+  # This is the "on" switch for your cloud settings
   SPRING_PROFILES_ACTIVE: "gcp"
