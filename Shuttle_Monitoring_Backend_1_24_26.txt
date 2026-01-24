@@ -4700,7 +4700,7 @@ GlobalExceptionHandler :
 package com.example.shuttlemonitor.config;
 
 import com.example.shuttlemonitor.exception.UnauthorizedAccessException;
-import io.swagger.v3.oas.annotations.Hidden; // Add this import
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -4715,46 +4715,85 @@ import java.util.Map;
 @Hidden
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    // Helper method to create consistent error responses
+    private ResponseEntity<Map<String, Object>> buildErrorResponse(String errorType, String message, HttpStatus status) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", errorType);
+        response.put("message", message);
+        response.put("status", status.value());
+        return new ResponseEntity<>(response, status);
+    }
+
+    // 400 - Bad Request (e.g., invalid input)
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", ex.getMessage());
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return buildErrorResponse(
+                "Invalid Request",
+                "Something in your request doesn't look right. Please check and try again.",
+                HttpStatus.BAD_REQUEST
+        );
     }
 
-    @ExceptionHandler(IOException.class)
-    public ResponseEntity<Map<String, String>> handleIOException(IOException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", "Failed to upload images: " + ex.getMessage());
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    // 401 - Unauthorized (not logged in or invalid token)
+    @ExceptionHandler({org.springframework.security.core.AuthenticationException.class})
+    public ResponseEntity<Map<String, Object>> handleAuthenticationException(Exception ex) {
+        return buildErrorResponse(
+                "Please Sign In",
+                "You need to log in to access this feature. Please sign in and try again.",
+                HttpStatus.UNAUTHORIZED
+        );
     }
 
-    @ExceptionHandler(UnauthorizedAccessException.class)
-    public ResponseEntity<Map<String, String>> handleUnauthorizedAccessException(UnauthorizedAccessException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", ex.getMessage());
-        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
-    }
-
+    // 403 - Forbidden (logged in but no permission)
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Map<String, String>> handleAccessDeniedException(AccessDeniedException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", "Only admins can perform this action");
-        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    public ResponseEntity<Map<String, Object>> handleAccessDeniedException(AccessDeniedException ex) {
+        return buildErrorResponse(
+                "Access Denied",
+                "Sorry, you don't have permission to do this. Contact support if you think this is a mistake.",
+                HttpStatus.FORBIDDEN
+        );
     }
 
+    // Custom unauthorized access (from your UserService checks)
+    @ExceptionHandler(UnauthorizedAccessException.class)
+    public ResponseEntity<Map<String, Object>> handleUnauthorizedAccessException(UnauthorizedAccessException ex) {
+        return buildErrorResponse(
+                "Access Denied",
+                "Sorry, you don't have permission to view or change this information.",
+                HttpStatus.FORBIDDEN
+        );
+    }
+
+    // 401 - User not found (during login or password reset)
     @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleUsernameNotFoundException(UsernameNotFoundException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", ex.getMessage());
-        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<Map<String, Object>> handleUsernameNotFoundException(UsernameNotFoundException ex) {
+        return buildErrorResponse(
+                "Account Not Found",
+                "We couldn't find an account with that username or email. Please check and try again.",
+                HttpStatus.UNAUTHORIZED
+        );
     }
 
+    // 500 - File upload issues
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<Map<String, Object>> handleIOException(IOException ex) {
+        return buildErrorResponse(
+                "Upload Error",
+                "We had trouble uploading your file. Please try again or use a smaller file.",
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
+    }
+
+    // Catch-all for unexpected errors (500)
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleGeneralException(Exception ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", "An unexpected error occurred: " + ex.getMessage());
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex) {
+        // In production, you might want to log ex.getMessage() here
+        return buildErrorResponse(
+                "Something Went Wrong",
+                "We're having a technical issue right now. Please try again later or contact support.",
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
     }
 }
 
@@ -4909,10 +4948,14 @@ public class JwtUtil {
 SecurityConfig :
 package com.example.shuttlemonitor.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -4920,10 +4963,15 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
@@ -4934,28 +4982,62 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+        http
+                .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.addAllowedOrigin("*");
+                    config.addAllowedOrigin("*"); // TODO: Restrict in production
                     config.addAllowedMethod("*");
                     config.addAllowedHeader("*");
                     return config;
                 }))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/forgotPassword/**", "/**").permitAll()
-                        .requestMatchers("/api/users/{userId}/profile-picture").authenticated()
-                        .requestMatchers("/api/students/**", "/api/parents/**", "/api/operators/**", "/api/drivers/**").authenticated()
-                        .requestMatchers("/api/admin/bulk-upload/**").hasRole("ADMIN")
+                        // Public endpoints
+                        .requestMatchers("/api/auth/**", "/api/forgotPassword/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/check-in/log").permitAll()
-                        .requestMatchers("/api/shuttles/**").authenticated()
-                        .anyRequest().authenticated())
+
+                        // Static frontend resources (very important!)
+                        .requestMatchers("/", "/index.html", "/reset-password.html", "/styles.css", "/script.js", "/images/**").permitAll()
+
+                        // All API endpoints require authentication
+                        .requestMatchers("/api/**").authenticated()
+
+                        // Everything else requires auth
+                        .anyRequest().authenticated()
+                )
                 .exceptionHandling(handling -> handling
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                        // Use custom friendly entry point for 401
+                        .authenticationEntryPoint(unauthorizedEntryPoint())
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
+    }
+
+    // NEW: Custom friendly 401 response
+    @Bean
+    public AuthenticationEntryPoint unauthorizedEntryPoint() {
+        return (request, response, authException) -> {
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setCharacterEncoding("UTF-8");
+
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Please sign in to continue");
+            errorResponse.put("message", "You need to log in to access this feature.");
+
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                response.getWriter().write(mapper.writeValueAsString(errorResponse));
+            } catch (IOException e) {
+                // Fallback if JSON writing fails
+                try {
+                    response.getWriter().write("{\"error\": \"Please sign in to continue\"}");
+                } catch (IOException ignored) {}
+            }
+        };
     }
 
     @Bean
@@ -6141,7 +6223,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -6159,14 +6240,14 @@ import java.util.UUID;
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
 public class UserController {
-
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private UserService userService;
 
+    // UPDATED: Added @PreAuthorize to allow only owner or admin
     @GetMapping("/{userId}")
+    @PreAuthorize("@userService.isOwnerOrAdmin(#userId)")
     public ResponseEntity<?> getUserWithDetails(@PathVariable Long userId) {
         Map<String, String> response = new HashMap<>();
         ResponseEntity<User> result = userService.getUserWithDetails(userId);
@@ -6187,7 +6268,9 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    // UPDATED: Added @PreAuthorize to allow only owner or admin
     @PostMapping("/{userId}/profile-picture")
+    @PreAuthorize("@userService.isOwnerOrAdmin(#userId)")
     public ResponseEntity<Map<String, String>> uploadProfilePicture(
             @PathVariable Long userId,
             @RequestParam("file") MultipartFile file) {
@@ -6195,40 +6278,32 @@ public class UserController {
         try {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
             if (file.isEmpty()) {
                 response.put("error", "Image file is required");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 response.put("error", "Only image files are allowed");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-
             BufferedImage image = ImageIO.read(file.getInputStream());
             if (image == null) {
                 response.put("error", "Invalid image file");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-
             String uploadDir = "Uploads/profile-pictures/";
             Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
-
             String fileName = UUID.randomUUID() + ".jpg";
             Path filePath = uploadPath.resolve(fileName);
-
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(image, "jpg", baos);
             Files.write(filePath, baos.toByteArray());
-
             user.setProfilePicturePath(uploadDir + fileName);
             userRepository.save(user);
-
             response.put("message", "Profile picture uploaded successfully");
             response.put("path", user.getProfilePicturePath());
             return ResponseEntity.ok(response);
@@ -6238,30 +6313,28 @@ public class UserController {
         }
     }
 
+    // UPDATED: Added @PreAuthorize to allow only owner or admin
     @GetMapping("/{userId}/profile-picture")
+    @PreAuthorize("@userService.isOwnerOrAdmin(#userId)")
     public ResponseEntity<?> getProfilePicture(@PathVariable Long userId) {
         Map<String, String> response = new HashMap<>();
         try {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
             String imagePath = user.getProfilePicturePath();
             if (imagePath == null || imagePath.isEmpty()) {
                 imagePath = "Uploads/profile-pictures/default-profile.jpg"; // Default image
             }
-
             File file = new File(imagePath);
             if (!file.exists() || !file.isFile()) {
                 response.put("error", "Profile picture not found");
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
-
             Resource resource = new FileSystemResource(file);
             String contentType = Files.probeContentType(file.toPath());
             if (contentType == null) {
                 contentType = "image/jpeg";
             }
-
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + file.getName() + "\"")
@@ -7514,25 +7587,18 @@ import java.util.List;
 
 @Service
 public class UserService {
-
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private ParentRepository parentRepository;
-
     @Autowired
     private StudentRepository studentRepository;
-
     @Autowired
     private OperatorRepository operatorRepository;
-
     @Autowired
     private DriverRepository driverRepository;
-
     @Autowired
     private ShuttleRepository shuttleRepository;
-
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -7582,12 +7648,10 @@ public class UserService {
         if (currentUser != null && currentUser.getUserId().equals(userId)) {
             return new ResponseEntity<>("Cannot delete own account", HttpStatus.FORBIDDEN);
         }
-
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
         }
-
         // Delete role-specific entity first
         switch (user.getRole()) {
             case PARENT:
@@ -7610,7 +7674,6 @@ public class UserService {
                 // For ADMIN, no additional
                 break;
         }
-
         userRepository.deleteById(userId);
         return new ResponseEntity<>("User deleted successfully", HttpStatus.OK);
     }
@@ -7631,7 +7694,6 @@ public class UserService {
             default:
                 sortField = "createdAt"; // Default sort
         }
-
         Sort sort = Sort.by(sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortField);
         return userRepository.findAll(sort);
     }
@@ -7730,14 +7792,20 @@ public class UserService {
             throw new UnauthorizedAccessException("Unauthorized");
         }
     }
+
+    // UPDATED: New method for general user ownership check (used in UserController)
+    public boolean isOwnerOrAdmin(Long userId) {
+        User currentUser = getCurrentUser();
+        if (currentUser.getRole() == Role.ADMIN) return true;
+        return currentUser.getUserId().equals(userId);
+    }
+
     public Student assignShuttleToStudent(Long studentId, Long shuttleId) {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found"));
-        checkAccessForStudent(student);  // Existing access check
-
+        checkAccessForStudent(student); // Existing access check
         Shuttle shuttle = shuttleRepository.findById(shuttleId)
                 .orElseThrow(() -> new IllegalArgumentException("Shuttle not found"));
-
         student.setAssignedShuttle(shuttle);
         return studentRepository.save(student);
     }

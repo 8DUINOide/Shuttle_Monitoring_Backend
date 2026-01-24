@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -32,14 +31,14 @@ import java.util.UUID;
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
 public class UserController {
-
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private UserService userService;
 
+    // UPDATED: Added @PreAuthorize to allow only owner or admin
     @GetMapping("/{userId}")
+    @PreAuthorize("@userService.isOwnerOrAdmin(#userId)")
     public ResponseEntity<?> getUserWithDetails(@PathVariable Long userId) {
         Map<String, String> response = new HashMap<>();
         ResponseEntity<User> result = userService.getUserWithDetails(userId);
@@ -60,7 +59,9 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    // UPDATED: Added @PreAuthorize to allow only owner or admin
     @PostMapping("/{userId}/profile-picture")
+    @PreAuthorize("@userService.isOwnerOrAdmin(#userId)")
     public ResponseEntity<Map<String, String>> uploadProfilePicture(
             @PathVariable Long userId,
             @RequestParam("file") MultipartFile file) {
@@ -68,40 +69,32 @@ public class UserController {
         try {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
             if (file.isEmpty()) {
                 response.put("error", "Image file is required");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 response.put("error", "Only image files are allowed");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-
             BufferedImage image = ImageIO.read(file.getInputStream());
             if (image == null) {
                 response.put("error", "Invalid image file");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-
             String uploadDir = "Uploads/profile-pictures/";
             Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
-
             String fileName = UUID.randomUUID() + ".jpg";
             Path filePath = uploadPath.resolve(fileName);
-
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(image, "jpg", baos);
             Files.write(filePath, baos.toByteArray());
-
             user.setProfilePicturePath(uploadDir + fileName);
             userRepository.save(user);
-
             response.put("message", "Profile picture uploaded successfully");
             response.put("path", user.getProfilePicturePath());
             return ResponseEntity.ok(response);
@@ -111,30 +104,28 @@ public class UserController {
         }
     }
 
+    // UPDATED: Added @PreAuthorize to allow only owner or admin
     @GetMapping("/{userId}/profile-picture")
+    @PreAuthorize("@userService.isOwnerOrAdmin(#userId)")
     public ResponseEntity<?> getProfilePicture(@PathVariable Long userId) {
         Map<String, String> response = new HashMap<>();
         try {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
             String imagePath = user.getProfilePicturePath();
             if (imagePath == null || imagePath.isEmpty()) {
                 imagePath = "Uploads/profile-pictures/default-profile.jpg"; // Default image
             }
-
             File file = new File(imagePath);
             if (!file.exists() || !file.isFile()) {
                 response.put("error", "Profile picture not found");
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
-
             Resource resource = new FileSystemResource(file);
             String contentType = Files.probeContentType(file.toPath());
             if (contentType == null) {
                 contentType = "image/jpeg";
             }
-
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + file.getName() + "\"")

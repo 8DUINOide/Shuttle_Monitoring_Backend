@@ -16,25 +16,18 @@ import java.util.List;
 
 @Service
 public class UserService {
-
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private ParentRepository parentRepository;
-
     @Autowired
     private StudentRepository studentRepository;
-
     @Autowired
     private OperatorRepository operatorRepository;
-
     @Autowired
     private DriverRepository driverRepository;
-
     @Autowired
     private ShuttleRepository shuttleRepository;
-
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -84,12 +77,10 @@ public class UserService {
         if (currentUser != null && currentUser.getUserId().equals(userId)) {
             return new ResponseEntity<>("Cannot delete own account", HttpStatus.FORBIDDEN);
         }
-
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
         }
-
         // Delete role-specific entity first
         switch (user.getRole()) {
             case PARENT:
@@ -112,7 +103,6 @@ public class UserService {
                 // For ADMIN, no additional
                 break;
         }
-
         userRepository.deleteById(userId);
         return new ResponseEntity<>("User deleted successfully", HttpStatus.OK);
     }
@@ -133,7 +123,6 @@ public class UserService {
             default:
                 sortField = "createdAt"; // Default sort
         }
-
         Sort sort = Sort.by(sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortField);
         return userRepository.findAll(sort);
     }
@@ -232,14 +221,20 @@ public class UserService {
             throw new UnauthorizedAccessException("Unauthorized");
         }
     }
+
+    // UPDATED: New method for general user ownership check (used in UserController)
+    public boolean isOwnerOrAdmin(Long userId) {
+        User currentUser = getCurrentUser();
+        if (currentUser.getRole() == Role.ADMIN) return true;
+        return currentUser.getUserId().equals(userId);
+    }
+
     public Student assignShuttleToStudent(Long studentId, Long shuttleId) {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found"));
-        checkAccessForStudent(student);  // Existing access check
-
+        checkAccessForStudent(student); // Existing access check
         Shuttle shuttle = shuttleRepository.findById(shuttleId)
                 .orElseThrow(() -> new IllegalArgumentException("Shuttle not found"));
-
         student.setAssignedShuttle(shuttle);
         return studentRepository.save(student);
     }
