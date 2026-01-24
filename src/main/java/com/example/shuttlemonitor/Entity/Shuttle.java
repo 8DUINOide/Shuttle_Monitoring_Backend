@@ -45,6 +45,9 @@ public class Shuttle {
     @JsonIgnore
     private List<CheckIn> checkIns = new ArrayList<>();
 
+    @org.hibernate.annotations.Formula("(SELECT COUNT(*) FROM students s WHERE s.assigned_shuttle_id = shuttle_id)")
+    private int assignedStudentsCount;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

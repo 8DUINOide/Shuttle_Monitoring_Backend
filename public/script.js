@@ -292,7 +292,7 @@ async function loadShuttles() {
                 <td>${sanitizeHTML(shuttle.licensePlate || 'N/A')}</td>
                 <td>${sanitizeHTML(shuttle.route || 'Unassigned')}</td>
                 <td><span class="status-badge ${statusClass}">${shuttle.status}</span></td>
-                <td>${shuttle.checkIns ? shuttle.checkIns.length : 0} / ${shuttle.maxCapacity}</td>
+                <td>${shuttle.assignedStudentsCount || 0} / ${shuttle.maxCapacity}</td>
 
                 <td>
                     <div style="display: inline-flex; gap: 5px; align-items: center;">

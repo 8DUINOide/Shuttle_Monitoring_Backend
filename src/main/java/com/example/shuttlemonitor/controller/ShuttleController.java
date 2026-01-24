@@ -84,6 +84,7 @@ public class ShuttleController {
         response.put("licensePlate", shuttle.getLicensePlate()); // New
         response.put("status", shuttle.getStatus());
         response.put("maxCapacity", shuttle.getMaxCapacity());
+        response.put("assignedStudentsCount", shuttle.getAssignedStudentsCount()); // New
         response.put("occupancy", shuttleService.calculateOccupancy(shuttle));
         response.put("nextStop", shuttleService.getNextStop(shuttle));
         response.put("eta", shuttleService.getETA(shuttle));
@@ -104,6 +105,7 @@ public class ShuttleController {
         response.put("name", shuttle.getName());
         response.put("status", shuttle.getStatus());
         response.put("maxCapacity", shuttle.getMaxCapacity() != null ? shuttle.getMaxCapacity() : 50);
+        response.put("assignedStudentsCount", shuttle.getAssignedStudentsCount()); // New
         response.put("occupancy", shuttleService.calculateOccupancy(shuttle));
         response.put("nextStop", shuttleService.getNextStop(shuttle));
         response.put("eta", shuttleService.getETA(shuttle));
@@ -177,6 +179,7 @@ public class ShuttleController {
         response.put("name", shuttle.getName());
         response.put("status", shuttle.getStatus());
         response.put("maxCapacity", shuttle.getMaxCapacity() != null ? shuttle.getMaxCapacity() : 50);
+        response.put("assignedStudentsCount", shuttle.getAssignedStudentsCount()); // New
         response.put("occupancy", shuttleService.calculateOccupancy(shuttle));
         response.put("nextStop", shuttleService.getNextStop(shuttle));
         response.put("eta", shuttleService.getETA(shuttle));
