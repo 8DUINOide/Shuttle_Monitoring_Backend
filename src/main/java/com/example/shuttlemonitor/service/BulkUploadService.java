@@ -235,7 +235,6 @@ public class BulkUploadService {
 
             String driverEmail = getCellValueAsString(row.getCell(baseCol + 1));
             String driverPassword = getCellValueAsString(row.getCell(baseCol + 2));
-            String driverLicenseNumber = getCellValueAsString(row.getCell(baseCol + 3));
             String driverContactPhone = getCellValueAsString(row.getCell(baseCol + 4));
             String driverEmergencyContact = getCellValueAsString(row.getCell(baseCol + 5));
 
@@ -247,11 +246,7 @@ public class BulkUploadService {
                 throw new IllegalArgumentException("Invalid or missing password for driver " + (d + 1));
             }
 
-            if (driverLicenseNumber == null || driverLicenseNumber.trim().isEmpty()) {
-                throw new IllegalArgumentException("Missing license number for driver " + (d + 1));
-            }
-
-            drivers.add(new BulkDriverDTO(driverUsername, driverEmail, driverPassword, driverLicenseNumber,
+            drivers.add(new BulkDriverDTO(driverUsername, driverEmail, driverPassword,
                     driverContactPhone, driverEmergencyContact));
         }
 
@@ -380,7 +375,6 @@ public class BulkUploadService {
 
                 Driver driver = new Driver();
                 driver.setUser(driverUser);
-                driver.setLicenseNumber(driverDto.licenseNumber());
                 driver.setContactPhone(driverDto.contactPhone());
                 driver.setEmergencyContact(driverDto.emergencyContact());
                 driver.setOperator(operator);

@@ -276,6 +276,7 @@ async function loadShuttles() {
             tr.innerHTML = `
                 <td>${sanitizeHTML(shuttle.name)}</td>
                 <td>${sanitizeHTML(shuttle.driver.user.username)}</td>
+                <td>${sanitizeHTML(shuttle.licensePlate)}</td>
                 <td>${sanitizeHTML(shuttle.route)}</td>
                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td>${occupancy}</td>
@@ -403,7 +404,6 @@ async function loadDrivers() {
                 <td>${sanitizeHTML(driver.user.username)}</td>
                 <td>${sanitizeHTML(driver.operator.fullName)}<br><small><i class="fa-solid fa-envelope"></i> ${sanitizeHTML(driver.operator.user.email)}</small></td>
                 <td><i class="fa-solid fa-phone"></i> ${sanitizeHTML(driver.contactPhone)}<br><i class="fa-solid fa-envelope"></i> ${sanitizeHTML(driver.user.email)}</td>
-                <td>${sanitizeHTML(driver.licenseNumber)}</td>
                 <td><i class="fa-solid fa-phone"></i> ${sanitizeHTML(driver.emergencyContact)}</td>
                 <td><span class="status-badge badge-active">Active</span></td>
                 <td>
@@ -591,12 +591,12 @@ async function updateDashboard() {
     const todaysTbody = document.querySelector('#todays-routes-table tbody');
     todaysTbody.innerHTML = '';
     shuttleRows.forEach(row => {
-        const statusText = row.querySelector('td:nth-child(4) span')?.textContent || '';
-        const statusClass = row.querySelector('td:nth-child(4) span')?.className || '';
-        const route = row.querySelector('td:nth-child(3)')?.textContent || '';
+        const statusText = row.querySelector('td:nth-child(5) span')?.textContent || '';
+        const statusClass = row.querySelector('td:nth-child(5) span')?.className || '';
+        const route = row.querySelector('td:nth-child(4)')?.textContent || '';
         const shuttle = row.querySelector('td:nth-child(1)')?.textContent || '';
         const driver = row.querySelector('td:nth-child(2)')?.textContent || '';
-        const occupancy = row.querySelector('td:nth-child(5)')?.textContent || '';
+        const occupancy = row.querySelector('td:nth-child(6)')?.textContent || '';
         const capacity = occupancy.split('/')[1] || '';
         routes.add(route);
         if (statusText === 'ACTIVE') {
@@ -832,6 +832,7 @@ async function editShuttle(id) {
         const shuttle = await response.json();
         document.getElementById('edit-shuttle-id').value = shuttle.shuttleId;
         document.getElementById('edit-name-input').value = shuttle.name || '';
+        document.getElementById('edit-license-plate-input').value = shuttle.licensePlate || ''; // New
         document.getElementById('edit-status-select').value = shuttle.status;
         document.getElementById('edit-route-input').value = shuttle.route || '';
         document.getElementById('edit-max-capacity-input').value = shuttle.maxCapacity || 50;
@@ -871,20 +872,25 @@ document.getElementById('addShuttleForm').addEventListener('submit', async (e) =
     const submitBtn = e.target.querySelector('.submit-btn');
     submitBtn.disabled = true;
     errorEl.style.display = 'none';
+
     const name = document.getElementById('nameInput').value.trim();
+    const licensePlate = document.getElementById('licensePlateInput').value.trim(); // New
     const opId = document.getElementById('operatorSelect').value;
     const driverId = document.getElementById('driverSelect').value;
     const route = document.getElementById('routeInput').value.trim();
     const maxCapacity = parseInt(document.getElementById('maxCapacityInput').value);
-    if (!opId || !driverId || !route || !maxCapacity) {
+
+    if (!opId || !driverId || !route || !maxCapacity || !licensePlate) { // Check licensePlate
         errorEl.textContent = 'All required fields must be filled';
         errorEl.style.display = 'block';
         submitBtn.disabled = false;
         return;
     }
+
     try {
         const body = JSON.stringify({
             name: name || undefined,
+            licensePlate, // New
             operatorId: parseInt(opId),
             driverId: parseInt(driverId),
             route,
@@ -921,12 +927,13 @@ document.getElementById('editShuttleForm').addEventListener('submit', async (e) 
     errorEl.style.display = 'none';
     const id = document.getElementById('edit-shuttle-id').value;
     const name = document.getElementById('edit-name-input').value.trim();
+    const licensePlate = document.getElementById('edit-license-plate-input').value.trim(); // New
     const status = document.getElementById('edit-status-select').value;
     const opId = document.getElementById('edit-operator-select').value;
     const driverId = document.getElementById('edit-driver-select').value;
     const route = document.getElementById('edit-route-input').value.trim();
     const maxCapacity = parseInt(document.getElementById('edit-max-capacity-input').value);
-    if (!status || !opId || !driverId || !route || !maxCapacity) {
+    if (!status || !opId || !driverId || !route || !maxCapacity || !licensePlate) {
         errorEl.textContent = 'All required fields must be filled';
         errorEl.style.display = 'block';
         submitBtn.disabled = false;
@@ -935,6 +942,7 @@ document.getElementById('editShuttleForm').addEventListener('submit', async (e) 
     try {
         const body = JSON.stringify({
             name: name || undefined,
+            licensePlate, // New
             status,
             operatorId: parseInt(opId),
             driverId: parseInt(driverId),
@@ -1266,12 +1274,6 @@ function resetOperatorForm() {
                     </span>
                 </div>
                 <div class="form-group">
-                    <label for="driver-1-license">License Number *</label>
-                    <input type="text" id="driver-1-license" placeholder="e.g., DRV-12345" required>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
                     <label for="driver-1-phone">Contact Phone *</label>
                     <input type="tel" id="driver-1-phone" placeholder="+63-912-345-6789" required>
                 </div>
@@ -1316,10 +1318,6 @@ function addDriverForm() {
                 <span class="toggle-password" onclick="togglePassword('driver-${driverCounter}-password', this)">
                     <i class="fa-solid fa-eye-slash"></i>
                 </span>
-            </div>
-            <div class="form-group">
-                <label for="driver-${driverCounter}-license">License Number *</label>
-                <input type="text" id="driver-${driverCounter}-license" placeholder="e.g., DRV-12345" required>
             </div>
         </div>
         <div class="form-row">
@@ -1391,7 +1389,6 @@ document.getElementById('addOperatorForm').addEventListener('submit', async (e) 
                 email: document.getElementById(`driver-${driverId}-email`).value,
                 password: document.getElementById(`driver-${driverId}-password`).value,
                 role: "DRIVER",
-                licenseNumber: document.getElementById(`driver-${driverId}-license`).value,
                 contactPhone: document.getElementById(`driver-${driverId}-phone`).value,
                 emergencyContact: document.getElementById(`driver-${driverId}-emergency`).value
             };
@@ -1642,7 +1639,6 @@ async function editDriver(id) {
         const driver = await response.json();
         document.getElementById('edit-driver-id').value = id;
         document.getElementById('edit-driver-contact').value = driver.contactPhone || '';
-        document.getElementById('edit-driver-license').value = driver.licenseNumber || '';
         document.getElementById('edit-driver-emergency').value = driver.emergencyContact || '';
         // Operator fields
         document.getElementById('edit-operator-id').value = driver.operator.operatorId;
@@ -1666,7 +1662,6 @@ document.getElementById('editDriverForm').addEventListener('submit', async (e) =
     const operatorId = document.getElementById('edit-operator-id').value;
     const updatedDriver = {
         contactPhone: document.getElementById('edit-driver-contact').value,
-        licenseNumber: document.getElementById('edit-driver-license').value,
         emergencyContact: document.getElementById('edit-driver-emergency').value
     };
     const updatedOperator = {

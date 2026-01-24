@@ -37,6 +37,8 @@ public class Shuttle {
 
     private String route; // e.g., "ADNU to Barangay X"
 
+    private String licensePlate; // New: License Plate Number
+
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "shuttle", cascade = CascadeType.ALL)
