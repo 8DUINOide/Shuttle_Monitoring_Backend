@@ -10,6 +10,5 @@ public record UserSignUpDTO(
         String contactPhone,
         String grade,
         String section,
-        String licenseNumber,
         String emergencyContact
 ) {}

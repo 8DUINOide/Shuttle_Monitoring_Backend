@@ -60,7 +60,7 @@ public class DriverController {
                 .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
         // Update fields as needed
         driver.setContactPhone(updatedDriver.getContactPhone());
-        driver.setLicenseNumber(updatedDriver.getLicenseNumber());
+
         driver.setEmergencyContact(updatedDriver.getEmergencyContact());
         // etc.
         driverRepository.save(driver);

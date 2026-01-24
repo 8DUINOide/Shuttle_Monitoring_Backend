@@ -216,7 +216,6 @@ public class AuthController {
 
             Driver driver = new Driver();
             driver.setUser(driverUser);
-            driver.setLicenseNumber(dd.licenseNumber());
             driver.setContactPhone(dd.contactPhone());
             driver.setEmergencyContact(dd.emergencyContact());
             driver.setOperator(operator);

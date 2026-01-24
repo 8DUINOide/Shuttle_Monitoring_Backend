@@ -50,6 +50,7 @@ public class ShuttleController {
         Long operatorId = Long.parseLong(request.get("operatorId").toString());
         String route = (String) request.get("route");
         String name = (String) request.get("name");
+        String licensePlate = (String) request.get("licensePlate"); // New
         Integer maxCapacity = request.get("maxCapacity") != null ? Integer.parseInt(request.get("maxCapacity").toString()) : 50;
 
         if (route == null || route.trim().isEmpty()) {
@@ -72,6 +73,7 @@ public class ShuttleController {
         shuttle.setDriver(driver);
         shuttle.setOperator(operator);
         shuttle.setRoute(route);
+        shuttle.setLicensePlate(licensePlate); // New
         shuttle = shuttleRepository.save(shuttle);
 
         Map<String, Object> response = new HashMap<>();
@@ -79,6 +81,7 @@ public class ShuttleController {
         response.put("shuttleId", shuttle.getShuttleId());
         response.put("name", shuttle.getName());
         response.put("route", shuttle.getRoute());
+        response.put("licensePlate", shuttle.getLicensePlate()); // New
         response.put("status", shuttle.getStatus());
         response.put("maxCapacity", shuttle.getMaxCapacity());
         response.put("occupancy", shuttleService.calculateOccupancy(shuttle));
@@ -100,11 +103,12 @@ public class ShuttleController {
         response.put("shuttleId", shuttle.getShuttleId());
         response.put("name", shuttle.getName());
         response.put("status", shuttle.getStatus());
-        response.put("maxCapacity", shuttle.getMaxCapacity() != null ? shuttle.getMaxCapacity() : 50);  // Fix: Fallback in response
+        response.put("maxCapacity", shuttle.getMaxCapacity() != null ? shuttle.getMaxCapacity() : 50);
         response.put("occupancy", shuttleService.calculateOccupancy(shuttle));
         response.put("nextStop", shuttleService.getNextStop(shuttle));
         response.put("eta", shuttleService.getETA(shuttle));
         response.put("route", shuttle.getRoute());
+        response.put("licensePlate", shuttle.getLicensePlate()); // New
         response.put("driver", Map.of(
                 "driverId", shuttle.getDriver().getDriverId(),
                 "username", shuttle.getDriver().getUser().getUsername()
@@ -149,6 +153,9 @@ public class ShuttleController {
         if (request.containsKey("route")) {
             shuttle.setRoute((String) request.get("route"));
         }
+        if (request.containsKey("licensePlate")) { // New
+            shuttle.setLicensePlate((String) request.get("licensePlate"));
+        }
         if (request.containsKey("driverId")) {
             Long driverId = Long.parseLong(request.get("driverId").toString());
             Driver driver = driverRepository.findById(driverId)
@@ -169,11 +176,12 @@ public class ShuttleController {
         response.put("shuttleId", shuttle.getShuttleId());
         response.put("name", shuttle.getName());
         response.put("status", shuttle.getStatus());
-        response.put("maxCapacity", shuttle.getMaxCapacity() != null ? shuttle.getMaxCapacity() : 50);  // Fix: Fallback in response
+        response.put("maxCapacity", shuttle.getMaxCapacity() != null ? shuttle.getMaxCapacity() : 50);
         response.put("occupancy", shuttleService.calculateOccupancy(shuttle));
         response.put("nextStop", shuttleService.getNextStop(shuttle));
         response.put("eta", shuttleService.getETA(shuttle));
         response.put("route", shuttle.getRoute());
+        response.put("licensePlate", shuttle.getLicensePlate()); // New
 
         return ResponseEntity.ok(response);
     }

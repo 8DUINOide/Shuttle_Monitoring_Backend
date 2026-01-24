@@ -20,8 +20,6 @@ public class Driver {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    private String licenseNumber;
-
     private String contactPhone;
 
     private String emergencyContact;
