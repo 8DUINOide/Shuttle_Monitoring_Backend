@@ -7,6 +7,7 @@ let studentCounter = 1;
 let driverCounter = 1;
 let bulkType = '';
 let allDrivers = [];
+let currentDashboardView = 'home';
 
 // Pagination State
 const paginationState = {
@@ -202,6 +203,7 @@ function cancelDelete() {
 
 //=================== UI CONTROL ===================
 function showTab(tabId) {
+    currentDashboardView = tabId;
     const tabs = document.querySelectorAll(".tab");
     tabs.forEach(tab => tab.classList.remove("active"));
     document.getElementById(tabId).classList.add("active");
@@ -269,50 +271,42 @@ async function loadShuttles() {
         const tbody = document.getElementById('shuttles-table');
         tbody.innerHTML = '';
         shuttles.forEach((shuttle) => {
-            const statusText = shuttle.status;
-            const statusClass = shuttleStatusClasses[shuttleStatuses.indexOf(statusText)] || 'badge-active';
-            const maxCapacity = shuttle.maxCapacity || 50;
-            const currentOccupancy = Math.floor(Math.random() * (maxCapacity + 1));
-            const occupancy = `${currentOccupancy}/${maxCapacity}`;
-            const lat = (14.5 + Math.random() * 0.2).toFixed(4);
-            const lng = (121.0 + Math.random() * 0.2).toFixed(4);
-            const nextStop = `Stop ${Math.floor(Math.random() * 5) + 1}`;
-            const eta = `${Math.floor(Math.random() * 25) + 5} min`;
+
+
             const tr = document.createElement('tr');
             tr.dataset.shuttleId = shuttle.shuttleId;
+            const driverName = shuttle.driver ? sanitizeHTML(shuttle.driver.user.username) : 'No Driver';
+            const statusClass = shuttleStatusClasses[shuttleStatuses.indexOf(shuttle.status)] || 'badge-inactive';
+
             tr.innerHTML = `
-                <td>${sanitizeHTML(shuttle.name)}</td>
-                <td>${sanitizeHTML(shuttle.driver.user.username)}</td>
-                <td>${sanitizeHTML(shuttle.licensePlate)}</td>
-                <td>${sanitizeHTML(shuttle.route)}</td>
-                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td>${occupancy}</td>
-                <td>Lat: ${lat}, Lng: ${lng}</td>
-                <td>${nextStop}</td>
-                <td>${eta}</td>
+                <td>${sanitizeHTML(shuttle.name || 'Shuttle #' + shuttle.shuttleId)}</td>
+                <td>${driverName}</td>
+                <td>${sanitizeHTML(shuttle.licensePlate || 'N/A')}</td>
+                <td>${sanitizeHTML(shuttle.route || 'Unassigned')}</td>
+                <td><span class="status-badge ${statusClass}">${shuttle.status}</span></td>
+                <td>${shuttle.checkIns ? shuttle.checkIns.length : 0} / ${shuttle.maxCapacity}</td>
+
                 <td>
                     <div style="display: inline-flex; gap: 5px; align-items: center;">
-                        <button class="action-btn track-btn" onclick="showToast('Tracking shuttle details')">Track Details</button>
-                        <div class="actions-dropdown">
-                            <button class="ellipsis-btn" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
-                            <div class="dropdown-menu" style="display: none;">
-                                <button class="dropdown-item" onclick="editShuttle(${shuttle.shuttleId}); toggleDropdown(this.parentElement.previousElementSibling)"><i class="fa-solid fa-edit"></i> Edit</button>
-                                <button class="dropdown-item delete" onclick="showDeleteConfirm(${shuttle.shuttleId}, 'shuttle'); toggleDropdown(this.parentElement.previousElementSibling)"><i class="fa-solid fa-trash"></i> Delete</button>
-                            </div>
-                        </div>
+
+                        <button class="action-btn" onclick="editShuttle(${shuttle.shuttleId})"><i class="fa-solid fa-edit"></i> Edit</button>
+                        <button class="action-btn delete-btn" onclick="showDeleteConfirm(${shuttle.shuttleId}, 'shuttle')"><i class="fa-solid fa-trash"></i> Delete</button>
                     </div>
                 </td>
             `;
             tbody.appendChild(tr);
         });
 
-        renderPagination('shuttles', 'shuttles'); // Add controls to 'shuttles' tab container
+        renderPagination('shuttles', 'shuttles');
 
     } catch (error) {
         console.error('Error loading shuttles:', error);
         showToast('Error loading shuttles data');
     }
 }
+
+// Pagination state needs a new entry for checkin
+paginationState.checkin = { page: 0, size: 10, totalPages: 0 };
 
 async function loadStudents() {
     if (!token) return;
@@ -325,63 +319,105 @@ async function loadStudents() {
             throw new Error('Failed to fetch students');
         }
         const data = await response.json();
-        const students = data.content; // Access content list
+        const students = data.content;
+        allStudentsData = students; // For lookups
 
-        // Update pagination state
+        // Update pagination
         paginationState.students.totalPages = data.totalPages;
         paginationState.students.page = data.number;
 
         const tbody = document.getElementById('students-table');
         tbody.innerHTML = '';
         students.forEach(student => {
-            const statusIndex = Math.floor(Math.random() * studentStatuses.length);
-            const statusText = studentStatuses[statusIndex];
-            const statusClass = studentStatusClasses[statusIndex];
-            let checkInTime = '-';
-            if (statusIndex !== 2) {
-                const hoursAgo = Math.floor(Math.random() * 8) + 1;
-                const checkInDate = new Date(Date.now() - hoursAgo * 3600000);
-                checkInTime = checkInDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-            }
-            const assignedShuttle = student.assignedShuttle ? `Shuttle #${student.assignedShuttle.shuttleId}` : 'Not Assigned';
-            // Fallback since API student object might not populate assigned shuttle details similarly if backend changed to lazy or different serialized form, but let's assume it's there or handle gently.
-
             const tr = document.createElement('tr');
             tr.dataset.studentId = student.studentId;
-            // Handle null parent just in case
             const parentName = student.parent ? sanitizeHTML(student.parent.fullName) : 'N/A';
             const parentContact = student.parent ? sanitizeHTML(student.parent.contactPhone) : 'N/A';
             const parentEmail = student.parent && student.parent.user ? sanitizeHTML(student.parent.user.email) : 'N/A';
 
+            // Static Data Only
             tr.innerHTML = `
                 <td>${sanitizeHTML(student.fullName)}<br><small>${sanitizeHTML(student.grade)} - ${sanitizeHTML(student.section)}</small></td>
                 <td>${parentName}</td>
                 <td><i class="fa-solid fa-phone"></i> ${parentContact}<br><i class="fa-solid fa-envelope"></i> ${parentEmail}</td>
-                <td>${sanitizeHTML(assignedShuttle)}</td>
-                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td>${checkInTime}</td>
-                <td>${sanitizeHTML(student.currentAddress)}</td>
                 <td>
                     <div style="display: inline-flex; gap: 5px; align-items: center;">
-                        <button class="action-btn track-btn" onclick="showToast('Tracking student details')">Track Details</button>
-                        <div class="actions-dropdown">
-                            <button class="ellipsis-btn" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
-                            <div class="dropdown-menu" style="display: none;">
-                                <button class="dropdown-item" onclick="editStudent(${student.studentId}); toggleDropdown(this.parentElement.previousElementSibling)"><i class="fa-solid fa-edit"></i> Edit</button>
-                                <button class="dropdown-item delete" onclick="showDeleteConfirm(${student.studentId}, 'student'); toggleDropdown(this.parentElement.previousElementSibling)"><i class="fa-solid fa-trash"></i> Delete</button>
-                            </div>
-                        </div>
+                        <button class="action-btn" onclick="editStudent(${student.studentId})"><i class="fa-solid fa-edit"></i> Edit</button>
+                        <button class="action-btn delete-btn" onclick="showDeleteConfirm(${student.studentId}, 'student')"><i class="fa-solid fa-trash"></i> Delete</button>
                     </div>
                 </td>
             `;
             tbody.appendChild(tr);
         });
 
-        renderPagination('students', 'students'); // Add controls to 'students' tab container
+        renderPagination('students', 'students');
 
     } catch (error) {
         console.error('Error loading students:', error);
         showToast('Error loading students data');
+    }
+}
+
+async function loadCheckInManagement() {
+    if (!token) return;
+    try {
+        const { page, size } = paginationState.checkin;
+        // Re-use student API for now, as it contains all needed info
+        const response = await fetch(`${SERVER_URL}/api/students/all?page=${page}&size=${size}&sortBy=studentId&sortOrder=desc`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!response.ok) { throw new Error('Failed to fetch check-in data'); }
+
+        const data = await response.json();
+        const students = data.content;
+        allStudentsData = students; // Sync global data
+
+        paginationState.checkin.totalPages = data.totalPages;
+        paginationState.checkin.page = data.number;
+
+        const tbody = document.getElementById('checkin-table');
+        tbody.innerHTML = '';
+
+        students.forEach(student => {
+            let statusText = student.status || 'Not Boarded';
+            let statusClass = 'badge-inactive';
+
+            if (statusText === 'Checked In') statusClass = 'badge-active';
+            else if (statusText === 'Checked Out') statusClass = 'badge-maintenance';
+
+            let checkInTime = '-';
+            if (student.lastCheckInTime) {
+                const checkInDate = new Date(student.lastCheckInTime);
+                checkInTime = checkInDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+            }
+
+            const assignedShuttle = student.assignedShuttle ? `Shuttle #${student.assignedShuttle.shuttleId}` : 'Not Assigned';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${sanitizeHTML(student.fullName)}<br><small>${sanitizeHTML(student.grade)}</small></td>
+                <td>${sanitizeHTML(assignedShuttle)}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>${checkInTime}</td>
+                <td>${sanitizeHTML(student.currentAddress)}</td>
+                <td>
+                    <div style="display: inline-flex; gap: 5px; align-items: center;">
+                        <button class="action-btn track-btn" onclick="showToast('Tracking details for ' + '${sanitizeHTML(student.fullName)}')">Track</button>
+                         <button class="action-btn" onclick="showRegisterDeviceModal(${student.studentId})"><i class="fa-solid fa-id-card"></i> Device</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // You might need to add renderPagination support for 'checkin' target
+        // For now reusing the existing function if it supports arbitrary targets, 
+        // else we assume renderPagination needs update or we add it later.
+        // renderPagination('checkin', 'checkin'); 
+
+    } catch (error) {
+        console.error('Error loading checkin:', error);
+        showToast('Error loading check-in data');
     }
 }
 
@@ -415,14 +451,9 @@ async function loadDrivers() {
                 <td><span class="status-badge badge-active">Active</span></td>
                 <td>
                     <div style="display: inline-flex; gap: 5px; align-items: center;">
-                        <button class="action-btn track-btn" onclick="showToast('Tracking driver details')">Track Details</button>
-                        <div class="actions-dropdown">
-                            <button class="ellipsis-btn" onclick="toggleDropdown(this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
-                            <div class="dropdown-menu" style="display: none;">
-                                <button class="dropdown-item" onclick="editDriver(${driver.driverId}); toggleDropdown(this.parentElement.previousElementSibling)"><i class="fa-solid fa-edit"></i> Edit</button>
-                                <button class="dropdown-item delete" onclick="showDeleteConfirm(${driver.driverId}, 'driver'); toggleDropdown(this.parentElement.previousElementSibling)"><i class="fa-solid fa-trash"></i> Delete</button>
-                            </div>
-                        </div>
+
+                        <button class="action-btn" onclick="editDriver(${driver.driverId})"><i class="fa-solid fa-edit"></i> Edit</button>
+                        <button class="action-btn delete-btn" onclick="showDeleteConfirm(${driver.driverId}, 'driver')"><i class="fa-solid fa-trash"></i> Delete</button>
                     </div>
                 </td>
             `;
@@ -1723,8 +1754,11 @@ async function deleteDriver(id) {
         });
         if (response.ok) {
             showToast('Driver deleted successfully');
-            await loadDrivers();
-            updateDashboard();
+            switch (currentDashboardView) {
+                case 'drivers': await loadDrivers(); break;
+                case 'checkin': await loadCheckInManagement(); break;
+                default: updateDashboard(); break;
+            }
         } else {
             const data = await response.json();
             showToast('Failed to delete driver: ' + (data.error || 'Unknown error'));
@@ -1733,3 +1767,60 @@ async function deleteDriver(id) {
         showToast('Error deleting driver: ' + error.message);
     }
 }
+
+function showRegisterDeviceModal(studentId) {
+    const student = allStudentsData.find(s => s.studentId === studentId); // Ensure allStudentsData is populated
+    if (!student) return;
+
+    document.getElementById('register-device-student-id').value = studentId;
+    document.getElementById('register-device-student-name').value = student.fullName;
+    document.getElementById('rfidInput').value = student.rfidTag || '';
+    document.getElementById('fingerprintInput').value = student.fingerprintHash || '';
+    document.getElementById('register-device-error').style.display = 'none';
+
+    document.getElementById('registerDeviceModal').style.display = 'flex';
+}
+
+function closeRegisterDeviceModal() {
+    document.getElementById('registerDeviceModal').style.display = 'none';
+    document.getElementById('registerDeviceForm').reset();
+}
+
+document.getElementById('registerDeviceForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const studentId = document.getElementById('register-device-student-id').value;
+    const rfidTag = document.getElementById('rfidInput').value;
+    const fingerprintHash = document.getElementById('fingerprintInput').value;
+    const submitBtn = e.target.querySelector('.submit-btn');
+    const errorEl = document.getElementById('register-device-error');
+
+    submitBtn.disabled = true;
+    errorEl.style.display = 'none';
+
+    try {
+        const response = await fetch(`${SERVER_URL}/api/check-in/register-device/${studentId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ rfidTag, fingerprintHash })
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            showToast('Device registered successfully');
+            closeRegisterDeviceModal();
+            loadStudents(); // Refresh list
+        } else {
+            errorEl.textContent = result.error || 'Failed to register device';
+            errorEl.style.display = 'block';
+        }
+    } catch (err) {
+        console.error(err);
+        errorEl.textContent = 'Error connecting to server';
+        errorEl.style.display = 'block';
+    } finally {
+        submitBtn.disabled = false;
+    }
+});

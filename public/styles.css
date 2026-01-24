@@ -1721,3 +1721,43 @@ tbody tr:hover {
         margin-left: 0;
     }
 }
+
+/* === Custom Action Buttons === */
+/* Base Action Button (Edit, Track, etc) - Default Blue to match theme */
+.action-btn {
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #003A6C, #0066CC);
+    /* Ateneo Blue */
+    color: #F5F5F5;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: opacity 0.3s, background 0.3s;
+    text-decoration: none;
+}
+
+.action-btn:hover {
+    opacity: 0.9;
+    color: #fff;
+}
+
+/* Delete Button - Red */
+.action-btn.delete-btn {
+    background: #dc3545;
+    /* Bootstrap Red */
+}
+
+.action-btn.delete-btn:hover {
+    background: #c82333;
+    /* Darker Red */
+}
+
+/* Track Button - Distinct Green or Teal if needed, but keeping Blue for now as requested 'edit not green' */
+.action-btn.track-btn {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    /* Info Teal to distinguish from Edit */
+}

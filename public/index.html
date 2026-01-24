@@ -123,6 +123,7 @@
                 <li onclick="showTab('home')"><i class="fa-solid fa-house"></i> Dashboard</li>
                 <li onclick="showTab('live-map')"><i class="fa-solid fa-map-location-dot"></i> Live Map</li>
                 <li onclick="showTab('students')"><i class="fa-solid fa-users"></i> Students</li>
+                <li onclick="showTab('checkin')"><i class="fa-solid fa-clipboard-check"></i> Check-In</li>
                 <li onclick="showTab('drivers')"><i class="fa-solid fa-id-card"></i> Drivers</li>
                 <li onclick="showTab('shuttles')"><i class="fa-solid fa-bus"></i> Shuttles</li>
                 <li onclick="showTab('notifications')"><i class="fa-solid fa-bell"></i> Notifications</li>
@@ -219,9 +220,7 @@
                             <th>Route</th>
                             <th>Status</th>
                             <th>Occupancy</th>
-                            <th>Location</th>
-                            <th>Next Stop</th>
-                            <th>ETA</th>
+
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -235,12 +234,12 @@
                         <i class="fa-solid fa-users"></i>
                         <h2>Student Management</h2>
                     </div>
-                    <p>Monitor and manage all student shuttle operations</p>
+                    <p>Manage student records and contact information</p>
                 </header>
                 <div class="table-header">
                     <div class="table-title-section">
-                        <h3>Active Students</h3>
-                        <p>Real-time student tracking and status monitoring</p>
+                        <h3>Registered Students</h3>
+                        <p>Database of all students in the shuttle system</p>
                     </div>
                     <div class="table-actions">
                         <button class="add-btn" onclick="showAddParentModal()">
@@ -252,14 +251,8 @@
                     </div>
                 </div>
                 <div class="search-container">
-                    <input id="searchStudents" type="text" placeholder="Search students, parents, or shuttles..."
+                    <input id="searchStudents" type="text" placeholder="Search students or parents..."
                         oninput="filterStudents()">
-                    <select id="statusFilter" onchange="filterStudents()">
-                        <option value="all">All Status</option>
-                        <option value="checked-in">Checked in</option>
-                        <option value="checked-out">Checked out</option>
-                        <option value="not-boarded">Not boarded</option>
-                    </select>
                 </div>
                 <p id="no-students-message" style="display:none; color: red; margin-top: 10px;">No students found.</p>
                 <table>
@@ -268,14 +261,52 @@
                             <th><i class="fa-solid fa-user"></i> Student</th>
                             <th><i class="fa-solid fa-user"></i> Parent/Guardian</th>
                             <th><i class="fa-solid fa-address-book"></i> Contact</th>
-                            <th><i class="fa-solid fa-bus"></i> Assigned Shuttle</th>
-                            <th>Status</th>
-                            <th>Check-in Time</th>
-                            <th>Current Location</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="students-table"></tbody>
+                </table>
+            </div>
+
+            <div id="checkin" class="tab users-tab">
+                <header>
+                    <div class="title-container">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                        <h2>Check-In Management</h2>
+                    </div>
+                    <p>Real-time monitoring of student check-ins and boardings</p>
+                </header>
+                <div class="table-header">
+                    <div class="table-title-section">
+                        <h3>Student Check-In Status</h3>
+                        <p>Live status of student locations</p>
+                    </div>
+                    <div class="table-actions">
+                        <!-- Actions can go here if needed -->
+                    </div>
+                </div>
+                <div class="search-container">
+                    <input id="searchCheckIn" type="text" placeholder="Search students..." oninput="filterCheckIn()">
+                    <select id="statusFilterCheckIn" onchange="filterCheckIn()">
+                        <option value="all">All Status</option>
+                        <option value="Checked In">Checked In</option>
+                        <option value="Checked Out">Checked Out</option>
+                        <option value="Not Boarded">Not Boarded</option>
+                    </select>
+                </div>
+                <p id="no-checkin-message" style="display:none; color: red; margin-top: 10px;">No records found.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Assigned Shuttle</th>
+                            <th>Status</th>
+                            <th>Check-in Time</th>
+                            <th>Location</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="checkin-table"></tbody>
                 </table>
             </div>
 
