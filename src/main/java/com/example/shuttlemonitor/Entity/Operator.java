@@ -14,6 +14,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "operators")
 public class Operator {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

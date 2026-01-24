@@ -1,4 +1,4 @@
-const SERVER_URL = "http://34.126.105.77:8080"; // Change to "http://34.126.105.77:8080" for server testing
+const SERVER_URL = "http://localhost:8080"; // Change to "http://34.126.105.77:8080" for server testing
 
 let token = null;
 let currentUser = null;

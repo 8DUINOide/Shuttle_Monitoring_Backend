@@ -14,6 +14,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "parents")
 public class Parent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
