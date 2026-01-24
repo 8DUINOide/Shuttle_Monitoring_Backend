@@ -1,11 +1,13 @@
 /* === General Reset === */
-body, html {
+body,
+html {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', sans-serif;
     height: 100%;
     overflow: hidden;
-    background-color: #F5F5F5; /* Light Grayish-White */
+    background-color: #F5F5F5;
+    /* Light Grayish-White */
 }
 
 /* === Login Page === */
@@ -21,7 +23,8 @@ body, html {
 }
 
 .login-container {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.75), rgba(250, 204, 21, 0.75)); /* Bright Yellow to Lighter Yellow with increased transparency */
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.75), rgba(250, 204, 21, 0.75));
+    /* Bright Yellow to Lighter Yellow with increased transparency */
     padding: 3rem 2.5rem;
     border-radius: 25px;
     text-align: center;
@@ -31,8 +34,15 @@ body, html {
 }
 
 @keyframes fadeInZoom {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .login-container .logo {
@@ -44,33 +54,41 @@ body, html {
     width: 77%;
     padding: 1rem;
     margin-bottom: 1.2rem;
-    border: 2px solid #FBBF24; /* Bright Yellow */
+    border: 2px solid #FBBF24;
+    /* Bright Yellow */
     border-radius: 10px;
     font-size: 1rem;
     outline: none;
-    background-color: rgba(255, 255, 255, 0.9); /* White with opacity */
-    color: #003A6C; /* Ateneo Blue */
+    background-color: rgba(255, 255, 255, 0.9);
+    /* White with opacity */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 .login-container button {
     width: 86%;
     padding: 1rem;
-    background: #003A6C; /* Ateneo Blue */
-    color: #FFFFFF; /* White text */
+    background: #003A6C;
+    /* Ateneo Blue */
+    color: #FFFFFF;
+    /* White text */
     border: none;
     border-radius: 10px;
     font-size: 1.1rem;
-    font-weight: bold; /* Bold text */
+    font-weight: bold;
+    /* Bold text */
     cursor: pointer;
     transition: background 0.3s;
 }
 
 .login-container button:hover {
-    background: #0066CC; /* Lighter Ateneo Blue for hover */
+    background: #0066CC;
+    /* Lighter Ateneo Blue for hover */
 }
 
 .login-container a {
-    color: #0066CC; /* Lighter Ateneo Blue */
+    color: #0066CC;
+    /* Lighter Ateneo Blue */
     text-decoration: none;
 }
 
@@ -92,11 +110,14 @@ body, html {
     border-radius: 50%;
     object-fit: cover;
     margin-bottom: 1rem;
-    border: 2px solid #0066CC; /* Lighter Ateneo Blue */
+    border: 2px solid #0066CC;
+    /* Lighter Ateneo Blue */
 }
 
-.sidebar-username, .sidebar-email {
-    color: #F5F5F5; /* Light Grayish-White */
+.sidebar-username,
+.sidebar-email {
+    color: #F5F5F5;
+    /* Light Grayish-White */
     font-size: 0.9rem;
     margin: 0.2rem 0;
     text-align: center;
@@ -112,15 +133,17 @@ body, html {
     left: -240px;
     width: 220px;
     height: 100%;
-    background: linear-gradient(135deg, #003A6C, #0066CC); /* Ateneo Blue to Lighter Blue */
-    color: #F5F5F5; /* Light Grayish-White */
+    background: linear-gradient(135deg, #003A6C, #0066CC);
+    /* Ateneo Blue to Lighter Blue */
+    color: #F5F5F5;
+    /* Light Grayish-White */
     display: flex;
     flex-direction: column;
     align-items: center;
     padding-top: 2rem;
     transition: left 0.3s ease;
     z-index: 1000;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar.active {
@@ -140,7 +163,8 @@ body, html {
 
 .sidebar ul li {
     padding: 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* White with opacity */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    /* White with opacity */
     cursor: pointer;
     text-align: left;
     transition: background 0.3s;
@@ -148,7 +172,8 @@ body, html {
 }
 
 .sidebar ul li:hover {
-    background: rgba(255, 255, 255, 0.1); /* White with opacity */
+    background: rgba(255, 255, 255, 0.1);
+    /* White with opacity */
 }
 
 /* === Toggle Button === */
@@ -158,8 +183,10 @@ body, html {
     left: 20px;
     font-size: 1.5rem;
     cursor: pointer;
-    background: linear-gradient(135deg, #003A6C, #0066CC); /* Ateneo Blue to Lighter Blue */
-    color: #F5F5F5; /* Light Grayish-White */
+    background: linear-gradient(135deg, #003A6C, #0066CC);
+    /* Ateneo Blue to Lighter Blue */
+    color: #F5F5F5;
+    /* Light Grayish-White */
     padding: 0.5rem 0.75rem;
     border-radius: 8px;
     z-index: 1100;
@@ -179,7 +206,8 @@ body, html {
     transition: margin-left 0.3s ease;
     overflow-y: auto;
     width: 100%;
-    background: #F3F4F6; /* Light Gray */
+    background: #F3F4F6;
+    /* Light Gray */
 }
 
 /* === Tabs === */
@@ -189,6 +217,24 @@ body, html {
 
 .tab.active {
     display: block;
+    height: 100%;
+    /* Ensure tab takes full height */
+}
+
+/* === Live Map Specific === */
+.live-map-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.map-container {
+    flex: 1;
+    display: flex;
+    gap: 20px;
+    min-height: 0;
+    /* Critical for flex child scrolling */
 }
 
 /* === Unified Header Styling for All Tabs === */
@@ -208,19 +254,22 @@ body, html {
 .tab header i {
     margin-right: 0.5rem;
     font-size: 1.5rem;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 .tab header h2 {
     margin: 0;
     font-size: 1.5rem;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 .tab header p {
     margin: 0.5rem 0 0 0;
     font-size: 1rem;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 /* === Cards and Tables === */
@@ -234,16 +283,20 @@ body, html {
 }
 
 .balance-card {
-    background: linear-gradient(135deg, #003A6C, #0066CC); /* Ateneo Blue to Lighter Blue */
-    color: #F5F5F5; /* Light Grayish-White */
+    background: linear-gradient(135deg, #003A6C, #0066CC);
+    /* Ateneo Blue to Lighter Blue */
+    color: #F5F5F5;
+    /* Light Grayish-White */
     padding: 1.5rem;
     border-radius: 15px;
     flex: 1;
     min-width: 250px;
     max-width: 300px;
-    width: 100%; /* Ensure it respects the max-width */
-    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-    overflow: hidden; /* Clip any overflow */
+    width: 100%;
+    /* Ensure it respects the max-width */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    /* Clip any overflow */
     display: flex;
     flex-direction: column;
 }
@@ -261,10 +314,11 @@ body, html {
 }
 
 .chart-card {
-    background: #F3F4F6; /* Light Gray */
+    background: #F3F4F6;
+    /* Light Gray */
     padding: 1.5rem;
     border-radius: 15px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
     flex: 2;
     min-width: 300px;
     width: 100%;
@@ -272,10 +326,11 @@ body, html {
 }
 
 .notifications-card {
-    background: #F3F4F6; /* Light Gray */
+    background: #F3F4F6;
+    /* Light Gray */
     padding: 1.5rem;
     border-radius: 15px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
     flex: 1;
     min-width: 250px;
     max-width: 300px;
@@ -289,23 +344,28 @@ body, html {
     min-height: 200px;
 }
 
-.chart-card h4, .notifications-card h4 {
+.chart-card h4,
+.notifications-card h4 {
     margin: 0 0 1rem;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 /* === Recent Activity Subtitle === */
 .activity-subtitle {
     font-size: 0.8rem;
-    color: #666; /* Medium gray for subtitle text */
+    color: #666;
+    /* Medium gray for subtitle text */
     margin-top: 0.25rem;
-    font-style: italic; /* Optional: makes subtitle distinct */
+    font-style: italic;
+    /* Optional: makes subtitle distinct */
 }
 
 /* === Notification Items === */
 .notification-item {
     padding: 0.75rem 0;
-    border-bottom: 1px solid #D1D5DB; /* Medium Gray */
+    border-bottom: 1px solid #D1D5DB;
+    /* Medium Gray */
 }
 
 .notification-item:last-child {
@@ -315,7 +375,8 @@ body, html {
 .notification-item p {
     margin: 0.25rem 0;
     font-size: 0.95rem;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 /* === Table Header === */
@@ -330,13 +391,15 @@ body, html {
 .table-title-section h3 {
     margin: 0;
     font-size: 1.2rem;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 .table-title-section p {
     margin: 0.5rem 0 0 0;
     font-size: 0.9rem;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 .table-actions {
@@ -348,17 +411,22 @@ body, html {
 .table-actions select {
     padding: 6px 10px;
     border-radius: 6px;
-    border: 1px solid #003A6C; /* Ateneo Blue */
+    border: 1px solid #003A6C;
+    /* Ateneo Blue */
     font-size: 0.9rem;
-    background: #F3F4F6; /* Light Gray */
-    color: #003A6C; /* Ateneo Blue */
+    background: #F3F4F6;
+    /* Light Gray */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 /* === Add Button === */
 .add-btn {
     padding: 10px 16px;
-    background: linear-gradient(135deg, #003A6C, #0066CC); /* Ateneo Blue to Lighter Blue */
-    color: #F5F5F5; /* Light Grayish-White */
+    background: linear-gradient(135deg, #003A6C, #0066CC);
+    /* Ateneo Blue to Lighter Blue */
+    color: #F5F5F5;
+    /* Light Grayish-White */
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -380,7 +448,8 @@ body, html {
 
 /* === Bulk Upload Button === */
 .bulk-btn {
-    background: linear-gradient(135deg, #f0ad4e, #ec971f); /* Orange for bulk */
+    background: linear-gradient(135deg, #f0ad4e, #ec971f);
+    /* Orange for bulk */
 }
 
 .bulk-btn:hover {
@@ -391,28 +460,34 @@ body, html {
 table {
     width: 100%;
     border-collapse: collapse;
-    background: #F3F4F6; /* Light Gray */
+    background: #F3F4F6;
+    /* Light Gray */
     border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     table-layout: fixed;
 }
 
 thead {
-    background: linear-gradient(135deg, #003A6C, #0066CC); /* Ateneo Blue to Lighter Blue */
-    color: #F5F5F5; /* Light Grayish-White */
+    background: linear-gradient(135deg, #003A6C, #0066CC);
+    /* Ateneo Blue to Lighter Blue */
+    color: #F5F5F5;
+    /* Light Grayish-White */
 }
 
-td, th {
+td,
+th {
     padding: 0.8rem;
     text-align: left;
-    border-bottom: 1px solid #D1D5DB; /* Medium Gray */
+    border-bottom: 1px solid #D1D5DB;
+    /* Medium Gray */
     white-space: normal;
     word-wrap: break-word;
 }
 
 tbody tr:hover {
-    background: rgba(0, 58, 108, 0.1); /* Ateneo Blue with opacity */
+    background: rgba(0, 58, 108, 0.1);
+    /* Ateneo Blue with opacity */
 }
 
 /* === Modal === */
@@ -423,7 +498,7 @@ tbody tr:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0, 0, 0, 0.5);
     justify-content: center;
     align-items: center;
     z-index: 2000;
@@ -432,10 +507,11 @@ tbody tr:hover {
 }
 
 .modal-content {
-    background: #F3F4F6; /* Light Gray */
+    background: #F3F4F6;
+    /* Light Gray */
     padding: 2rem;
     border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     width: 320px;
     text-align: center;
 }
@@ -444,10 +520,12 @@ tbody tr:hover {
     width: 90%;
     padding: 0.75rem;
     margin-bottom: 1rem;
-    border: 1px solid #003A6C; /* Ateneo Blue */
+    border: 1px solid #003A6C;
+    /* Ateneo Blue */
     border-radius: 8px;
     background-color: #fff;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 .modal-content button {
@@ -457,12 +535,15 @@ tbody tr:hover {
     border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
-    background: linear-gradient(135deg, #003A6C, #0066CC); /* Ateneo Blue to Lighter Blue */
-    color: #F5F5F5; /* Light Grayish-White */
+    background: linear-gradient(135deg, #003A6C, #0066CC);
+    /* Ateneo Blue to Lighter Blue */
+    color: #F5F5F5;
+    /* Light Grayish-White */
 }
 
 .modal-content button:last-child {
-    background: linear-gradient(135deg, #D1D5DB, #D1D5DB); /* Medium Gray */
+    background: linear-gradient(135deg, #D1D5DB, #D1D5DB);
+    /* Medium Gray */
     color: black;
 }
 
@@ -525,7 +606,7 @@ tbody tr:hover {
     padding: 1.5rem;
     background: #fff;
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .form-section h4 {
@@ -552,7 +633,8 @@ tbody tr:hover {
     padding-bottom: 0;
 }
 
-.add-student-btn, .add-driver-btn {
+.add-student-btn,
+.add-driver-btn {
     padding: 8px 12px;
     background: linear-gradient(135deg, #5cb85c, #4cae4c);
     color: white;
@@ -565,7 +647,8 @@ tbody tr:hover {
     gap: 6px;
 }
 
-.add-student-btn:hover, .add-driver-btn:hover {
+.add-student-btn:hover,
+.add-driver-btn:hover {
     opacity: 0.9;
 }
 
@@ -589,7 +672,8 @@ tbody tr:hover {
     margin-bottom: 0.5rem;
 }
 
-.form-group input, .form-group select {
+.form-group input,
+.form-group select {
     padding: 0.75rem;
     border: 1px solid #003A6C;
     border-radius: 8px;
@@ -599,14 +683,16 @@ tbody tr:hover {
     box-sizing: border-box;
 }
 
-.form-group input:focus, .form-group select:focus {
+.form-group input:focus,
+.form-group select:focus {
     outline: none;
     border-color: #0066CC;
     box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
 }
 
 /* === Student/Driver Forms === */
-.student-form, .driver-form {
+.student-form,
+.driver-form {
     margin-bottom: 2rem;
     padding: 1.5rem;
     background: #f8f9fa;
@@ -614,7 +700,8 @@ tbody tr:hover {
     border: 1px solid #D1D5DB;
 }
 
-.student-header, .driver-header {
+.student-header,
+.driver-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -623,13 +710,15 @@ tbody tr:hover {
     border-bottom: 1px solid #D1D5DB;
 }
 
-.student-header h5, .driver-header h5 {
+.student-header h5,
+.driver-header h5 {
     margin: 0;
     color: #003A6C;
     font-size: 1.1rem;
 }
 
-.remove-student-btn, .remove-driver-btn {
+.remove-student-btn,
+.remove-driver-btn {
     padding: 6px 10px;
     background: #d9534f;
     color: white;
@@ -642,7 +731,8 @@ tbody tr:hover {
     gap: 4px;
 }
 
-.remove-student-btn:hover, .remove-driver-btn:hover {
+.remove-student-btn:hover,
+.remove-driver-btn:hover {
     background: #c9302c;
 }
 
@@ -701,18 +791,19 @@ tbody tr:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0, 0, 0, 0.5);
     justify-content: center;
     align-items: center;
     z-index: 3000;
 }
 
 .modal-confirm-content {
-    background: #F3F4F6; /* Light Gray */
+    background: #F3F4F6;
+    /* Light Gray */
     padding: 2rem;
     border-radius: 10px;
     text-align: center;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     width: 400px;
 }
 
@@ -757,11 +848,13 @@ tbody tr:hover {
     transform: translateY(-50%);
     cursor: pointer;
     font-size: 1rem;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 .toggle-password:hover {
-    color: #0066CC; /* Lighter Ateneo Blue */
+    color: #0066CC;
+    /* Lighter Ateneo Blue */
 }
 
 .form-group .password-wrapper .toggle-password {
@@ -770,14 +863,17 @@ tbody tr:hover {
 }
 
 .login-container .password-wrapper .toggle-password {
-    right: 45px; /* Adjusted to align within login input field */
-    top: 35%; /* Adjusted to vertically center in login input */
+    right: 45px;
+    /* Adjusted to align within login input field */
+    top: 35%;
+    /* Adjusted to vertically center in login input */
 }
 
 /* === Profile Tab === */
 #profile header h2 {
     font-size: 1.5rem;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
     margin-left: 40px;
     margin-top: 2px;
     margin-bottom: 1.5rem;
@@ -793,22 +889,25 @@ tbody tr:hover {
 }
 
 .profile-card {
-    background: #F3F4F6; /* Light Gray */
+    background: #F3F4F6;
+    /* Light Gray */
     padding: 1.5rem;
     border-radius: 15px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .profile-card h3 {
     margin: 0 0 1rem;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
     font-size: 1.2rem;
 }
 
 .profile-card .info-row p {
     margin: 0.5rem 0;
     font-size: 1rem;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 .profile-form {
@@ -825,19 +924,22 @@ tbody tr:hover {
 
 .profile-form label {
     font-size: 0.9rem;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
     font-weight: 500;
 }
 
 .profile-form input {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid #003A6C; /* Ateneo Blue */
+    border: 1px solid #003A6C;
+    /* Ateneo Blue */
     border-radius: 8px;
     font-size: 1rem;
     background: #fff;
     box-sizing: border-box;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 .profile-form .password-wrapper .toggle-password {
@@ -848,8 +950,10 @@ tbody tr:hover {
 
 .profile-button {
     padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, #003A6C, #0066CC); /* Ateneo Blue to Lighter Blue */
-    color: #F5F5F5; /* Light Grayish-White */
+    background: linear-gradient(135deg, #003A6C, #0066CC);
+    /* Ateneo Blue to Lighter Blue */
+    color: #F5F5F5;
+    /* Light Grayish-White */
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -863,7 +967,8 @@ tbody tr:hover {
 }
 
 .profile-button:disabled {
-    background: linear-gradient(135deg, #D1D5DB, #D1D5DB); /* Medium Gray */
+    background: linear-gradient(135deg, #D1D5DB, #D1D5DB);
+    /* Medium Gray */
     cursor: not-allowed;
     opacity: 0.7;
 }
@@ -883,8 +988,10 @@ tbody tr:hover {
 .profile-picture-upload button {
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
-    background: linear-gradient(135deg, #003A6C, #0066CC); /* Ateneo Blue to Lighter Blue */
-    color: #F5F5F5; /* Light Grayish-White */
+    background: linear-gradient(135deg, #003A6C, #0066CC);
+    /* Ateneo Blue to Lighter Blue */
+    color: #F5F5F5;
+    /* Light Grayish-White */
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -892,7 +999,8 @@ tbody tr:hover {
 
 #profile-picture-error {
     text-align: center;
-    color: #d9534f; /* Unchanged: Error text */
+    color: #d9534f;
+    /* Unchanged: Error text */
 }
 
 /* === Search Bar & Table Actions === */
@@ -907,10 +1015,12 @@ tbody tr:hover {
     width: 100%;
     padding: 10px 40px 10px 12px;
     font-size: 15px;
-    border: 1px solid #003A6C; /* Ateneo Blue */
+    border: 1px solid #003A6C;
+    /* Ateneo Blue */
     border-radius: 6px;
     background: #fff;
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 .users-header {
@@ -924,8 +1034,10 @@ tbody tr:hover {
 
 .add-user-btn {
     padding: 10px 16px;
-    background: linear-gradient(135deg, #003A6C, #0066CC); /* Ateneo Blue to Lighter Blue */
-    color: #F5F5F5; /* Light Grayish-White */
+    background: linear-gradient(135deg, #003A6C, #0066CC);
+    /* Ateneo Blue to Lighter Blue */
+    color: #F5F5F5;
+    /* Light Grayish-White */
     font-weight: bold;
     border: none;
     border-radius: 6px;
@@ -979,11 +1091,12 @@ tbody tr:hover {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: linear-gradient(135deg, #008000, #2a6f2a); /* Unchanged: Green for toast */
+    background: linear-gradient(135deg, #008000, #2a6f2a);
+    /* Unchanged: Green for toast */
     color: #fff;
     padding: 1rem 1.5rem;
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     display: none;
     animation: fadeInOut 4s forwards;
     z-index: 3000;
@@ -991,10 +1104,21 @@ tbody tr:hover {
 }
 
 @keyframes fadeInOut {
-    0% { opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { opacity: 0; }
+    0% {
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
 }
 
 /* === Delete Icon Button === */
@@ -1010,12 +1134,14 @@ tbody tr:hover {
 }
 
 .delete-icon-btn i.fas.fa-trash-alt {
-    color: #d9534f; /* Unchanged: Red */
+    color: #d9534f;
+    /* Unchanged: Red */
     font-size: 14px;
 }
 
 .delete-icon-btn:hover i.fas.fa-trash-alt {
-    color: #003A6C; /* Ateneo Blue */
+    color: #003A6C;
+    /* Ateneo Blue */
 }
 
 /* === Action Buttons === */
@@ -1059,7 +1185,7 @@ tbody tr:hover {
     background: white;
     border: 1px solid #ccc;
     border-radius: 4px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     z-index: 10;
     min-width: 120px;
 }
@@ -1107,7 +1233,8 @@ tbody tr:hover {
     flex: 1;
     width: 100%;
     min-width: 300px;
-    max-width: 1200px; /* Further extended width for better visibility */
+    max-width: 1200px;
+    /* Further extended width for better visibility */
 }
 
 #shuttles .search-container select {
@@ -1132,7 +1259,8 @@ tbody tr:hover {
     flex: 1;
     width: 100%;
     min-width: 300px;
-    max-width: 1200px; /* Extended width for better visibility */
+    max-width: 1200px;
+    /* Extended width for better visibility */
 }
 
 #students .search-container select {
@@ -1151,54 +1279,83 @@ tbody tr:hover {
     width: 16px;
     text-align: center;
 }
+
 #students td small {
     color: #666;
     font-size: 0.85rem;
 }
 
 /* === Students Table Column Widths === */
-#students table th:nth-child(1), #students table td:nth-child(1) { /* Student */
+#students table th:nth-child(1),
+#students table td:nth-child(1) {
+    /* Student */
     width: 20%;
     max-width: 200px;
 }
-#students table th:nth-child(2), #students table td:nth-child(2) { /* Parent/Guardian */
+
+#students table th:nth-child(2),
+#students table td:nth-child(2) {
+    /* Parent/Guardian */
     width: 15%;
     max-width: 150px;
 }
-#students table th:nth-child(3), #students table td:nth-child(3) { /* Contact */
+
+#students table th:nth-child(3),
+#students table td:nth-child(3) {
+    /* Contact */
     width: 25%;
     max-width: 250px;
 }
-#students table th:nth-child(4), #students table td:nth-child(4) { /* Assigned Shuttle */
+
+#students table th:nth-child(4),
+#students table td:nth-child(4) {
+    /* Assigned Shuttle */
     width: 15%;
     max-width: 150px;
 }
-#students table th:nth-child(5), #students table td:nth-child(5) { /* Status */
+
+#students table th:nth-child(5),
+#students table td:nth-child(5) {
+    /* Status */
     width: 10%;
     max-width: 100px;
 }
-#students table th:nth-child(6), #students table td:nth-child(6) { /* Check-in Time */
+
+#students table th:nth-child(6),
+#students table td:nth-child(6) {
+    /* Check-in Time */
     width: 10%;
     max-width: 100px;
 }
-#students table th:nth-child(7), #students table td:nth-child(7) { /* Current Location */
+
+#students table th:nth-child(7),
+#students table td:nth-child(7) {
+    /* Current Location */
     width: 15%;
     max-width: 150px;
 }
-#students table th:nth-child(8), #students table td:nth-child(8) { /* Actions */
+
+#students table th:nth-child(8),
+#students table td:nth-child(8) {
+    /* Actions */
     width: 10%;
     max-width: 100px;
 }
 
 /* === Status Badges for Students Tab === */
 .badge-checked-in {
-    background: #5cb85c; /* Green for Checked in */
+    background: #5cb85c;
+    /* Green for Checked in */
 }
+
 .badge-checked-out {
-    background: #f0ad4e; /* Orange for Checked out */
+    background: #f0ad4e;
+    /* Orange for Checked out */
 }
+
 .badge-not-boarded {
-    background: #d9534f; /* Red for Not boarded */
+    background: #d9534f;
+    /* Red for Not boarded */
 }
 
 /* === Notifications Tab Specific Styles === */
@@ -1259,25 +1416,36 @@ tbody tr:hover {
     font-size: 0.9rem;
 }
 
-#notifications table th:nth-child(1), #notifications table td:nth-child(1) { /* Notification Message */
+#notifications table th:nth-child(1),
+#notifications table td:nth-child(1) {
+    /* Notification Message */
     width: 60%;
     max-width: 600px;
 }
-#notifications table th:nth-child(2), #notifications table td:nth-child(2) { /* Timestamp */
+
+#notifications table th:nth-child(2),
+#notifications table td:nth-child(2) {
+    /* Timestamp */
     width: 30%;
     max-width: 300px;
 }
-#notifications table th:nth-child(3), #notifications table td:nth-child(3) { /* Status */
+
+#notifications table th:nth-child(3),
+#notifications table td:nth-child(3) {
+    /* Status */
     width: 10%;
     max-width: 100px;
 }
 
 /* === Status Badges for Notifications Tab === */
 .badge-unread {
-    background: #d9534f; /* Red for Unread */
+    background: #d9534f;
+    /* Red for Unread */
 }
+
 .badge-read {
-    background: #5cb85c; /* Green for Read */
+    background: #5cb85c;
+    /* Green for Read */
 }
 
 /* === Live Map Tracking Tab Specific Styles === */
@@ -1311,24 +1479,35 @@ tbody tr:hover {
 }
 
 #live-map .table-header .action-btn:nth-child(2) {
-    background: linear-gradient(135deg, #337ab7, #286090); /* Layers */
+    background: linear-gradient(135deg, #337ab7, #286090);
+    /* Layers */
 }
 
 #live-map .table-header .action-btn:nth-child(3) {
-    background: linear-gradient(135deg, #f0ad4e, #ec971f); /* Zoom In */
+    background: linear-gradient(135deg, #f0ad4e, #ec971f);
+    /* Zoom In */
 }
 
 #live-map .table-header .action-btn:nth-child(4) {
-    background: linear-gradient(135deg, #f0ad4e, #ec971f); /* Zoom Out */
+    background: linear-gradient(135deg, #f0ad4e, #ec971f);
+    /* Zoom Out */
 }
 
 #live-map .table-header .action-btn:nth-child(5) {
-    background: linear-gradient(135deg, #d9534f, #c9302c); /* Full Screen */
+    background: linear-gradient(135deg, #d9534f, #c9302c);
+    /* Full Screen */
 }
 
 #live-map .map-container {
     padding-left: 40px;
     padding-right: 40px;
+}
+
+/* Flex wrapper for live-map tab to fill viewport */
+.live-map-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 4rem);
 }
 
 #live-map .active-shuttles h3 {
@@ -1383,7 +1562,8 @@ tbody tr:hover {
     flex: 1;
     width: 100%;
     min-width: 300px;
-    max-width: 1200px; /* Extended width for better visibility */
+    max-width: 1200px;
+    /* Extended width for better visibility */
 }
 
 #drivers .search-container select {
@@ -1396,31 +1576,51 @@ tbody tr:hover {
 }
 
 /* === Drivers Table Column Widths === */
-#drivers table th:nth-child(1), #drivers table td:nth-child(1) { /* Driver */
+#drivers table th:nth-child(1),
+#drivers table td:nth-child(1) {
+    /* Driver */
     width: 15%;
     max-width: 150px;
 }
-#drivers table th:nth-child(2), #drivers table td:nth-child(2) { /* Operator */
+
+#drivers table th:nth-child(2),
+#drivers table td:nth-child(2) {
+    /* Operator */
     width: 20%;
     max-width: 200px;
 }
-#drivers table th:nth-child(3), #drivers table td:nth-child(3) { /* Contact */
+
+#drivers table th:nth-child(3),
+#drivers table td:nth-child(3) {
+    /* Contact */
     width: 20%;
     max-width: 200px;
 }
-#drivers table th:nth-child(4), #drivers table td:nth-child(4) { /* License Number */
+
+#drivers table th:nth-child(4),
+#drivers table td:nth-child(4) {
+    /* License Number */
     width: 15%;
     max-width: 150px;
 }
-#drivers table th:nth-child(5), #drivers table td:nth-child(5) { /* Emergency Contact */
+
+#drivers table th:nth-child(5),
+#drivers table td:nth-child(5) {
+    /* Emergency Contact */
     width: 15%;
     max-width: 150px;
 }
-#drivers table th:nth-child(6), #drivers table td:nth-child(6) { /* Status */
+
+#drivers table th:nth-child(6),
+#drivers table td:nth-child(6) {
+    /* Status */
     width: 10%;
     max-width: 100px;
 }
-#drivers table th:nth-child(7), #drivers table td:nth-child(7) { /* Actions */
+
+#drivers table th:nth-child(7),
+#drivers table td:nth-child(7) {
+    /* Actions */
     width: 10%;
     max-width: 100px;
 }
@@ -1432,6 +1632,7 @@ tbody tr:hover {
     width: 16px;
     text-align: center;
 }
+
 #drivers td small {
     color: #666;
     font-size: 0.85rem;
@@ -1439,8 +1640,10 @@ tbody tr:hover {
 
 #recent-activity-list li {
     padding: 0.75rem 0;
-    border-bottom: 1px solid #D1D5DB; /* Medium Gray */
-    color: #003A6C; /* Ateneo Blue for main text */
+    border-bottom: 1px solid #D1D5DB;
+    /* Medium Gray */
+    color: #003A6C;
+    /* Ateneo Blue for main text */
 }
 
 #recent-activity-list li:last-child {
@@ -1461,45 +1664,59 @@ tbody tr:hover {
         align-items: stretch;
         padding: 0 0.5rem;
     }
-    .balance-card, .chart-card, .notifications-card {
+
+    .balance-card,
+    .chart-card,
+    .notifications-card {
         flex: none;
         width: 100%;
         max-width: none;
     }
+
     .chart-card canvas {
         height: 50vw !important;
         max-height: 300px;
     }
-    .modal-content, .popup-card {
+
+    .modal-content,
+    .popup-card {
         width: 90%;
     }
+
     .profile-section {
         grid-template-columns: 1fr;
         padding: 0 20px;
     }
+
     .add-form-modal {
         width: 95%;
         padding: 1rem;
     }
+
     .form-row {
         grid-template-columns: 1fr;
     }
+
     .table-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
     }
+
     .modal-actions {
         flex-direction: column;
         gap: 0.5rem;
     }
+
     .dropdown-menu {
         right: -50px;
         min-width: 140px;
     }
+
     .sidebar {
         left: -100%;
     }
+
     .content.content-shift {
         margin-left: 0;
     }

@@ -223,6 +223,13 @@ function showTab(tabId) {
     if (tabId === 'students') filterStudents();
     if (tabId === 'drivers') filterDrivers();
     if (tabId === 'notifications') filterNotifications();
+
+    // Fix map size when switching to live-map tab
+    if (tabId === 'live-map' && window.dashboardMap) {
+        setTimeout(() => {
+            window.dashboardMap.resize();
+        }, 100);
+    }
 }
 
 function toggleSidebar() {
