@@ -13,7 +13,8 @@ let currentDashboardView = 'home';
 const paginationState = {
     shuttles: { page: 0, size: 10, totalPages: 0 },
     students: { page: 0, size: 10, totalPages: 0 },
-    drivers: { page: 0, size: 10, totalPages: 0 }
+    drivers: { page: 0, size: 10, totalPages: 0 },
+    registration: { page: 0, size: 10, totalPages: 0 }
 };
 
 // =================== PAGINATION CONTROLS ===================
@@ -46,6 +47,7 @@ async function changePage(entityType, newPage) {
     if (entityType === 'shuttles') await loadShuttles();
     else if (entityType === 'students') await loadStudents();
     else if (entityType === 'drivers') await loadDrivers();
+    else if (entityType === 'registration') await loadRegistration();
 }
 
 const studentStatuses = ['Checked in', 'Checked out', 'Not boarded'];
@@ -220,11 +222,17 @@ function showTab(tabId) {
     statusFilters.forEach(filter => {
         filter.value = "all";
     });
+    // Reset specific registration filter if separate
+    if (document.getElementById('statusFilterRegistration')) {
+        document.getElementById('statusFilterRegistration').value = 'all';
+    }
     // Trigger filter functions to refresh displayed data
     if (tabId === 'shuttles') filterShuttles();
     if (tabId === 'students') filterStudents();
     if (tabId === 'drivers') filterDrivers();
     if (tabId === 'notifications') filterNotifications();
+    if (tabId === 'registration') loadRegistration();
+    if (tabId === 'checkin') loadCheckInManagement();
 
     // Fix map size when switching to live-map tab
     if (tabId === 'live-map' && window.dashboardMap) {
@@ -403,7 +411,6 @@ async function loadCheckInManagement() {
                 <td>
                     <div style="display: inline-flex; gap: 5px; align-items: center;">
                         <button class="action-btn track-btn" onclick="showToast('Tracking details for ' + '${sanitizeHTML(student.fullName)}')">Track</button>
-                         <button class="action-btn" onclick="showRegisterDeviceModal(${student.studentId})"><i class="fa-solid fa-id-card"></i> Device</button>
                     </div>
                 </td>
             `;
@@ -420,6 +427,132 @@ async function loadCheckInManagement() {
         showToast('Error loading check-in data');
     }
 }
+
+async function loadRegistration() {
+    if (!token) return;
+    try {
+        const { page, size } = paginationState.registration;
+        const response = await fetch(`${SERVER_URL}/api/students/all?page=${page}&size=${size}&sortBy=studentId&sortOrder=desc`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch registration data');
+        const data = await response.json();
+        const students = data.content;
+        allStudentsData = students;
+
+        paginationState.registration.totalPages = data.totalPages;
+        paginationState.registration.page = data.number;
+
+        const tbody = document.getElementById('registration-table');
+        if (tbody) {
+            tbody.innerHTML = '';
+            students.forEach(student => {
+                let assignedShuttle = 'Not Assigned';
+                if (student.assignedShuttle) {
+                    const shuttleName = student.assignedShuttle.name ? student.assignedShuttle.name : `Shuttle #${student.assignedShuttle.shuttleId}`;
+                    assignedShuttle = `${shuttleName}(${student.assignedShuttle.route})`;
+                }
+                const hasRfid = student.rfidTag ? '<i class="fa-solid fa-check-circle" style="color: green;"></i> RFID' : '<i class="fa-solid fa-times-circle" style="color: red;"></i> RFID';
+                const hasFingerprint = student.fingerprintHash ? '<i class="fa-solid fa-check-circle" style="color: green;"></i> Fingerprint' : '<i class="fa-solid fa-times-circle" style="color: red;"></i> Fingerprint';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${sanitizeHTML(student.fullName)}</td>
+                    <td>${sanitizeHTML(student.grade)} - ${sanitizeHTML(student.section)}</td>
+                    <td>
+                        ${sanitizeHTML(assignedShuttle)}
+                        <button class="action-btn" onclick="showAssignShuttleModal(${student.studentId})" style="margin-left:5px; font-size: 0.8em;"><i class="fa-solid fa-pen"></i></button>
+                    </td>
+                    <td>${hasRfid} &nbsp; ${hasFingerprint}</td>
+                    <td>
+                        <button class="action-btn" onclick="showRegisterDeviceModal(${student.studentId})"><i class="fa-solid fa-id-card"></i> Register Device</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            renderPagination('registration', 'registration');
+            filterRegistration();
+        }
+    } catch (error) {
+        console.error('Error loading registration:', error);
+        showToast('Error loading registration data');
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// =================== ASSIGN SHUTTLE ===================
+function showAssignShuttleModal(studentId) {
+    document.getElementById('assign-student-id').value = studentId;
+    const select = document.getElementById('assign-shuttle-select');
+    select.innerHTML = '<option value="">Select Shuttle</option>';
+
+    // Use the loaded shuttles (or fetch active ones)
+    // We can fetch active shuttles specifically or use loadShuttles data if available
+    // For simplicity, let's fetch list if we don't have a specific global for dropdown
+    // Or just iterate existing paginationState.shuttles data? No, that's paginated.
+    // Better to fetch all active shuttles for the dropdown.
+
+    fetch(`${SERVER_URL}/api/shuttles/all?size=100`, {
+        headers: { "Authorization": `Bearer ${token}` }
+    })
+        .then(res => res.json())
+        .then(data => {
+            data.content.forEach(shuttle => {
+                const opt = document.createElement('option');
+                opt.value = shuttle.shuttleId;
+                const shuttleName = shuttle.name ? shuttle.name : `Shuttle #${shuttle.shuttleId}`;
+                opt.textContent = `${shuttleName}(${shuttle.route}) - ${shuttle.status}`;
+                select.appendChild(opt);
+            });
+            document.getElementById('assignShuttleModal').style.display = 'flex';
+        })
+        .catch(err => showToast("Error loading shuttles"));
+}
+
+function closeAssignShuttleModal() {
+    document.getElementById('assignShuttleModal').style.display = 'none';
+}
+
+document.getElementById('assignShuttleForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const studentId = document.getElementById('assign-student-id').value;
+    const shuttleId = document.getElementById('assign-shuttle-select').value;
+
+    if (!shuttleId) return;
+
+    try {
+        const response = await fetch(`${SERVER_URL}/api/students/${studentId}/assigned-shuttle`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ shuttleId: parseInt(shuttleId) })
+        });
+
+        if (response.ok) {
+            showToast("Shuttle assigned successfully");
+            closeAssignShuttleModal();
+            loadRegistration(); // Refresh table
+        } else {
+            showToast("Failed to assign shuttle");
+        }
+    } catch (err) {
+        showToast("Error assigning shuttle");
+    }
+});
 
 async function loadDrivers() {
     if (!token) return;
@@ -796,6 +929,36 @@ function filterNotifications() {
     });
 
     document.getElementById("no-notifications-message").style.display = visibleCount === 0 ? "block" : "none";
+}
+
+function filterRegistration() {
+    const searchValue = document.getElementById("searchRegistration").value.toLowerCase();
+    const statusFilter = document.getElementById("statusFilterRegistration").value.toLowerCase();
+    const rows = document.querySelectorAll("#registration-table tr");
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const student = row.querySelector("td:nth-child(1)")?.textContent.toLowerCase() || "";
+        const grade = row.querySelector("td:nth-child(2)")?.textContent.toLowerCase() || "";
+        const shuttle = row.querySelector("td:nth-child(3)")?.textContent.toLowerCase() || "";
+
+        const matchesSearch = student.includes(searchValue) || grade.includes(searchValue) || shuttle.includes(searchValue);
+        let matchesStatus = true;
+        if (statusFilter === 'assigned') {
+            matchesStatus = !shuttle.includes('not assigned');
+        } else if (statusFilter === 'unassigned') {
+            matchesStatus = shuttle.includes('not assigned');
+        }
+
+        if (matchesSearch && matchesStatus) {
+            row.style.display = "";
+            visibleCount++;
+        } else {
+            row.style.display = "none";
+        }
+    });
+
+    document.getElementById("no-registration-message").style.display = visibleCount === 0 ? "block" : "none";
 }
 
 function markAllAsRead() {
@@ -1811,7 +1974,11 @@ document.getElementById('registerDeviceForm').addEventListener('submit', async (
         if (response.ok) {
             showToast('Device registered successfully');
             closeRegisterDeviceModal();
-            loadStudents(); // Refresh list
+            if (currentDashboardView === 'registration') {
+                loadRegistration();
+            } else {
+                loadStudents();
+            }
         } else {
             errorEl.textContent = result.error || 'Failed to register device';
             errorEl.style.display = 'block';

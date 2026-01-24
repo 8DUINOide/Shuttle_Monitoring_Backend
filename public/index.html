@@ -124,6 +124,7 @@
                 <li onclick="showTab('live-map')"><i class="fa-solid fa-map-location-dot"></i> Live Map</li>
                 <li onclick="showTab('students')"><i class="fa-solid fa-users"></i> Students</li>
                 <li onclick="showTab('checkin')"><i class="fa-solid fa-clipboard-check"></i> Check-In</li>
+                <li onclick="showTab('registration')"><i class="fa-solid fa-id-card"></i> Registration</li>
                 <li onclick="showTab('drivers')"><i class="fa-solid fa-id-card"></i> Drivers</li>
                 <li onclick="showTab('shuttles')"><i class="fa-solid fa-bus"></i> Shuttles</li>
                 <li onclick="showTab('notifications')"><i class="fa-solid fa-bell"></i> Notifications</li>
@@ -225,6 +226,47 @@
                         </tr>
                     </thead>
                     <tbody id="shuttles-table"></tbody>
+                </table>
+            </div>
+
+            <div id="registration" class="tab">
+                <header>
+                    <div class="title-container">
+                        <i class="fa-solid fa-id-card"></i>
+                        <h2>Registration & Assignment</h2>
+                    </div>
+                    <p>Assign shuttles and register devices for students</p>
+                </header>
+                <div class="table-header">
+                    <div class="table-title-section">
+                        <h3>Student Registration</h3>
+                    </div>
+                    <div class="table-actions">
+
+                    </div>
+                </div>
+                <div class="search-container">
+                    <input id="searchRegistration" type="text" placeholder="Search student, grade, or shuttle..."
+                        oninput="filterRegistration()">
+                    <select id="statusFilterRegistration" onchange="filterRegistration()">
+                        <option value="all">All Status</option>
+                        <option value="assigned">Assigned</option>
+                        <option value="unassigned">Unassigned</option>
+                    </select>
+                </div>
+                <p id="no-registration-message" style="display:none; color: red; margin-top: 10px;">No students found.
+                </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Grade/Section</th>
+                            <th>Assigned Shuttle</th>
+                            <th>Device Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="registration-table"></tbody>
                 </table>
             </div>
 
@@ -1342,6 +1384,53 @@
         </div>
 
         <div id="toast" class="toast" style="display: none;"></div>
+
+
+
+        <!-- Assign Shuttle Modal -->
+        <div id="assignShuttleModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeAssignShuttleModal()">&times;</span>
+                <h2>Assign Shuttle</h2>
+                <form id="assignShuttleForm">
+                    <input type="hidden" id="assign-student-id">
+                    <div class="form-group">
+                        <label>Select Shuttle</label>
+                        <select id="assign-shuttle-select" required></select>
+                    </div>
+                    <button type="submit" class="submit-btn">Save Assignment</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Register Device Modal -->
+        <div id="registerDeviceModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeRegisterDeviceModal()">&times;</span>
+                <h2><i class="fa-solid fa-id-card"></i> Register Device</h2>
+                <form id="registerDeviceForm">
+                    <input type="hidden" id="register-device-student-id">
+                    <div class="form-group">
+                        <label>Student Name</label>
+                        <input type="text" id="register-device-student-name" readonly
+                            style="background-color: #f0f0f0;">
+                    </div>
+                    <div class="form-group">
+                        <label>RFID Tag</label>
+                        <input type="text" id="rfidInput" placeholder="Scan RFID Card">
+                    </div>
+                    <div class="form-group">
+                        <label>Fingerprint Hash</label>
+                        <input type="text" id="fingerprintInput" placeholder="Scan Fingerprint">
+                    </div>
+                    <p id="register-device-error" class="error-text" style="display: none;"></p>
+                    <button type="submit" class="submit-btn"
+                        style="background: linear-gradient(135deg, #4CAF50, #388E3C);">
+                        <i class="fa-solid fa-save"></i> Register Device
+                    </button>
+                </form>
+            </div>
+        </div>
 
         <script src="script.js"></script>
         <script>
