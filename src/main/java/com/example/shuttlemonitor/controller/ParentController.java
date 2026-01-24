@@ -5,6 +5,9 @@ import com.example.shuttlemonitor.Repository.ParentRepository;
 import com.example.shuttlemonitor.Repository.UserRepository;
 import com.example.shuttlemonitor.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,11 +40,14 @@ public class ParentController {
 
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Parent>> getAllParents(
+    public ResponseEntity<Page<Parent>> getAllParents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "parentId") String sortBy,
             @RequestParam(defaultValue = "desc") String sortOrder) {
         Sort sort = Sort.by(sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
-        List<Parent> parents = parentRepository.findAll(sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Parent> parents = parentRepository.findAll(pageable);
         return ResponseEntity.ok(parents);
     }
 

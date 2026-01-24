@@ -8,6 +8,45 @@ let driverCounter = 1;
 let bulkType = '';
 let allDrivers = [];
 
+// Pagination State
+const paginationState = {
+    shuttles: { page: 0, size: 10, totalPages: 0 },
+    students: { page: 0, size: 10, totalPages: 0 },
+    drivers: { page: 0, size: 10, totalPages: 0 }
+};
+
+// =================== PAGINATION CONTROLS ===================
+function renderPagination(entityType, containerId) {
+    const state = paginationState[entityType];
+    const container = document.getElementById(containerId);
+    if (!container) return; // Should allow dynamic creation if missing later
+
+    let html = `
+        <div class="pagination-controls" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 10px;">
+            <button class="action-btn" ${state.page === 0 ? 'disabled' : ''} onclick="changePage('${entityType}', ${state.page - 1})">Previous</button>
+            <span>Page ${state.page + 1} of ${state.totalPages}</span>
+            <button class="action-btn" ${state.page >= state.totalPages - 1 ? 'disabled' : ''} onclick="changePage('${entityType}', ${state.page + 1})">Next</button>
+        </div>
+    `;
+
+    // Check if pagination container exists within the tab, if not append it
+    let pagDiv = container.querySelector('.pagination-controls');
+    if (pagDiv) {
+        pagDiv.outerHTML = html;
+    } else {
+        container.insertAdjacentHTML('beforeend', html);
+    }
+}
+
+async function changePage(entityType, newPage) {
+    if (newPage < 0 || newPage >= paginationState[entityType].totalPages) return;
+    paginationState[entityType].page = newPage;
+
+    if (entityType === 'shuttles') await loadShuttles();
+    else if (entityType === 'students') await loadStudents();
+    else if (entityType === 'drivers') await loadDrivers();
+}
+
 const studentStatuses = ['Checked in', 'Checked out', 'Not boarded'];
 const studentStatusClasses = ['badge-checked-in', 'badge-checked-out', 'badge-not-boarded'];
 const shuttleStatuses = ['ACTIVE', 'INACTIVE', 'MAINTENANCE'];
@@ -205,13 +244,21 @@ async function loadAllData() {
 async function loadShuttles() {
     if (!token) return;
     try {
-        const response = await fetch(`${SERVER_URL}/api/shuttles/all`, {
+        const { page, size } = paginationState.shuttles;
+        // Default sort by shuttleId desc as per controller default or preference
+        const response = await fetch(`${SERVER_URL}/api/shuttles/all?page=${page}&size=${size}&sortBy=shuttleId&sortOrder=desc`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         if (!response.ok) {
             throw new Error('Failed to fetch shuttles');
         }
-        const shuttles = await response.json();
+        const data = await response.json();
+        const shuttles = data.content; // Access content from Page object
+
+        // Update pagination state
+        paginationState.shuttles.totalPages = data.totalPages;
+        paginationState.shuttles.page = data.number;
+
         const tbody = document.getElementById('shuttles-table');
         tbody.innerHTML = '';
         shuttles.forEach((shuttle) => {
@@ -250,6 +297,9 @@ async function loadShuttles() {
             `;
             tbody.appendChild(tr);
         });
+
+        renderPagination('shuttles', 'shuttles'); // Add controls to 'shuttles' tab container
+
     } catch (error) {
         console.error('Error loading shuttles:', error);
         showToast('Error loading shuttles data');
@@ -259,13 +309,20 @@ async function loadShuttles() {
 async function loadStudents() {
     if (!token) return;
     try {
-        const response = await fetch(`${SERVER_URL}/api/students/all`, {
+        const { page, size } = paginationState.students;
+        const response = await fetch(`${SERVER_URL}/api/students/all?page=${page}&size=${size}&sortBy=studentId&sortOrder=desc`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         if (!response.ok) {
             throw new Error('Failed to fetch students');
         }
-        const students = await response.json();
+        const data = await response.json();
+        const students = data.content; // Access content list
+
+        // Update pagination state
+        paginationState.students.totalPages = data.totalPages;
+        paginationState.students.page = data.number;
+
         const tbody = document.getElementById('students-table');
         tbody.innerHTML = '';
         students.forEach(student => {
@@ -278,14 +335,21 @@ async function loadStudents() {
                 const checkInDate = new Date(Date.now() - hoursAgo * 3600000);
                 checkInTime = checkInDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
             }
-            const assignedShuttle = `Shuttle #${Math.floor(Math.random() * 4) + 1}`;
+            const assignedShuttle = student.assignedShuttle ? `Shuttle #${student.assignedShuttle.shuttleId}` : 'Not Assigned';
+            // Fallback since API student object might not populate assigned shuttle details similarly if backend changed to lazy or different serialized form, but let's assume it's there or handle gently.
+
             const tr = document.createElement('tr');
             tr.dataset.studentId = student.studentId;
+            // Handle null parent just in case
+            const parentName = student.parent ? sanitizeHTML(student.parent.fullName) : 'N/A';
+            const parentContact = student.parent ? sanitizeHTML(student.parent.contactPhone) : 'N/A';
+            const parentEmail = student.parent && student.parent.user ? sanitizeHTML(student.parent.user.email) : 'N/A';
+
             tr.innerHTML = `
                 <td>${sanitizeHTML(student.fullName)}<br><small>${sanitizeHTML(student.grade)} - ${sanitizeHTML(student.section)}</small></td>
-                <td>${sanitizeHTML(student.parent.fullName)}</td>
-                <td><i class="fa-solid fa-phone"></i> ${sanitizeHTML(student.parent.contactPhone)}<br><i class="fa-solid fa-envelope"></i> ${sanitizeHTML(student.parent.user.email)}</td>
-                <td>${assignedShuttle}</td>
+                <td>${parentName}</td>
+                <td><i class="fa-solid fa-phone"></i> ${parentContact}<br><i class="fa-solid fa-envelope"></i> ${parentEmail}</td>
+                <td>${sanitizeHTML(assignedShuttle)}</td>
                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td>${checkInTime}</td>
                 <td>${sanitizeHTML(student.currentAddress)}</td>
@@ -304,6 +368,9 @@ async function loadStudents() {
             `;
             tbody.appendChild(tr);
         });
+
+        renderPagination('students', 'students'); // Add controls to 'students' tab container
+
     } catch (error) {
         console.error('Error loading students:', error);
         showToast('Error loading students data');
@@ -313,13 +380,20 @@ async function loadStudents() {
 async function loadDrivers() {
     if (!token) return;
     try {
-        const response = await fetch(`${SERVER_URL}/api/drivers/all`, {
+        const { page, size } = paginationState.drivers;
+        const response = await fetch(`${SERVER_URL}/api/drivers/all?page=${page}&size=${size}&sortBy=driverId&sortOrder=desc`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         if (!response.ok) {
             throw new Error('Failed to fetch drivers');
         }
-        allDrivers = await response.json();
+        const data = await response.json();
+        allDrivers = data.content; // Access content list
+
+        // Update pagination state
+        paginationState.drivers.totalPages = data.totalPages;
+        paginationState.drivers.page = data.number;
+
         const tbody = document.getElementById('drivers-table');
         tbody.innerHTML = '';
         allDrivers.forEach(driver => {
@@ -347,6 +421,9 @@ async function loadDrivers() {
             `;
             tbody.appendChild(tr);
         });
+
+        renderPagination('drivers', 'drivers'); // Add controls to 'drivers' tab container
+
     } catch (error) {
         console.error('Error loading drivers:', error);
         showToast('Error loading drivers data');

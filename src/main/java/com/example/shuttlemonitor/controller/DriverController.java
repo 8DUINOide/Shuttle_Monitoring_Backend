@@ -7,6 +7,9 @@ import com.example.shuttlemonitor.Repository.UserRepository;
 import com.example.shuttlemonitor.exception.UnauthorizedAccessException;
 import com.example.shuttlemonitor.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,11 +42,14 @@ public class DriverController {
 
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Driver>> getAllDrivers(
+    public ResponseEntity<Page<Driver>> getAllDrivers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "driverId") String sortBy,
             @RequestParam(defaultValue = "desc") String sortOrder) {
         Sort sort = Sort.by(sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
-        List<Driver> drivers = driverRepository.findAll(sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Driver> drivers = driverRepository.findAll(pageable);
         return ResponseEntity.ok(drivers);
     }
 

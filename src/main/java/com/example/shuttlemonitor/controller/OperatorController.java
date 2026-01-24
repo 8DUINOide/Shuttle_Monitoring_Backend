@@ -5,6 +5,9 @@ import com.example.shuttlemonitor.Repository.OperatorRepository;
 import com.example.shuttlemonitor.Repository.UserRepository;
 import com.example.shuttlemonitor.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,11 +40,14 @@ public class OperatorController {
 
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Operator>> getAllOperators(
+    public ResponseEntity<Page<Operator>> getAllOperators(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "operatorId") String sortBy,
             @RequestParam(defaultValue = "desc") String sortOrder) {
         Sort sort = Sort.by(sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
-        List<Operator> operators = operatorRepository.findAll(sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Operator> operators = operatorRepository.findAll(pageable);
         return ResponseEntity.ok(operators);
     }
 

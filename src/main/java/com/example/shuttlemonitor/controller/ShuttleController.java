@@ -11,6 +11,9 @@ import com.example.shuttlemonitor.service.ShuttleService;
 import com.example.shuttlemonitor.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -117,11 +120,14 @@ public class ShuttleController {
 
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Shuttle>> getAllShuttles(
+    public ResponseEntity<Page<Shuttle>> getAllShuttles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "shuttleId") String sortBy,
             @RequestParam(defaultValue = "desc") String sortOrder) {
         Sort sort = Sort.by(sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
-        List<Shuttle> shuttles = shuttleRepository.findAll(sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Shuttle> shuttles = shuttleRepository.findAll(pageable);
         return ResponseEntity.ok(shuttles);
     }
 
