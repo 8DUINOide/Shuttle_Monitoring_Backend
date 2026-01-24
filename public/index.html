@@ -388,6 +388,7 @@
             </div>
 
             <div id="live-map" class="tab">
+<<<<<<< HEAD
                 <div class="live-map-wrapper">
                     <header style="flex-shrink: 0;">
                         <div class="title-container">
@@ -487,6 +488,101 @@
                             const styleSelector = document.createElement('div');
                             styleSelector.className = 'map-style-selector';
                             styleSelector.innerHTML = `
+=======
+                <header>
+                    <div class="title-container">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        <h2>Live Map Tracking</h2>
+                    </div>
+                    <p>Real-time shuttle locations and routes</p>
+                </header>
+                <div class="table-header">
+                    <h3>Shuttle Map</h3>
+                    <div class="table-actions">
+                        <div class="map-search">
+                            <input id="map-search-input" type="text" placeholder="Search location...">
+                            <button class="action-btn" onclick="searchLocation()"><i
+                                    class="fa-solid fa-search"></i></button>
+                        </div>
+                        <button class="action-btn" onclick="refreshMap()">Refresh</button>
+                        <button class="action-btn" onclick="toggleTrafficLayer()">Toggle Traffic</button>
+                    </div>
+                </div>
+                <div class="map-container" style="display: flex; gap: 20px;">
+                    <div id="map" style="flex: 1; position: relative;"></div>
+                    <div class="active-shuttles" style="width: 30%; max-height: 600px; overflow-y: auto;">
+                        <h3>Active Shuttles</h3>
+                        <p>Live Location Tracking</p>
+                        <div class="shuttle-list">
+                            <div class="shuttle-item">
+                                <p><strong>Shuttle #1</strong> - On Time<br>Lat: 14.5995, Lng: 120.9842<br>Driver: John
+                                    Doe<br>Route: A</p>
+                                <button class="action-btn track-btn" onclick="trackShuttle('Shuttle #1')">Track
+                                    Shuttle</button>
+                                <button class="action-btn route-btn" onclick="showRoute('Shuttle #1')">Show
+                                    Route</button>
+                            </div>
+                            <div class="shuttle-item">
+                                <p><strong>Shuttle #2</strong> - Delayed<br>Lat: 14.6760, Lng: 121.0437<br>Driver: Jane
+                                    Smith<br>Route: B</p>
+                                <button class="action-btn track-btn" onclick="trackShuttle('Shuttle #2')">Track
+                                    Shuttle</button>
+                                <button class="action-btn route-btn" onclick="showRoute('Shuttle #2')">Show
+                                    Route</button>
+                            </div>
+                            <div class="shuttle-item">
+                                <p><strong>Shuttle #3</strong> - On Time<br>Lat: 14.5580, Lng: 121.0813<br>Driver: Alex
+                                    Brown<br>Route: C</p>
+                                <button class="action-btn track-btn" onclick="trackShuttle('Shuttle #3')">Track
+                                    Shuttle</button>
+                                <button class="action-btn route-btn" onclick="showRoute('Shuttle #3')">Show
+                                    Route</button>
+                            </div>
+                            <div class="shuttle-item">
+                                <p><strong>Shuttle #4</strong> - Inactive<br>Lat: 14.5547, Lng: 121.0244<br>Driver:
+                                    None<br>Route: None</p>
+                                <button class="action-btn track-btn" onclick="trackShuttle('Shuttle #4')">Track
+                                    Shuttle</button>
+                                <button class="action-btn route-btn" onclick="showRoute('Shuttle #4')" disabled>No
+                                    Route</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    mapboxgl.accessToken = 'pk.eyJ1IjoiYWxmcmFuY2lzYnA0IiwiYSI6ImNtZnRqaDU2dzBsbGIyanM4cHFhbDY1MjMifQ.-ZQAt1NphjZJLxYUeMkZ7g';
+                    const map = new mapboxgl.Map({
+                        container: 'map',
+                        style: 'mapbox://styles/mapbox/streets-v11',
+                        center: [121.7740, 12.8797],
+                        zoom: 5
+                    });
+
+                    map.on('load', () => {
+                        // Initialize Mapbox Directions
+                        const directions = new MapboxDirections({
+                            accessToken: mapboxgl.accessToken,
+                            unit: 'metric',
+                            profile: 'mapbox/driving-traffic',
+                            controls: { inputs: true, instructions: true }
+                        });
+                        map.addControl(directions, 'top-left');
+
+                        // Add Geolocation Control
+                        map.addControl(new mapboxgl.GeolocateControl({
+                            positionOptions: { enableHighAccuracy: true },
+                            trackUserLocation: true,
+                            showUserHeading: true
+                        }), 'top-right');
+
+                        // Add Scale Control
+                        map.addControl(new mapboxgl.ScaleControl({ unit: 'metric' }), 'bottom-right');
+
+                        // Add Map Style Selector
+                        const styleSelector = document.createElement('div');
+                        styleSelector.className = 'map-style-selector';
+                        styleSelector.innerHTML = `
+>>>>>>> 7dd3befc83a18eb9e9e70bec3c3ced4032ebb278
                         <select id="style-selector" onchange="changeMapStyle(this.value)">
                             <option value="mapbox://styles/mapbox/streets-v11">Streets</option>
                             <option value="mapbox://styles/mapbox/satellite-v9">Satellite</option>
@@ -494,6 +590,7 @@
                             <option value="mapbox://styles/mapbox/navigation-day-v1">Navigation Day</option>
                         </select>
                     `;
+<<<<<<< HEAD
                             document.getElementById('map').prepend(styleSelector);
 
                             // Add Traffic Layer (initially hidden)
@@ -545,24 +642,143 @@
 
                         shuttles.forEach(shuttle => {
                             const markerElement = document.createElement('div');
+=======
+                        document.getElementById('map').prepend(styleSelector);
+
+                        // Add Traffic Layer (initially hidden)
+                        map.addSource('traffic', {
+                            type: 'vector',
+                            url: 'mapbox://mapbox.mapbox-traffic-v1'
+                        });
+                        map.addLayer({
+                            id: 'traffic-layer',
+                            type: 'line',
+                            source: 'traffic',
+                            'source-layer': 'traffic',
+                            paint: {
+                                'line-color': [
+                                    'case',
+                                    ['==', ['get', 'congestion'], 'low'], '#00ff00',
+                                    ['==', ['get', 'congestion'], 'moderate'], '#ffcc00',
+                                    ['==', ['get', 'congestion'], 'heavy'], '#ff0000',
+                                    ['==', ['get', 'congestion'], 'severe'], '#800000',
+                                    '#000000'
+                                ],
+                                'line-width': 4,
+                                'line-opacity': 0.7
+                            },
+                            layout: { visibility: 'none' }
+                        });
+
+                        // Ensure map resizes correctly
+                        map.resize();
+                    });
+
+                    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+                    map.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+
+                    const shuttles = [
+                        { name: 'Shuttle #1', coordinates: [120.9842, 14.5995], status: 'On Time', driver: 'John Doe', route: 'A', nextStop: 'Stop 1', eta: '10 min' },
+                        { name: 'Shuttle #2', coordinates: [121.0437, 14.6760], status: 'Delayed', driver: 'Jane Smith', route: 'B', nextStop: 'Stop 2', eta: '15 min' },
+                        { name: 'Shuttle #3', coordinates: [121.0813, 14.5580], status: 'On Time', driver: 'Alex Brown', route: 'C', nextStop: 'Stop 3', eta: '8 min' },
+                        { name: 'Shuttle #4', coordinates: [121.0244, 14.5547], status: 'Inactive', driver: 'None', route: 'None', nextStop: 'N/A', eta: 'N/A' }
+                    ];
+
+                    // Sample routes for demonstration
+                    const routes = {
+                        'Shuttle #1': [[120.9842, 14.5995], [120.9900, 14.6000], [120.9950, 14.6050]],
+                        'Shuttle #2': [[121.0437, 14.6760], [121.0500, 14.6800], [121.0550, 14.6850]],
+                        'Shuttle #3': [[121.0813, 14.5580], [121.0850, 14.5600], [121.0900, 14.5650]],
+                        'Shuttle #4': []
+                    };
+
+                    shuttles.forEach(shuttle => {
+                        const markerElement = document.createElement('div');
+                        markerElement.style.backgroundColor = shuttle.status === 'Inactive' ? '#666' : '#003A6C';
+                        markerElement.style.width = '30px';
+                        markerElement.style.height = '30px';
+                        markerElement.style.borderRadius = '50%';
+                        markerElement.style.display = 'flex';
+                        markerElement.style.alignItems = 'center';
+                        markerElement.style.justifyContent = 'center';
+                        markerElement.style.cursor = 'pointer';
+                        markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                        markerElement.innerHTML = '<i class="fa-solid fa-bus" style="color: #F5F5F5; font-size: 18px;"></i>';
+
+                        markerElement.addEventListener('mouseenter', () => {
+                            markerElement.style.backgroundColor = shuttle.status === 'Inactive' ? '#999' : '#0066CC';
+                        });
+                        markerElement.addEventListener('mouseleave', () => {
+>>>>>>> 7dd3befc83a18eb9e9e70bec3c3ced4032ebb278
                             markerElement.style.backgroundColor = shuttle.status === 'Inactive' ? '#666' : '#003A6C';
-                            markerElement.style.width = '30px';
-                            markerElement.style.height = '30px';
-                            markerElement.style.borderRadius = '50%';
-                            markerElement.style.display = 'flex';
-                            markerElement.style.alignItems = 'center';
-                            markerElement.style.justifyContent = 'center';
-                            markerElement.style.cursor = 'pointer';
-                            markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-                            markerElement.innerHTML = '<i class="fa-solid fa-bus" style="color: #F5F5F5; font-size: 18px;"></i>';
+                        });
 
-                            markerElement.addEventListener('mouseenter', () => {
-                                markerElement.style.backgroundColor = shuttle.status === 'Inactive' ? '#999' : '#0066CC';
+                        new mapboxgl.Marker({ element: markerElement })
+                            .setLngLat(shuttle.coordinates)
+                            .setPopup(new mapboxgl.Popup().setHTML(`
+                            <h3>${shuttle.name}</h3>
+                            <p>Status: ${shuttle.status}</p>
+                            <p>Driver: ${shuttle.driver}</p>
+                            <p>Route: ${shuttle.route}</p>
+                            <p>Next Stop: ${shuttle.nextStop}</p>
+                            <p>ETA: ${shuttle.eta}</p>
+                        `))
+                            .addTo(map);
+                    });
+
+                    function refreshMap() {
+                        map.resize();
+                        showToast('Map refreshed!');
+                    }
+
+                    function toggleTrafficLayer() {
+                        const visibility = map.getLayoutProperty('traffic-layer', 'visibility');
+                        map.setLayoutProperty('traffic-layer', 'visibility', visibility === 'visible' ? 'none' : 'visible');
+                        showToast(visibility === 'visible' ? 'Traffic layer hidden' : 'Traffic layer shown');
+                    }
+
+                    function changeMapStyle(style) {
+                        map.setStyle(style);
+                        showToast('Map style changed');
+                        map.on('style.load', () => {
+                            map.addSource('traffic', {
+                                type: 'vector',
+                                url: 'mapbox://mapbox.mapbox-traffic-v1'
                             });
-                            markerElement.addEventListener('mouseleave', () => {
+                            map.addLayer({
+                                id: 'traffic-layer',
+                                type: 'line',
+                                source: 'traffic',
+                                'source-layer': 'traffic',
+                                paint: {
+                                    'line-color': [
+                                        'case',
+                                        ['==', ['get', 'congestion'], 'low'], '#00ff00',
+                                        ['==', ['get', 'congestion'], 'moderate'], '#ffcc00',
+                                        ['==', ['get', 'congestion'], 'heavy'], '#ff0000',
+                                        ['==', ['get', 'congestion'], 'severe'], '#800000',
+                                        '#000000'
+                                    ],
+                                    'line-width': 4,
+                                    'line-opacity': 0.7
+                                },
+                                layout: { visibility: 'none' }
+                            });
+
+                            shuttles.forEach(shuttle => {
+                                const markerElement = document.createElement('div');
                                 markerElement.style.backgroundColor = shuttle.status === 'Inactive' ? '#666' : '#003A6C';
-                            });
+                                markerElement.style.width = '30px';
+                                markerElement.style.height = '30px';
+                                markerElement.style.borderRadius = '50%';
+                                markerElement.style.display = 'flex';
+                                markerElement.style.alignItems = 'center';
+                                markerElement.style.justifyContent = 'center';
+                                markerElement.style.cursor = 'pointer';
+                                markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+                                markerElement.innerHTML = '<i class="fa-solid fa-bus" style="color: #F5F5F5; font-size: 18px;"></i>';
 
+<<<<<<< HEAD
                             new mapboxgl.Marker({ element: markerElement })
                                 .setLngLat(shuttle.coordinates)
                                 .setPopup(new mapboxgl.Popup().setHTML(`
@@ -638,6 +854,18 @@
                                     new mapboxgl.Marker({ element: markerElement })
                                         .setLngLat(shuttle.coordinates)
                                         .setPopup(new mapboxgl.Popup().setHTML(`
+=======
+                                markerElement.addEventListener('mouseenter', () => {
+                                    markerElement.style.backgroundColor = shuttle.status === 'Inactive' ? '#999' : '#0066CC';
+                                });
+                                markerElement.addEventListener('mouseleave', () => {
+                                    markerElement.style.backgroundColor = shuttle.status === 'Inactive' ? '#666' : '#003A6C';
+                                });
+
+                                new mapboxgl.Marker({ element: markerElement })
+                                    .setLngLat(shuttle.coordinates)
+                                    .setPopup(new mapboxgl.Popup().setHTML(`
+>>>>>>> 7dd3befc83a18eb9e9e70bec3c3ced4032ebb278
                                     <h3>${shuttle.name}</h3>
                                     <p>Status: ${shuttle.status}</p>
                                     <p>Driver: ${shuttle.driver}</p>
@@ -645,6 +873,7 @@
                                     <p>Next Stop: ${shuttle.nextStop}</p>
                                     <p>ETA: ${shuttle.eta}</p>
                                 `))
+<<<<<<< HEAD
                                         .addTo(map);
                                 });
 
@@ -745,6 +974,107 @@
                         }
                     </script>
                 </div>
+=======
+                                    .addTo(map);
+                            });
+
+                            // Re-add Directions control after style change
+                            const directions = new MapboxDirections({
+                                accessToken: mapboxgl.accessToken,
+                                unit: 'metric',
+                                profile: 'mapbox/driving-traffic',
+                                controls: { inputs: true, instructions: true }
+                            });
+                            map.addControl(directions, 'top-left');
+                        });
+                    }
+
+                    function trackShuttle(shuttleName) {
+                        const shuttle = shuttles.find(s => s.name === shuttleName);
+                        if (shuttle) {
+                            map.flyTo({ center: shuttle.coordinates, zoom: 12 });
+                            showToast(`Tracking ${shuttleName}`);
+                        }
+                    }
+
+                    function showRoute(shuttleName) {
+                        const route = routes[shuttleName];
+                        if (!route || route.length < 2) {
+                            showToast(`No route available for ${shuttleName}`);
+                            return;
+                        }
+
+                        const coordinates = route;
+                        map.getSource('route')?.setData({
+                            type: 'Feature',
+                            properties: {},
+                            geometry: {
+                                type: 'LineString',
+                                coordinates: coordinates
+                            }
+                        }) || map.addSource('route', {
+                            type: 'geojson',
+                            data: {
+                                type: 'Feature',
+                                properties: {},
+                                geometry: {
+                                    type: 'LineString',
+                                    coordinates: coordinates
+                                }
+                            }
+                        });
+
+                        map.getLayer('route') || map.addLayer({
+                            id: 'route',
+                            type: 'line',
+                            source: 'route',
+                            layout: {
+                                'line-join': 'round',
+                                'line-cap': 'round'
+                            },
+                            paint: {
+                                'line-color': '#003A6C',
+                                'line-width': 5,
+                                'line-opacity': 0.75
+                            }
+                        });
+
+                        const bounds = coordinates.reduce((bounds, coord) => {
+                            return bounds.extend(coord);
+                        }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+                        map.fitBounds(bounds, { padding: 50 });
+                        showToast(`Showing route for ${shuttleName}`);
+                    }
+
+                    function searchLocation() {
+                        const query = document.getElementById('map-search-input').value.trim();
+                        if (!query) {
+                            showToast('Please enter a location to search.');
+                            return;
+                        }
+
+                        fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxgl.accessToken}&country=PH&limit=1`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.features && data.features.length > 0) {
+                                    const [lng, lat] = data.features[0].center;
+                                    map.flyTo({ center: [lng, lat], zoom: 12 });
+                                    new mapboxgl.Marker()
+                                        .setLngLat([lng, lat])
+                                        .setPopup(new mapboxgl.Popup().setHTML(`<h3>${data.features[0].place_name}</h3>`))
+                                        .addTo(map);
+                                    showToast(`Found location: ${data.features[0].place_name}`);
+                                } else {
+                                    showToast('Location not found. Please try a different search term.');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error searching location:', error);
+                                showToast('Error searching location: ' + error.message);
+                            });
+                    }
+                </script>
+>>>>>>> 7dd3befc83a18eb9e9e70bec3c3ced4032ebb278
             </div>
 
             <div id="profile" class="tab">
