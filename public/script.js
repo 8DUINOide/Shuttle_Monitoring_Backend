@@ -218,7 +218,7 @@ function showTab(tabId) {
         updateDashboard();
     }
     // Reset status filters to "All Status" when switching tabs
-    const statusFilters = document.querySelectorAll('select[id$="statusFilter"], select[id$="statusFilterDrivers"]');
+    const statusFilters = document.querySelectorAll('select[id$="statusFilter"]');
     statusFilters.forEach(filter => {
         filter.value = "all";
     });
@@ -581,7 +581,6 @@ async function loadDrivers() {
                 <td>${sanitizeHTML(driver.operator.fullName)}<br><small><i class="fa-solid fa-envelope"></i> ${sanitizeHTML(driver.operator.user.email)}</small></td>
                 <td><i class="fa-solid fa-phone"></i> ${sanitizeHTML(driver.contactPhone)}<br><i class="fa-solid fa-envelope"></i> ${sanitizeHTML(driver.user.email)}</td>
                 <td><i class="fa-solid fa-phone"></i> ${sanitizeHTML(driver.emergencyContact)}</td>
-                <td><span class="status-badge badge-active">Active</span></td>
                 <td>
                     <div style="display: inline-flex; gap: 5px; align-items: center;">
 
@@ -883,7 +882,6 @@ function filterStudents() {
 
 function filterDrivers() {
     const searchValue = document.getElementById("searchDrivers").value.toLowerCase();
-    const statusFilter = document.getElementById("statusFilterDrivers").value.toLowerCase();
     const rows = document.querySelectorAll("#drivers-table tr");
     let visibleCount = 0;
 
@@ -891,12 +889,10 @@ function filterDrivers() {
         const driver = row.querySelector("td:nth-child(1)")?.textContent.toLowerCase() || "";
         const operator = row.querySelector("td:nth-child(2)")?.textContent.toLowerCase() || "";
         const license = row.querySelector("td:nth-child(4)")?.textContent.toLowerCase() || "";
-        const status = row.querySelector("td:nth-child(6) span")?.textContent.toLowerCase() || "";
 
         const matchesSearch = driver.includes(searchValue) || operator.includes(searchValue) || license.includes(searchValue);
-        const matchesStatus = statusFilter === "all" || status === statusFilter;
 
-        if (matchesSearch && matchesStatus) {
+        if (matchesSearch) {
             row.style.display = "";
             visibleCount++;
         } else {

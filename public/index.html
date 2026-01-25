@@ -377,12 +377,6 @@
                 <div class="search-container">
                     <input id="searchDrivers" type="text" placeholder="Search drivers, operators, or licenses..."
                         oninput="filterDrivers()">
-                    <select id="statusFilterDrivers" onchange="filterDrivers()">
-                        <option value="all">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="maintenance">Maintenance</option>
-                    </select>
                 </div>
                 <p id="no-drivers-message" style="display:none; color: red; margin-top: 10px;">No drivers found.</p>
                 <table>
@@ -393,7 +387,6 @@
                             <th><i class="fa-solid fa-address-book"></i> Contact</th>
 
                             <th><i class="fa-solid fa-phone-volume"></i> Emergency Contact</th>
-                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
