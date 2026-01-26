@@ -39,6 +39,10 @@ public class Shuttle {
 
     private String licensePlate; // New: License Plate Number
 
+    private Double latitude; // New: Current Latitude
+    private Double longitude; // New: Current Longitude
+
+
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "shuttle", cascade = CascadeType.ALL)

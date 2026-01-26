@@ -477,9 +477,44 @@
                     <div class="map-container">
                         <div id="map" style="flex: 1; position: relative;"></div>
                         <div class="active-shuttles" style="width: 30%; max-height: 600px; overflow-y: auto;">
+                            <!-- New: Simulation Box -->
+                            <div class="simulation-box"
+                                style="background: #e6f7ff; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #1890ff;">
+                                <h4 style="margin-top: 0; color: #003A6C;">Hardware Simulation</h4>
+                                <p style="font-size: 12px; margin-bottom: 5px;">Simulate GPS data from hardware.</p>
+                                <input type="number" id="sim-shuttle-id" placeholder="Shuttle ID"
+                                    style="width: 100%; margin-bottom: 5px; padding: 5px;">
+                                <input type="number" id="sim-lat" placeholder="Latitude" step="any"
+                                    style="width: 100%; margin-bottom: 5px; padding: 5px;">
+                                <input type="number" id="sim-lng" placeholder="Longitude" step="any"
+                                    style="width: 100%; margin-bottom: 5px; padding: 5px;">
+                                <button class="action-btn" onclick="simulateLocationUpdate()"
+                                    style="width: 100%;">Update Location</button>
+                            </div>
+
+                            <!-- New: Student Simulation Box -->
+                            <div class="simulation-box"
+                                style="background: #f0f5ff; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #4CAF50;">
+                                <h4 style="margin-top: 0; color: #2E7D32;">Student Pin Simulation</h4>
+                                <p style="font-size: 12px; margin-bottom: 5px;">Simulate Student setting their location.
+                                </p>
+                                <input type="number" id="sim-stud-id" placeholder="Student ID"
+                                    style="width: 100%; margin-bottom: 5px; padding: 5px;">
+                                <input type="number" id="sim-stud-lat" placeholder="Latitude" step="any"
+                                    style="width: 100%; margin-bottom: 5px; padding: 5px;">
+                                <input type="number" id="sim-stud-lng" placeholder="Longitude" step="any"
+                                    style="width: 100%; margin-bottom: 5px; padding: 5px;">
+                                <button class="action-btn" onclick="simulateStudentLocation()"
+                                    style="width: 100%; background-color: #4CAF50;">Set My Pin</button>
+                            </div>
+                            <div id="mouse-coordinates"
+                                style="background: rgba(255, 255, 255, 0.8); padding: 5px; margin-bottom: 10px; border-radius: 4px; font-size: 12px; font-weight: bold;">
+                                Mouse: Move over map
+                            </div>
+
                             <h3>Active Shuttles</h3>
                             <p>Live Location Tracking</p>
-                            <div class="shuttle-list">
+                            <div class="shuttle-list" id="active-shuttles-list">
                                 <div class="shuttle-item">
                                     <p><strong>Shuttle #1</strong> - On Time<br>Lat: 14.5995, Lng: 120.9842<br>Driver:
                                         John
@@ -530,14 +565,15 @@
                         window.dashboardMap = map;
 
                         map.on('load', () => {
-                            // Initialize Mapbox Directions
-                            const directions = new MapboxDirections({
+                            // Initialize Mapbox Directions (Expose globally)
+                            window.mapDirections = new MapboxDirections({
                                 accessToken: mapboxgl.accessToken,
                                 unit: 'metric',
                                 profile: 'mapbox/driving-traffic',
-                                controls: { inputs: true, instructions: true }
+                                controls: { inputs: true, instructions: true },
+                                flyTo: false // Prevent auto-flying, we'll handle it
                             });
-                            map.addControl(directions, 'top-left');
+                            map.addControl(window.mapDirections, 'top-left');
 
                             // Add Geolocation Control
                             map.addControl(new mapboxgl.GeolocateControl({
@@ -589,17 +625,34 @@
 
                             // Ensure map resizes correctly
                             map.resize();
+
+                            // New: Mouse Coordinates
+                            map.on('mousemove', (e) => {
+                                document.getElementById('mouse-coordinates').innerText =
+                                    `Lat: ${e.lngLat.lat.toFixed(6)}, Lng: ${e.lngLat.lng.toFixed(6)}`;
+                            });
+
+                            // New: Click to fill simulation box (Student or Shuttle)
+                            map.on('click', (e) => {
+                                // Default to shuttle sim inputs
+                                document.getElementById('sim-lat').value = e.lngLat.lat.toFixed(6);
+                                document.getElementById('sim-lng').value = e.lngLat.lng.toFixed(6);
+
+                                // Also fill student sim inputs
+                                if (document.getElementById('sim-stud-lat')) {
+                                    document.getElementById('sim-stud-lat').value = e.lngLat.lat.toFixed(6);
+                                    document.getElementById('sim-stud-lng').value = e.lngLat.lng.toFixed(6);
+                                }
+                            });
                         });
 
                         map.addControl(new mapboxgl.NavigationControl(), 'top-right');
                         map.addControl(new mapboxgl.FullscreenControl(), 'top-right');
 
-                        const shuttles = [
-                            { name: 'Shuttle #1', coordinates: [120.9842, 14.5995], status: 'On Time', driver: 'John Doe', route: 'A', nextStop: 'Stop 1', eta: '10 min' },
-                            { name: 'Shuttle #2', coordinates: [121.0437, 14.6760], status: 'Delayed', driver: 'Jane Smith', route: 'B', nextStop: 'Stop 2', eta: '15 min' },
-                            { name: 'Shuttle #3', coordinates: [121.0813, 14.5580], status: 'On Time', driver: 'Alex Brown', route: 'C', nextStop: 'Stop 3', eta: '8 min' },
-                            { name: 'Shuttle #4', coordinates: [121.0244, 14.5547], status: 'Inactive', driver: 'None', route: 'None', nextStop: 'N/A', eta: 'N/A' }
-                        ];
+                        // Hardcoded shuttles removed. Logic moved to script.js
+                        const shuttles = [];
+                        window.mapMarkers = []; // Global marker array for script.js to manage
+
 
                         // Sample routes for demonstration
                         const routes = {
@@ -609,43 +662,9 @@
                             'Shuttle #4': []
                         };
 
-                        shuttles.forEach(shuttle => {
-                            const markerElement = document.createElement('div');
-                            markerElement.style.backgroundColor = shuttle.status === 'Inactive' ? '#666' : '#003A6C';
-                            markerElement.style.width = '30px';
-                            markerElement.style.height = '30px';
-                            markerElement.style.borderRadius = '50%';
-                            markerElement.style.display = 'flex';
-                            markerElement.style.alignItems = 'center';
-                            markerElement.style.justifyContent = 'center';
-                            markerElement.style.cursor = 'pointer';
-                            markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-                            markerElement.innerHTML = '<i class="fa-solid fa-bus" style="color: #F5F5F5; font-size: 18px;"></i>';
 
-                            markerElement.addEventListener('mouseenter', () => {
-                                markerElement.style.backgroundColor = shuttle.status === 'Inactive' ? '#999' : '#0066CC';
-                            });
-                            markerElement.addEventListener('mouseleave', () => {
-                                markerElement.style.backgroundColor = shuttle.status === 'Inactive' ? '#666' : '#003A6C';
-                            });
 
-                            new mapboxgl.Marker({ element: markerElement })
-                                .setLngLat(shuttle.coordinates)
-                                .setPopup(new mapboxgl.Popup().setHTML(`
-                            <h3>${shuttle.name}</h3>
-                            <p>Status: ${shuttle.status}</p>
-                            <p>Driver: ${shuttle.driver}</p>
-                            <p>Route: ${shuttle.route}</p>
-                            <p>Next Stop: ${shuttle.nextStop}</p>
-                            <p>ETA: ${shuttle.eta}</p>
-                        `))
-                                .addTo(map);
-                        });
 
-                        function refreshMap() {
-                            map.resize();
-                            showToast('Map refreshed!');
-                        }
 
                         function toggleTrafficLayer() {
                             const visibility = map.getLayoutProperty('traffic-layer', 'visibility');
@@ -681,57 +700,22 @@
                                     layout: { visibility: 'none' }
                                 });
 
-                                shuttles.forEach(shuttle => {
-                                    const markerElement = document.createElement('div');
-                                    markerElement.style.backgroundColor = shuttle.status === 'Inactive' ? '#666' : '#003A6C';
-                                    markerElement.style.width = '30px';
-                                    markerElement.style.height = '30px';
-                                    markerElement.style.borderRadius = '50%';
-                                    markerElement.style.display = 'flex';
-                                    markerElement.style.alignItems = 'center';
-                                    markerElement.style.justifyContent = 'center';
-                                    markerElement.style.cursor = 'pointer';
-                                    markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-                                    markerElement.innerHTML = '<i class="fa-solid fa-bus" style="color: #F5F5F5; font-size: 18px;"></i>';
+                                // Markers and Routes will be handled by script.js
 
-                                    markerElement.addEventListener('mouseenter', () => {
-                                        markerElement.style.backgroundColor = shuttle.status === 'Inactive' ? '#999' : '#0066CC';
-                                    });
-                                    markerElement.addEventListener('mouseleave', () => {
-                                        markerElement.style.backgroundColor = shuttle.status === 'Inactive' ? '#666' : '#003A6C';
-                                    });
-
-                                    new mapboxgl.Marker({ element: markerElement })
-                                        .setLngLat(shuttle.coordinates)
-                                        .setPopup(new mapboxgl.Popup().setHTML(`
-                                    <h3>${shuttle.name}</h3>
-                                    <p>Status: ${shuttle.status}</p>
-                                    <p>Driver: ${shuttle.driver}</p>
-                                    <p>Route: ${shuttle.route}</p>
-                                    <p>Next Stop: ${shuttle.nextStop}</p>
-                                    <p>ETA: ${shuttle.eta}</p>
-                                `))
-                                        .addTo(map);
-                                });
 
                                 // Re-add Directions control after style change
-                                const directions = new MapboxDirections({
+                                window.mapDirections = new MapboxDirections({
                                     accessToken: mapboxgl.accessToken,
                                     unit: 'metric',
                                     profile: 'mapbox/driving-traffic',
-                                    controls: { inputs: true, instructions: true }
+                                    controls: { inputs: true, instructions: true },
+                                    flyTo: false
                                 });
-                                map.addControl(directions, 'top-left');
+                                map.addControl(window.mapDirections, 'top-left');
                             });
                         }
 
-                        function trackShuttle(shuttleName) {
-                            const shuttle = shuttles.find(s => s.name === shuttleName);
-                            if (shuttle) {
-                                map.flyTo({ center: shuttle.coordinates, zoom: 12 });
-                                showToast(`Tracking ${shuttleName}`);
-                            }
-                        }
+
 
                         function showRoute(shuttleName) {
                             const route = routes[shuttleName];

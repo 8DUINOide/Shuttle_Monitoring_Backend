@@ -55,12 +55,64 @@ public class ShuttleService {
         return nextStudent.map(Student::getCurrentAddress).orElse("End of route");
     }
 
-    // Simple ETA calculation (placeholder: based on occupancy/stops; real: integrate Google Maps API)
+    // New: Get Next Student's Location (Lat/Lng) for Routing
+    public Student getNextStudent(Shuttle shuttle) {
+        List<Student> assignedStudents = studentRepository.findByAssignedShuttle(shuttle);
+        if (assignedStudents.isEmpty()) {
+            return null;
+        }
+        // Logic: Find first student with valid Lat/Lng (Simulation: usually just one active student)
+        // Improvement: Filter by those who have "Pin" set
+        return assignedStudents.stream()
+                .filter(s -> s.getLatitude() != null && s.getLongitude() != null)
+                .findFirst() // Just pick the first for now (Simulation)
+                .orElse(null);
+    }
+
+    // New: Get All Assigned Students Locations
+    public List<java.util.Map<String, Object>> getAssignedStudentLocations(Shuttle shuttle) {
+        List<Student> assignedStudents = studentRepository.findByAssignedShuttle(shuttle);
+        return assignedStudents.stream()
+                .filter(s -> s.getLatitude() != null && s.getLongitude() != null)
+                .map(s -> {
+                    java.util.Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("studentId", s.getStudentId());
+                    map.put("name", s.getFullName()); // Or just "Student #" + id
+                    map.put("latitude", s.getLatitude());
+                    map.put("longitude", s.getLongitude());
+                    return map;
+                })
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    // Updated: ETA calculation based on distance to next stop (simulated coordinates)
     public String getETA(Shuttle shuttle) {
-        double occupancy = calculateOccupancy(shuttle);
-        int estimatedMinutes = (int) (occupancy > 80 ? 30 : 15); // High occupancy = longer ETA
-        LocalDateTime etaTime = LocalDateTime.now().plusMinutes(estimatedMinutes);
-        return etaTime.toString();
+        if (shuttle.getLatitude() == null || shuttle.getLongitude() == null) {
+            return "Unknown";
+        }
+
+        // Target: For simulation, we assume a fixed destination (e.g., School/Terminal)
+        // In real implementation, this would be the next student's coordinates
+        double targetLat = 14.5995; // Example: Manila City Hall area
+        double targetLng = 120.9842;
+
+        double distanceKm = calculateDistance(shuttle.getLatitude(), shuttle.getLongitude(), targetLat, targetLng);
+        double averageSpeedKmH = 30.0; // Assume 30 km/h in city traffic
+        int minutes = (int) ((distanceKm / averageSpeedKmH) * 60);
+
+        // Add 2 min per stop/passenger logic if needed
+        return minutes + " min";
+    }
+
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371; // Radius of the earth in km
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
     private boolean hasRecentCheckIn(Long studentId, String type) {

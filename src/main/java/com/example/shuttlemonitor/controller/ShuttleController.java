@@ -91,6 +91,9 @@ public class ShuttleController {
         response.put("driverId", driverId);
         response.put("operatorId", operatorId);
         response.put("createdAt", shuttle.getCreatedAt().toString());
+        // New: Location
+        response.put("latitude", shuttle.getLatitude());
+        response.put("longitude", shuttle.getLongitude());
 
         return ResponseEntity.ok(response);
     }
@@ -120,6 +123,13 @@ public class ShuttleController {
                 "username", shuttle.getOperator().getUser().getUsername()
         ));
         response.put("createdAt", shuttle.getCreatedAt().toString());
+        // New: Location
+        response.put("latitude", shuttle.getLatitude());
+        response.put("longitude", shuttle.getLongitude());
+
+        // New: Include ALL assigned students locations for visualization
+        List<Map<String, Object>> studentLocations = shuttleService.getAssignedStudentLocations(shuttle);
+        response.put("assignedStudentLocations", studentLocations);
 
         return ResponseEntity.ok(response);
     }
@@ -185,6 +195,9 @@ public class ShuttleController {
         response.put("eta", shuttleService.getETA(shuttle));
         response.put("route", shuttle.getRoute());
         response.put("licensePlate", shuttle.getLicensePlate()); // New
+        // New: Location
+        response.put("latitude", shuttle.getLatitude());
+        response.put("longitude", shuttle.getLongitude());
 
         return ResponseEntity.ok(response);
     }
@@ -199,5 +212,42 @@ public class ShuttleController {
         response.put("shuttleId", id);
 
         return ResponseEntity.ok(response);
+    }
+
+    // New: Update Location Endpoint (For Hardware)
+    @PostMapping("/{id}/location")
+    public ResponseEntity<Map<String, Object>> updateLocation(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        Shuttle shuttle = shuttleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Shuttle not found"));
+
+        if (request.containsKey("latitude") && request.containsKey("longitude")) {
+            shuttle.setLatitude(Double.parseDouble(request.get("latitude").toString()));
+            shuttle.setLongitude(Double.parseDouble(request.get("longitude").toString()));
+            shuttleRepository.save(shuttle);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Location updated successfully");
+            response.put("shuttleId", shuttle.getShuttleId());
+            response.put("latitude", shuttle.getLatitude());
+            response.put("longitude", shuttle.getLongitude());
+            response.put("eta", shuttleService.getETA(shuttle)); // New: Return updated ETA
+            
+            // New: Include Target Student Location for Routing
+            com.example.shuttlemonitor.Entity.Student nextStudent = shuttleService.getNextStudent(shuttle);
+            if (nextStudent != null) {
+                response.put("targetLatitude", nextStudent.getLatitude());
+                response.put("targetLongitude", nextStudent.getLongitude());
+            }
+
+             // New: Include ALL assigned students locations for visualization
+            List<Map<String, Object>> studentLocations = shuttleService.getAssignedStudentLocations(shuttle);
+            response.put("assignedStudentLocations", studentLocations);
+
+            return ResponseEntity.ok(response);
+        } else {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Latitude and Longitude are required");
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
     }
 }

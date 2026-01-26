@@ -254,7 +254,8 @@ async function loadAllData() {
     await Promise.all([
         loadStudents(),
         loadDrivers(),
-        loadShuttles()
+        loadShuttles(), // loads list for table
+        fetchMapShuttles() // loads markers for map
     ]);
 }
 
@@ -1987,3 +1988,489 @@ document.getElementById('registerDeviceForm').addEventListener('submit', async (
         submitBtn.disabled = false;
     }
 });
+
+// =================== LIVE MAP & SIMULATION ===================
+
+async function fetchMapShuttles() {
+    if (!token) return;
+    try {
+        const response = await fetch(`${SERVER_URL}/api/shuttles/all?page=0&size=100`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!response.ok) return;
+
+        const data = await response.json();
+        updateMapMarkers(data.content);
+    } catch (e) {
+        console.error("Error fetching map shuttles:", e);
+    }
+}
+
+// Simulated Routes (Lat/Lng arrays) - In real app, these come from DB
+const shuttleRoutes = {
+    'Shuttle #1': [
+        [120.9842, 14.5995], [120.9850, 14.6000], [120.9880, 14.6020],
+        [120.9900, 14.6050], [120.9950, 14.6080], [121.0000, 14.6100]
+    ],
+    'Shuttle #2': [
+        [121.0437, 14.6760], [121.0450, 14.6750], [121.0480, 14.6720],
+        [121.0500, 14.6700], [121.0550, 14.6650]
+    ],
+    'Shuttle #3': [
+        [121.0813, 14.5580], [121.0800, 14.5550], [121.0750, 14.5500],
+        [121.0700, 14.5450]
+    ]
+};
+
+function updateMapMarkers(shuttlesData) {
+    if (!window.dashboardMap || !window.mapboxgl) return;
+
+    // Clear existing markers
+    if (window.mapMarkers) {
+        window.mapMarkers.forEach(marker => marker.remove());
+    }
+    window.mapMarkers = [];
+
+    // Clear existing route layers if any (simple clean up)
+    if (window.dashboardMap.getLayer('route-line')) {
+        window.dashboardMap.removeLayer('route-line');
+        window.dashboardMap.removeSource('route-source');
+    }
+
+    const listContainer = document.getElementById('active-shuttles-list');
+    if (listContainer) listContainer.innerHTML = '';
+
+    shuttlesData.forEach(shuttle => {
+        // Only show shuttles with valid location
+        if (shuttle.latitude !== null && shuttle.longitude !== null && shuttle.latitude !== undefined && shuttle.longitude !== undefined) {
+
+            // Add to list
+            if (listContainer) {
+                const item = document.createElement('div');
+                item.className = 'shuttle-item';
+                // Fix: Handle nested driver.user.username if structure differs
+                let driverName = 'No Driver';
+                if (shuttle.driver) {
+                    if (shuttle.driver.username) driverName = shuttle.driver.username;
+                    else if (shuttle.driver.user && shuttle.driver.user.username) driverName = shuttle.driver.user.username;
+                }
+                item.innerHTML = `
+                    <p><strong>${sanitizeHTML(shuttle.name)}</strong> - ${sanitizeHTML(shuttle.status)}<br>
+                    Lat: ${shuttle.latitude}, Lng: ${shuttle.longitude}<br>
+                    Driver: ${sanitizeHTML(driverName)}<br>
+                    Route: ${sanitizeHTML(shuttle.route)}<br>
+                    <strong>ETA: ${shuttle.eta || 'Calculating...'}</strong></p>
+                    <button class="action-btn track-btn" onclick="trackShuttle(${shuttle.shuttleId}, ${shuttle.latitude}, ${shuttle.longitude})">Track</button>
+                    ${shuttle.route ? `<button class="action-btn route-btn" onclick="showRoute('${sanitizeHTML(shuttle.name)}')">Show Route</button>` : ''}
+                `;
+                listContainer.appendChild(item);
+            }
+
+            // Add Marker
+            const markerElement = document.createElement('div');
+            markerElement.style.backgroundColor = shuttle.status === 'INACTIVE' ? '#666' : '#003A6C';
+            markerElement.style.width = '30px';
+            markerElement.style.height = '30px';
+            markerElement.style.borderRadius = '50%';
+            markerElement.style.display = 'flex';
+            markerElement.style.alignItems = 'center';
+            markerElement.style.justifyContent = 'center';
+            markerElement.style.cursor = 'pointer';
+            markerElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            markerElement.innerHTML = '<i class="fa-solid fa-bus" style="color: #F5F5F5; font-size: 18px;"></i>';
+
+            // Hover effects
+            markerElement.addEventListener('mouseenter', () => {
+                markerElement.style.backgroundColor = shuttle.status === 'INACTIVE' ? '#999' : '#0066CC';
+            });
+            markerElement.addEventListener('mouseleave', () => {
+                markerElement.style.backgroundColor = shuttle.status === 'INACTIVE' ? '#666' : '#003A6C';
+            });
+
+            const popup = new mapboxgl.Popup().setHTML(`
+                <h3>${sanitizeHTML(shuttle.name)}</h3>
+                <p>Status: ${sanitizeHTML(shuttle.status)}</p>
+                <p>Driver: ${shuttle.driver ? shuttle.driver.username : 'N/A'}</p>
+                <p>Route: ${sanitizeHTML(shuttle.route)}</p>
+            `);
+
+            const marker = new mapboxgl.Marker({ element: markerElement })
+                .setLngLat([shuttle.longitude, shuttle.latitude])
+                .setPopup(popup)
+                .addTo(window.dashboardMap);
+
+            window.mapMarkers.push(marker);
+        }
+    });
+
+    if (listContainer.children.length === 0) {
+        listContainer.innerHTML = '<p>No active shuttles with location data.</p>';
+    }
+}
+
+// New: Auto-restore state on map load/refresh
+function restoreTrackingState(shuttles) {
+    const lastId = localStorage.getItem('lastTrackedShuttleId');
+    if (lastId) {
+        const shuttle = shuttles.find(s => s.shuttleId == lastId);
+        if (shuttle && shuttle.latitude && shuttle.longitude) {
+            console.log("Restoring tracking for Shuttle #" + lastId);
+            trackShuttle(shuttle.shuttleId, shuttle.latitude, shuttle.longitude);
+        }
+    }
+}
+
+
+// Global locations for routing
+// Global locations for routing
+let lastShuttleLoc = null;
+let lastStudentLoc = null;
+let currentWaypoints = []; // New: Store waypoints for multi-stop routing
+
+// Track Shuttle
+async function trackShuttle(id, lat, lng) {
+    if (window.dashboardMap) {
+        window.dashboardMap.flyTo({ center: [lng, lat], zoom: 14 });
+
+        // Save state
+        localStorage.setItem('lastTrackedShuttleId', id);
+
+        // Save for Directions API
+        lastShuttleLoc = [parseFloat(lng), parseFloat(lat)];
+
+        // Fetch latest details to get the Target Student Location
+        try {
+            const response = await fetch(`${SERVER_URL}/api/shuttles/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+
+                // 1. Set global "Target" student (for route line)
+                if (data.targetLatitude && data.targetLongitude) {
+                    lastStudentLoc = [parseFloat(data.targetLongitude), parseFloat(data.targetLatitude)];
+                }
+
+                // 2. Clear old student markers
+                if (window.studentMarkers) {
+                    window.studentMarkers.forEach(m => m.remove());
+                }
+                window.studentMarkers = [];
+
+                // 3. Visualize ALL assigned students
+                if (data.assignedStudentLocations && Array.isArray(data.assignedStudentLocations)) {
+                    data.assignedStudentLocations.forEach(stud => {
+                        const el = document.createElement('div');
+                        el.className = 'student-pin';
+                        el.style.backgroundColor = '#4CAF50'; // Green
+                        el.style.width = '15px';
+                        el.style.height = '15px';
+                        el.style.borderRadius = '50%';
+                        el.style.border = '2px solid white';
+
+                        const marker = new mapboxgl.Marker(el)
+                            .setLngLat([stud.longitude, stud.latitude])
+                            .setPopup(new mapboxgl.Popup().setHTML(`<b>${stud.name}</b><br>ID: ${stud.studentId}`))
+                            .addTo(window.dashboardMap);
+
+                        window.studentMarkers.push(marker);
+                    });
+                    showToast(`Showing ${data.assignedStudentLocations.length} student locations for this shuttle.`);
+
+                    // 4. Set Waypoints for Routing (Route to all students)
+                    // Strategy: Origin=Shuttle -> Waypoints=Students[0..N-1] -> Destination=Students[N]
+                    if (data.assignedStudentLocations.length > 0) {
+                        currentWaypoints = data.assignedStudentLocations.map(s => [s.longitude, s.latitude]);
+                    } else {
+                        currentWaypoints = [];
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Error fetching shuttle details for tracking", e);
+        }
+
+        updateDirectionRoute();
+
+        let shuttleName = `Shuttle #${id}`;
+        drawRoute(shuttleName, [lng, lat]);
+        showToast(`Tracking Shuttle #${id}`);
+    }
+}
+
+function updateDirectionRoute() {
+    console.log("updateDirectionRoute called. Shuttle:", lastShuttleLoc, "Waypoints:", currentWaypoints.length);
+    if (window.mapDirections && lastShuttleLoc) {
+        // Ensure origin is number
+        const origin = [parseFloat(lastShuttleLoc[0]), parseFloat(lastShuttleLoc[1])];
+        window.mapDirections.setOrigin(origin);
+
+        // Clear existing waypoints first (mapbox-gl-directions doesn't have clearWaypoints, needs removeWaypoint)
+        // A simple way is to setOrigin/Dest and then add waypoints.
+
+        if (currentWaypoints.length > 0) {
+            // Use the LAST student as the final destination
+            const destIndex = currentWaypoints.length - 1;
+            const dest = currentWaypoints[destIndex];
+            window.mapDirections.setDestination(dest);
+
+            // Add others as waypoints
+            for (let i = 0; i < destIndex; i++) {
+                // addWaypoint(index, coordinates)
+                window.mapDirections.addWaypoint(i, currentWaypoints[i]);
+            }
+        } else if (lastStudentLoc) {
+            // Fallback to single student
+            const dest = [parseFloat(lastStudentLoc[0]), parseFloat(lastStudentLoc[1])];
+            window.mapDirections.setDestination(dest);
+        }
+
+        showToast("Calculating multi-stop route...");
+    }
+}
+
+function drawRoute(shuttleName, currentPos) {
+    const routeCoords = shuttleRoutes[shuttleName];
+    if (!routeCoords) return;
+
+    const map = window.dashboardMap;
+
+    // Remove if exists
+    if (map.getLayer('route-line')) {
+        map.removeLayer('route-line');
+        map.removeSource('route-source');
+    }
+
+    // Add Route Source
+    map.addSource('route-source', {
+        'type': 'geojson',
+        'data': {
+            'type': 'Feature',
+            'properties': {},
+            'geometry': {
+                'type': 'LineString',
+                'coordinates': routeCoords
+            }
+        }
+    });
+
+    // Add Route Layer
+    map.addLayer({
+        'id': 'route-line',
+        'type': 'line',
+        'source': 'route-source',
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        'paint': {
+            'line-color': '#003A6C', // Shuttle Blue
+            'line-width': 6,
+            'line-opacity': 0.8
+        }
+    });
+
+    // Fit bounds 
+    const bounds = new mapboxgl.LngLatBounds();
+    routeCoords.forEach(coord => bounds.extend(coord));
+    bounds.extend(currentPos);
+    map.fitBounds(bounds, { padding: 50 });
+}
+
+async function simulateLocationUpdate() {
+    const id = document.getElementById('sim-shuttle-id').value;
+    const lat = document.getElementById('sim-lat').value;
+    const lng = document.getElementById('sim-lng').value;
+
+    if (!id || !lat || !lng) {
+        showToast("Please enter Student ID, Latitude, and Longitude");
+        return;
+    }
+
+    // Ensure student is assigned to a shuttle (so they show up in tracking)
+    await checkAndAssignShuttle(id);
+
+    try {
+        const response = await fetch(`${SERVER_URL}/api/shuttles/${id}/location`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ latitude: lat, longitude: lng })
+        });
+
+        const data = await response.json();
+
+
+        if (response.ok) {
+            showToast("Location updated! ETA: " + (data.eta || "Calculating..."));
+
+            // Backend-driven Routing: Use target coordinates if provided
+            if (data.targetLatitude && data.targetLongitude) {
+                lastStudentLoc = [parseFloat(data.targetLongitude), parseFloat(data.targetLatitude)];
+                console.log("Backend provided target student location:", lastStudentLoc);
+            }
+
+            // Update lastShuttleLoc if we are simulating
+            if (window.dashboardMap) {
+                // Convert to numbers just in case
+                lastShuttleLoc = [parseFloat(lng), parseFloat(lat)];
+                updateDirectionRoute();
+            }
+            fetchMapShuttles(); // Refresh map
+        } else {
+            showToast("Error: " + (data.error || "Failed"));
+        }
+    } catch (e) {
+        console.error(e);
+        showToast("Network Error");
+    }
+}
+
+async function checkAndAssignShuttle(studentId) {
+    // Helper to ensure student is assigned to a shuttle so they appear on map
+    try {
+        const response = await fetch(`${SERVER_URL}/api/students/${studentId}/assigned-shuttle`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (!data.assignedShuttleId) {
+                // Auto-assign to Shuttle #1 for simulation purposes
+                // Ideally we'd ask the user, but for this simulation we want it to "just work"
+                // Assuming Shuttle #1 exists or active shuttles exist
+                if (window.shuttles && window.shuttles.length > 0) {
+                    const targetShuttleId = window.shuttles[0].shuttleId;
+                    await fetch(`${SERVER_URL}/api/students/${studentId}/assigned-shuttle`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ shuttleId: targetShuttleId })
+                    });
+                    console.log(`Auto-assigned Student ${studentId} to Shuttle ${targetShuttleId}`);
+                    showToast(`Student assigned to Shuttle #${targetShuttleId}`);
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Auto-assign check failed", e);
+    }
+}
+
+// Global hook for refreshMap in index.html to call
+window.refreshMap = function () {
+    if (window.dashboardMap) window.dashboardMap.resize();
+    fetchMapShuttles();
+    showToast('Map refreshed & Data synced');
+};
+
+async function simulateStudentLocation() {
+    const id = document.getElementById('sim-stud-id').value;
+    const lat = document.getElementById('sim-stud-lat').value;
+    const lng = document.getElementById('sim-stud-lng').value;
+
+    if (!id || !lat || !lng) {
+        showToast("Please enter Student ID, Latitude, and Longitude");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${SERVER_URL}/api/students/${id}/location`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ latitude: lat, longitude: lng })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            showToast("Student Pin Set!");
+
+            // Visual feedback: Add a temporary marker for the student
+            if (window.dashboardMap) {
+                const el = document.createElement('div');
+                el.className = 'student-pin';
+                el.style.backgroundColor = '#4CAF50';
+                el.style.width = '20px';
+                el.style.height = '20px';
+                el.style.borderRadius = '50%';
+                el.style.border = '2px solid white';
+
+                new mapboxgl.Marker(el)
+                    .setLngLat([lng, lat])
+                    .setPopup(new mapboxgl.Popup().setHTML('<b>Student #' + id + '</b><br>Location Pinned'))
+                    .addTo(window.dashboardMap);
+            }
+
+            // Save for Directions API
+            const numLat = parseFloat(lat);
+            const numLng = parseFloat(lng);
+            lastStudentLoc = [numLng, numLat];
+            console.log("Student Pin: stored lastStudentLoc", lastStudentLoc);
+            updateDirectionRoute();
+
+        } else {
+            showToast("Error: " + (data.error || "Failed"));
+        }
+    } catch (e) {
+        console.error(e);
+        showToast("Network Error");
+    }
+}
+
+// New: Fetch and display ALL student locations (Persistent View)
+async function fetchStudentLocations() {
+    try {
+        const response = await fetch(`${SERVER_URL}/api/students/locations`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const locations = await response.json();
+            console.log(`Fetched ${locations.length} student locations.`);
+
+            // Clear existing global markers if any (optional, depending on behavior)
+            // For now, we just add them to ensuring they are visible
+
+            locations.forEach(stud => {
+                const el = document.createElement('div');
+                el.className = 'student-pin-persistent'; // Class for easier identifying
+                el.style.backgroundColor = '#4CAF50'; // Green
+                el.style.width = '15px';
+                el.style.height = '15px';
+                el.style.borderRadius = '50%';
+                el.style.border = '2px solid white';
+                el.style.cursor = 'pointer';
+
+                new mapboxgl.Marker(el)
+                    .setLngLat([stud.longitude, stud.latitude])
+                    .setPopup(new mapboxgl.Popup().setHTML(`<b>${stud.name}</b><br>ID: ${stud.studentId}<br>Assigned Shuttle: ${stud.assignedShuttleId || 'None'}`))
+                    .addTo(window.dashboardMap);
+            });
+        }
+    } catch (e) {
+        console.error("Error fetching student locations:", e);
+    }
+}
+
+// Initialization Logic
+// Ensure map is loaded before restoring state
+if (window.dashboardMap) {
+    window.dashboardMap.on('load', () => {
+        console.log("Map loaded. Fetching shuttles and students...");
+        fetchMapShuttles();
+        fetchStudentLocations(); // Load student pins immediately
+        // Restore state check is inside fetchMapShuttles -> restoreTrackingState
+    });
+} else {
+    // Fallback if map isn't ready immediately (though index.html sets it)
+    setTimeout(() => {
+        if (window.dashboardMap) {
+            console.log("Map check (delayed). Fetching shuttles and students...");
+            fetchMapShuttles();
+            fetchStudentLocations(); // Load student pins immediately
+        }
+
+    }, 1000);
+}

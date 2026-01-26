@@ -131,4 +131,51 @@ public class StudentController {
 
         return ResponseEntity.ok(Map.of("message", "Student and associated user deleted successfully"));
     }
+
+    // New: Get All Student Locations (for debugging/admin view)
+    @GetMapping("/locations")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Map<String, Object>>> getAllStudentLocations() {
+        List<Student> students = studentRepository.findAll();
+        List<Map<String, Object>> locations = students.stream()
+                .filter(s -> s.getLatitude() != null && s.getLongitude() != null)
+                .map(s -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("studentId", s.getStudentId());
+                    map.put("name", s.getFullName());
+                    map.put("latitude", s.getLatitude());
+                    map.put("longitude", s.getLongitude());
+                    map.put("assignedShuttleId", s.getAssignedShuttle() != null ? s.getAssignedShuttle().getShuttleId() : null);
+                    return map;
+                })
+                .collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(locations);
+    }
+
+    // New: Update Student Location (for "Pin" feature)
+    @PostMapping("/{id}/location")
+    public ResponseEntity<Map<String, Object>> updateLocation(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        System.out.println("Received updateLocation request for Student ID: " + id);
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+
+        if (request.containsKey("latitude") && request.containsKey("longitude")) {
+            Double lat = Double.parseDouble(request.get("latitude").toString());
+            Double lng = Double.parseDouble(request.get("longitude").toString());
+            System.out.println("Updating Student ID " + id + " to Lat: " + lat + ", Lng: " + lng);
+            
+            student.setLatitude(lat);
+            student.setLongitude(lng);
+            studentRepository.save(student);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Location updated successfully");
+            response.put("studentId", student.getStudentId());
+            response.put("latitude", student.getLatitude());
+            response.put("longitude", student.getLongitude());
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("error", "Latitude and Longitude are required"));
+        }
+    }
 }
