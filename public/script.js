@@ -1,4 +1,7 @@
-const SERVER_URL = "http://localhost:8080"; // Change to "http://34.126.105.77:8080" for server testing
+// Cloud Deployment: Use relative path if served from same origin, or localhost for local dev
+const SERVER_URL = (window.location.hostname === 'localhost' || window.location.protocol === 'file:')
+    ? "http://localhost:8080"
+    : ""; // Production: Requests go to same domain (e.g. /api/...)
 
 let token = null;
 let currentUser = null;
