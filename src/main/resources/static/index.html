@@ -229,7 +229,7 @@
                 </table>
             </div>
 
-            <div id="registration" class="tab">
+            <div id="registration" class="tab" style="position: relative;">
                 <header>
                     <div class="title-container">
                         <i class="fa-solid fa-id-card"></i>
@@ -237,6 +237,23 @@
                     </div>
                     <p>Assign shuttles and register devices for students</p>
                 </header>
+                <!-- Hardware Simulator Widget (Tab Specific) -->
+                <div id="hardware-simulator"
+                    style="position: absolute; top: 20px; right: 20px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 3000; border: 2px solid #003A6C;">
+                    <h4 style="margin: 0 0 10px 0; color: #003A6C; font-size: 1rem;"><i
+                            class="fa-solid fa-microchip"></i>
+                        Hardware Simulator</h4>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button onclick="simulateHardwareScan('rfid')"
+                            style="padding: 8px; background: #003A6C; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            <i class="fa-solid fa-id-card"></i> Simulate RFID Scan
+                        </button>
+                        <button onclick="simulateHardwareScan('fingerprint')"
+                            style="padding: 8px; background: #003A6C; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            <i class="fa-solid fa-fingerprint"></i> Simulate Fingerprint
+                        </button>
+                    </div>
+                </div>
                 <div class="table-header">
                     <div class="table-title-section">
                         <h3>Student Registration</h3>
@@ -1397,6 +1414,8 @@
                 </div>
             </div>
         </div>
+
+
 
         <div id="toast" class="toast" style="display: none;"></div>
 

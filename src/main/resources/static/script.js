@@ -2550,3 +2550,103 @@ if (window.dashboardMap) {
 
     }, 1000);
 }
+
+// =================== HARDWARE AUTO-SAVE ===================
+let hardwarePollInterval = null;
+
+function startHardwarePolling() {
+    if (hardwarePollInterval) return;
+    hardwarePollInterval = setInterval(pollHardwareInput, 1500);
+    console.log("Hardware polling started");
+}
+
+function stopHardwarePolling() {
+    if (hardwarePollInterval) {
+        clearInterval(hardwarePollInterval);
+        hardwarePollInterval = null;
+        console.log("Hardware polling stopped");
+    }
+}
+
+async function pollHardwareInput() {
+    try {
+        const res = await fetch(`${SERVER_URL}/api/hardware/latest`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            const rfidInput = document.getElementById('rfidInput');
+            const fingerprintInput = document.getElementById('fingerprintInput');
+
+            let updated = false;
+
+            // Handle RFID
+            if (data.rfid && rfidInput) {
+                rfidInput.value = data.rfid;
+                rfidInput.style.backgroundColor = '#e8f0fe';
+                updated = true;
+            }
+
+            // Handle Fingerprint
+            if (data.fingerprint && fingerprintInput) {
+                fingerprintInput.value = data.fingerprint;
+                fingerprintInput.style.backgroundColor = '#e8f0fe';
+                updated = true;
+            }
+
+            // Auto-submit if we have incoming data and both fields are valid
+            if (updated && rfidInput && fingerprintInput && rfidInput.value && fingerprintInput.value) {
+                const btn = document.querySelector('#registerDeviceForm .submit-btn');
+                if (btn && !btn.disabled) {
+                    console.log("Auto-submitting hardware registration...");
+                    btn.click();
+                    showToast("Device registered automatically from hardware scan");
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Hardware polling error", e);
+    }
+}
+
+// Observer to auto-start polling when Register Device modal opens
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('registerDeviceModal');
+    if (modal) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    const display = window.getComputedStyle(modal).display;
+                    if (display !== 'none') {
+                        startHardwarePolling();
+                    } else {
+                        stopHardwarePolling();
+                    }
+                }
+            });
+        });
+        observer.observe(modal, { attributes: true });
+    }
+});
+
+async function simulateHardwareScan(type) {
+    const value = type === 'rfid' ? 'RFID-' + Math.floor(Math.random() * 1000000) : 'FP-' + Math.floor(Math.random() * 1000000);
+    try {
+        const res = await fetch(`${SERVER_URL}/api/hardware/scan`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ type, value })
+        });
+        if (res.ok) {
+            showToast(`Simulated ${type.toUpperCase()} scan sent`);
+        } else {
+            showToast("Simulation failed");
+        }
+    } catch (e) {
+        console.error(e);
+        showToast("Simulation network error");
+    }
+}
