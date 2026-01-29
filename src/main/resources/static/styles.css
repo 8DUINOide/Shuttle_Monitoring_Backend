@@ -1434,6 +1434,32 @@ tbody tr:hover {
     background: linear-gradient(135deg, #d9534f, #c9302c);
 }
 
+/* === Check-In Tab Specific Styles === */
+#checkin .search-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 40px;
+    margin-bottom: 1rem;
+}
+
+#checkin .search-container input {
+    flex: 1;
+    width: 100%;
+    min-width: 300px;
+    max-width: 1200px;
+}
+
+#checkin .search-container select {
+    padding: 10px;
+    border: 1px solid #003A6C;
+    border-radius: 6px;
+    background: #fff;
+    color: #003A6C;
+    font-size: 0.9rem;
+}
+
+/* === Notifications Tab Specific Styles === */
 #notifications .search-container {
     display: flex;
     align-items: center;

@@ -13,4 +13,6 @@ import java.util.List;
 public interface CheckInRepository extends JpaRepository<CheckIn, Long> {
     @Query("SELECT c FROM CheckIn c WHERE c.student.user.userId = :studentId AND c.timestamp >= :startDate")
     List<CheckIn> findByStudentIdAndDate(@Param("studentId") Long studentId, @Param("startDate") LocalDateTime startDate);
+
+    CheckIn findTopByStudent_StudentIdOrderByTimestampDesc(Long studentId);
 }

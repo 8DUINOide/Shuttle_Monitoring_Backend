@@ -327,7 +327,7 @@
                 </table>
             </div>
 
-            <div id="checkin" class="tab users-tab">
+            <div id="checkin" class="tab users-tab" style="position: relative;">
                 <header>
                     <div class="title-container">
                         <i class="fa-solid fa-clipboard-check"></i>
@@ -335,6 +335,26 @@
                     </div>
                     <p>Real-time monitoring of student check-ins and boardings</p>
                 </header>
+                <!-- Check-In Hardware Simulator -->
+                <div id="checkin-hardware-simulator"
+                    style="position: absolute; top: 20px; right: 20px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 3000; border: 2px solid #003A6C;">
+                    <h4 style="margin: 0 0 10px 0; color: #003A6C; font-size: 1rem;"><i
+                            class="fa-solid fa-microchip"></i> Hardware Simulator</h4>
+                    <select id="sim-shuttle-select"
+                        style="width: 100%; padding: 5px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">Select Shuttle Context</option>
+                    </select>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button onclick="simulateCheckInScan('rfid')"
+                            style="padding: 8px; background: #003A6C; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            <i class="fa-solid fa-id-card"></i> Scan RFID
+                        </button>
+                        <button onclick="simulateCheckInScan('fingerprint')"
+                            style="padding: 8px; background: #003A6C; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            <i class="fa-solid fa-fingerprint"></i> Scan Fingerprint
+                        </button>
+                    </div>
+                </div>
                 <div class="table-header">
                     <div class="table-title-section">
                         <h3>Student Check-In Status</h3>
@@ -356,13 +376,11 @@
                 <p id="no-checkin-message" style="display:none; color: red; margin-top: 10px;">No records found.</p>
                 <table>
                     <thead>
-                        <tr>
+                        <tr style="background-color: #003A6C; color: white;">
                             <th>Student</th>
                             <th>Assigned Shuttle</th>
                             <th>Status</th>
-                            <th>Check-in Time</th>
-                            <th>Location</th>
-                            <th>Actions</th>
+                            <th>Time & Location</th>
                         </tr>
                     </thead>
                     <tbody id="checkin-table"></tbody>
