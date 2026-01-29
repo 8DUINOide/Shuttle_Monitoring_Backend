@@ -1350,6 +1350,44 @@
                 </div>
             </div>
 
+            <!-- Shuttle Students Modal -->
+            <div id="shuttleStudentsModal" class="modal">
+                <div class="modal-content" style="width: 95%; max-width: 700px;">
+                    <div class="modal-header">
+                        <h3>Assigned Students <span id="modal-shuttle-id-display"
+                                style="font-weight:normal; font-size: 0.8em; color: gray;"></span></h3>
+                        <span class="close-modal" onclick="closeShuttleStudentsModal()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" id="searchShuttleStudents" placeholder="Search students..."
+                            style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;"
+                            oninput="filterShuttleStudents()">
+                        <div style="max-height: 500px; overflow-y: auto;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background-color: #f2f2f2; position: sticky; top: 0;">
+                                        <th
+                                            style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">
+                                            ID
+                                        </th>
+                                        <th
+                                            style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">
+                                            Name
+                                        </th>
+                                        <th
+                                            style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">
+                                            Location</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="shuttle-students-tbody">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="logoutConfirmModal" class="modal-confirm" style="display: none;">
                 <div class="modal-confirm-content">
                     <h3>Confirm Logout</h3>

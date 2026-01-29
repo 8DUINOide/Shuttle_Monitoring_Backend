@@ -252,6 +252,76 @@ function toggleSidebar() {
     content.classList.toggle("content-shift");
 }
 
+// =================== SHUTTLE STUDENTS DETAILS ===================
+let currentShuttleStudents = [];
+let currentShuttleId = null;
+
+async function showShuttleDetails(shuttleId) {
+    if (!token) return;
+    try {
+        const response = await fetch(`${SERVER_URL}/api/shuttles/${shuttleId}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch shuttle details');
+
+        const data = await response.json();
+        const students = data.assignedStudentLocations || [];
+        currentShuttleStudents = students;
+        currentShuttleId = shuttleId;
+
+        document.getElementById('modal-shuttle-id-display').textContent = ' - Shuttle #' + shuttleId;
+
+        renderShuttleStudents(students);
+        document.getElementById('shuttleStudentsModal').style.display = 'flex';
+    } catch (error) {
+        console.error('Error loading shuttle details:', error);
+        showToast('Error loading shuttle details');
+    }
+}
+
+function renderShuttleStudents(students) {
+    const tbody = document.getElementById('shuttle-students-tbody');
+    tbody.innerHTML = '';
+
+    if (students.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">No students assigned</td></tr>';
+        return;
+    }
+
+    students.forEach(student => {
+        const tr = document.createElement('tr');
+        const lat = student.latitude !== null && student.latitude !== undefined ? student.latitude.toFixed(6) : 'Not Set';
+        const lng = student.longitude !== null && student.longitude !== undefined ? student.longitude.toFixed(6) : 'Not Set';
+        const pinLocation = (lat === 'Not Set') ? '<span style="color:red">Not Set</span>' : `${lat}, ${lng}`;
+
+        tr.innerHTML = `
+            <td>${student.studentId}</td>
+            <td>${sanitizeHTML(student.name)}</td>
+            <td>${pinLocation}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+// Retrying implementation to be cleaner
+function closeShuttleStudentsModal() {
+    document.getElementById('shuttleStudentsModal').style.display = 'none';
+}
+
+function filterShuttleStudents() {
+    const query = document.getElementById('searchShuttleStudents').value.toLowerCase();
+    const filtered = currentShuttleStudents.filter(s =>
+        s.name.toLowerCase().includes(query) ||
+        String(s.studentId).includes(query)
+    );
+    // We need the shuttleId for the table. 
+    // I need to store the current shuttle ID globally or pass it?
+    // Let's just store it in a global variable when opening.
+    renderShuttleStudents(filtered);
+}
+// Wait, I need to solve the `shuttleId` display issue properly.
+// I will add `currentShuttleId` global.
+
 // =================== DATA LOADING ===================
 async function loadAllData() {
     await Promise.all([
@@ -301,6 +371,9 @@ async function loadShuttles() {
                 <td>
                     <div style="display: inline-flex; gap: 5px; align-items: center;">
 
+
+
+                        <button class="action-btn" onclick="showShuttleDetails(${shuttle.shuttleId})" title="Show Details"><i class="fa-solid fa-list"></i></button>
                         <button class="action-btn" onclick="editShuttle(${shuttle.shuttleId})"><i class="fa-solid fa-edit"></i> Edit</button>
                         <button class="action-btn delete-btn" onclick="showDeleteConfirm(${shuttle.shuttleId}, 'shuttle')"><i class="fa-solid fa-trash"></i> Delete</button>
                     </div>

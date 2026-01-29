@@ -73,7 +73,6 @@ public class ShuttleService {
     public List<java.util.Map<String, Object>> getAssignedStudentLocations(Shuttle shuttle) {
         List<Student> assignedStudents = studentRepository.findByAssignedShuttle(shuttle);
         return assignedStudents.stream()
-                .filter(s -> s.getLatitude() != null && s.getLongitude() != null)
                 .map(s -> {
                     java.util.Map<String, Object> map = new java.util.HashMap<>();
                     map.put("studentId", s.getStudentId());
