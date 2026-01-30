@@ -913,8 +913,8 @@ function filterShuttles() {
     rows.forEach(row => {
         const shuttle = row.querySelector("td:nth-child(1)")?.textContent.toLowerCase() || "";
         const driver = row.querySelector("td:nth-child(2)")?.textContent.toLowerCase() || "";
-        const route = row.querySelector("td:nth-child(3)")?.textContent.toLowerCase() || "";
-        const status = row.querySelector("td:nth-child(4) span")?.textContent.toLowerCase() || "";
+        const route = row.querySelector("td:nth-child(4)")?.textContent.toLowerCase() || "";
+        const status = row.querySelector("td:nth-child(5) span")?.textContent.toLowerCase() || "";
 
         const matchesSearch = shuttle.includes(searchValue) || driver.includes(searchValue) || route.includes(searchValue);
         const matchesStatus = statusFilter === "all" || status === statusFilter;
