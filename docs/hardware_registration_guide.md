@@ -43,7 +43,7 @@ http.post("http://<server-ip>/api/hardware/scan", "application/json", payload);
 ### 2. Poll Latest Scan (Internal/Frontend Polling)
 
 **Endpoint:** `GET /api/hardware/latest`  
-**Description:** Returns the buffered scans and clears them.
+**Description:** Returns the buffered scans and clears them for the frontend to auto-populate.
 
 **Response:**
 ```json
@@ -52,7 +52,35 @@ http.post("http://<server-ip>/api/hardware/scan", "application/json", payload);
   "fingerprint": "FP-hash-string"
 }
 ```
-*Note: Fields will only be present if a scan of that type has occurred since the last poll.*
+
+---
+
+### 3. Registration Persistence (Final Save)
+
+**Endpoint:** `POST /api/check-in/register-device/{studentId}`  
+**Description:** Permanently links the RFID and Fingerprint data to a specific Student. This is typically called by the **Admin Dashboard** once both values are captured, but can be called directly for testing or custom hardware registration units.
+
+**Request Body:**
+```json
+{
+  "rfidTag": "12345678",
+  "fingerprintHash": "FP-hash-string"
+}
+```
+
+**Authentication Required:** 
+- Must include header: `Authorization: Bearer <Admin_Token>`
+
+**Example Usage (cURL):**
+```bash
+curl -X POST http://<server-ip>/api/check-in/register-device/1 \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+     -d '{
+           "rfidTag": "RFID-123456",
+           "fingerprintHash": "FP-987654"
+         }'
+```
 
 ---
 
