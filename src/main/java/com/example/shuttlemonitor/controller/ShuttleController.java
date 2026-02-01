@@ -9,6 +9,7 @@ import com.example.shuttlemonitor.Repository.OperatorRepository;
 import com.example.shuttlemonitor.Repository.ShuttleRepository;
 import com.example.shuttlemonitor.service.ShuttleService;
 import com.example.shuttlemonitor.service.UserService;
+import com.example.shuttlemonitor.service.ActivityLogService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

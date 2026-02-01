@@ -6,6 +6,7 @@ import com.example.shuttlemonitor.Repository.DriverRepository;
 import com.example.shuttlemonitor.Repository.UserRepository;
 import com.example.shuttlemonitor.exception.UnauthorizedAccessException;
 import com.example.shuttlemonitor.service.UserService;
+import com.example.shuttlemonitor.service.ActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -67,7 +68,7 @@ public class DriverController {
         driver.setEmergencyContact(updatedDriver.getEmergencyContact());
         // etc.
         driverRepository.save(driver);
-        activityLogService.log("Driver updated: " + driver.getFullName(), "INFO");
+        activityLogService.log("Driver updated: " + driver.getUser().getUsername(), "INFO");
         return ResponseEntity.ok(driver);
     }
 
@@ -77,7 +78,7 @@ public class DriverController {
     public ResponseEntity<?> deleteDriver(@PathVariable Long id) {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
-        String name = driver.getFullName();
+        String name = driver.getUser().getUsername();
         driverRepository.delete(driver);
         userRepository.delete(driver.getUser());
         activityLogService.log("Driver deleted: " + name, "WARNING");

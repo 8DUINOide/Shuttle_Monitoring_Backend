@@ -5,6 +5,7 @@ import com.example.shuttlemonitor.Entity.Student;
 import com.example.shuttlemonitor.Repository.StudentRepository;
 import com.example.shuttlemonitor.Repository.UserRepository;
 import com.example.shuttlemonitor.service.UserService;
+import com.example.shuttlemonitor.service.ActivityLogService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -133,6 +134,7 @@ public class StudentController {
 
         studentRepository.delete(student);          // This now also deletes the User
         // No need to delete user separately anymore
+        activityLogService.log("Student deleted: " + student.getFullName(), "WARNING");
 
         return ResponseEntity.ok(Map.of("message", "Student and associated user deleted successfully"));
     }

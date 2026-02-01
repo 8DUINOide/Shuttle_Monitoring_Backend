@@ -6,6 +6,7 @@ import com.example.shuttlemonitor.Entity.Student;
 import com.example.shuttlemonitor.Repository.CheckInRepository;
 import com.example.shuttlemonitor.Repository.ShuttleRepository;
 import com.example.shuttlemonitor.Repository.StudentRepository;
+import com.example.shuttlemonitor.service.ActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
