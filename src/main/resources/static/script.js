@@ -832,74 +832,69 @@ function relativeTime(timestamp) {
 async function updateDashboard() {
     if (!token) return;
 
-    // Populate Today's Routes from Shuttles tab
-    const shuttleRows = document.querySelectorAll('#shuttles-table tr');
-    let activeShuttles = 0;
-    let routes = new Set();
-    const todaysTbody = document.querySelector('#todays-routes-table tbody');
-    todaysTbody.innerHTML = '';
-    shuttleRows.forEach(row => {
-        const statusText = row.querySelector('td:nth-child(5) span')?.textContent || '';
-        const statusClass = row.querySelector('td:nth-child(5) span')?.className || '';
-        const route = row.querySelector('td:nth-child(4)')?.textContent || '';
-        const shuttle = row.querySelector('td:nth-child(1)')?.textContent || '';
-        const driver = row.querySelector('td:nth-child(2)')?.textContent || '';
-        const occupancy = row.querySelector('td:nth-child(6)')?.textContent || '';
-        const capacity = occupancy.split('/')[1] || '';
-        routes.add(route);
-        if (statusText === 'ACTIVE') {
-            activeShuttles++;
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${sanitizeHTML(route)}</td>
-                <td>${sanitizeHTML(shuttle)}</td>
-                <td>${sanitizeHTML(driver)}</td>
-                <td>${sanitizeHTML(capacity)}</td>
-                <td><span class="${statusClass}">${sanitizeHTML(statusText)}</span></td>
-            `;
-            todaysTbody.appendChild(tr);
-        }
-    });
-    const activeRoutes = routes.size;
+    try {
+        const response = await fetch(`${SERVER_URL}/api/admin/dashboard/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const stats = await response.json();
 
-    // Populate Students Checked In from Students tab
-    const studentRows = document.querySelectorAll('#students-table tr');
-    let checkedInStudents = 0;
-    studentRows.forEach(row => {
-        const status = row.querySelector('td:nth-child(5) span')?.textContent || '';
-        if (status === 'Checked in') checkedInStudents++;
-    });
+            // Update Balance Cards with backend data
+            const balanceCards = document.querySelectorAll(".balance-card h1");
+            balanceCards[0].textContent = stats.activeShuttlesCount;
+            balanceCards[1].textContent = stats.checkedInStudentsCount;
+            balanceCards[2].textContent = `${stats.onTimePerformance}%`;
+            balanceCards[3].textContent = stats.activeRoutesCount;
+        }
+    } catch (e) {
+        console.error("Error fetching dashboard stats:", e);
+    }
+
+    // Populate Today's Routes from Shuttles tab (Existing logic for the list)
+    const shuttleRows = document.querySelectorAll('#shuttles-table tr');
+    const todaysTbody = document.querySelector('#todays-routes-table tbody');
+    if (todaysTbody) {
+        todaysTbody.innerHTML = '';
+        shuttleRows.forEach(row => {
+            const statusText = row.querySelector('td:nth-child(5) span')?.textContent || '';
+            const statusClass = row.querySelector('td:nth-child(5) span')?.className || '';
+            const route = row.querySelector('td:nth-child(4)')?.textContent || '';
+            const shuttle = row.querySelector('td:nth-child(1)')?.textContent || '';
+            const driver = row.querySelector('td:nth-child(2)')?.textContent || '';
+            const occupancy = row.querySelector('td:nth-child(6)')?.textContent || '';
+            const capacity = occupancy.split('/')[1] || '';
+
+            if (statusText === 'ACTIVE') {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${sanitizeHTML(route)}</td>
+                    <td>${sanitizeHTML(shuttle)}</td>
+                    <td>${sanitizeHTML(driver)}</td>
+                    <td>${sanitizeHTML(capacity)}</td>
+                    <td><span class="${statusClass}">${sanitizeHTML(statusText)}</span></td>
+                `;
+                todaysTbody.appendChild(tr);
+            }
+        });
+    }
 
     // Populate Recent Activity from Notifications tab
     const notifRows = document.querySelectorAll('#notifications-table tr');
     const activityList = document.getElementById('recent-activity-list');
-    activityList.innerHTML = '';
-    notifRows.forEach(row => {
-        const msg = row.querySelector('td:nth-child(1)')?.textContent || '';
-        const ts = row.querySelector('td:nth-child(2)')?.textContent || '';
-        const rel = relativeTime(ts);
-        const li = document.createElement('li');
-        li.innerHTML = `
-            <div>${sanitizeHTML(msg)}</div>
-            <div class="activity-subtitle">${sanitizeHTML(rel)}</div>
-        `;
-        activityList.appendChild(li);
-    });
-
-    // Calculate On Time Performance
-    let delayed = 0;
-    shuttleRows.forEach(row => {
-        const statusText = row.querySelector('td:nth-child(4) span')?.textContent || '';
-        if (statusText !== 'ACTIVE') delayed++;
-    });
-    const onTimePerf = activeRoutes > 0 ? Math.round((activeRoutes - delayed) / activeRoutes * 100) : 0;
-
-    // Update Balance Cards
-    const balanceCards = document.querySelectorAll(".balance-card h1");
-    balanceCards[0].textContent = activeShuttles;
-    balanceCards[1].textContent = checkedInStudents;
-    balanceCards[2].textContent = `${onTimePerf}%`;
-    balanceCards[3].textContent = activeRoutes;
+    if (activityList) {
+        activityList.innerHTML = '';
+        notifRows.forEach(row => {
+            const msg = row.querySelector('td:nth-child(1)')?.textContent || '';
+            const ts = row.querySelector('td:nth-child(2)')?.textContent || '';
+            const rel = relativeTime(ts);
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <div>${sanitizeHTML(msg)}</div>
+                <div class="activity-subtitle">${sanitizeHTML(rel)}</div>
+            `;
+            activityList.appendChild(li);
+        });
+    }
 
     showProfile();
 }

@@ -15,4 +15,13 @@ public interface CheckInRepository extends JpaRepository<CheckIn, Long> {
     List<CheckIn> findByStudentIdAndDate(@Param("studentId") Long studentId, @Param("startDate") LocalDateTime startDate);
 
     CheckIn findTopByStudent_StudentIdOrderByTimestampDesc(Long studentId);
+
+    @Query(value = "SELECT COUNT(*) FROM (\n" +
+            "    SELECT DISTINCT ON (student_id) type, status \n" +
+            "    FROM check_ins \n" +
+            "    WHERE timestamp >= :since \n" +
+            "    ORDER BY student_id, timestamp DESC\n" +
+            ") as latest_checks \n" +
+            "WHERE type = 'in' AND status = 'success'", nativeQuery = true)
+    Long countCurrentlyCheckedIn(@Param("since") LocalDateTime since);
 }
