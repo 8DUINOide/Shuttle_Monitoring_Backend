@@ -70,31 +70,6 @@ public class CheckInController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/scan")
-    public ResponseEntity<Map<String, Object>> scan(@RequestBody Map<String, Object> request) {
-        String type = (String) request.get("type"); // "rfid" or "fingerprint"
-        String value = (String) request.get("value");
-        Long shuttleId = Long.parseLong(request.get("shuttleId").toString());
-
-        try {
-            CheckIn checkIn = checkInService.processScan(type, value, shuttleId);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Check-" + checkIn.getType() + " successful");
-            response.put("checkInId", checkIn.getCheckInId());
-            response.put("studentName", checkIn.getStudent().getFullName());
-            response.put("shuttleName", checkIn.getShuttle().getName());
-            response.put("type", checkIn.getType());
-            response.put("status", checkIn.getStatus());
-            response.put("timestamp", checkIn.getTimestamp().toString());
-
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
 
     @PostMapping("/secure-scan")
     public ResponseEntity<Map<String, Object>> secureScan(@RequestBody Map<String, Object> request) {

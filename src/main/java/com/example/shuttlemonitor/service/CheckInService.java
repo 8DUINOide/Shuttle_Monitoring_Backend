@@ -79,53 +79,6 @@ public class CheckInService {
         return checkInRepository.save(checkIn);
     }
 
-    public CheckIn processScan(String type, String value, Long shuttleId) {
-        Optional<Student> studentOpt;
-        if ("rfid".equalsIgnoreCase(type)) {
-            studentOpt = studentRepository.findByRfidTag(value);
-        } else {
-            studentOpt = studentRepository.findByFingerprintHash(value);
-        }
-
-        if (studentOpt.isEmpty()) {
-            throw new IllegalArgumentException("Student not found with " + type + ": " + value);
-        }
-        Student student = studentOpt.get();
-
-        Optional<Shuttle> shuttleOpt = shuttleRepository.findById(shuttleId);
-        if (shuttleOpt.isEmpty()) {
-            throw new IllegalArgumentException("Shuttle not found");
-        }
-        Shuttle shuttle = shuttleOpt.get();
-
-        // Verify Assignment
-        if (student.getAssignedShuttle() == null || !student.getAssignedShuttle().getShuttleId().equals(shuttleId)) {
-             throw new IllegalArgumentException("Student not assigned to this shuttle");
-        }
-
-        // Determine In/Out
-        CheckIn lastCheckIn = checkInRepository.findTopByStudent_StudentIdOrderByTimestampDesc(student.getStudentId());
-        String newType = "in";
-        if (lastCheckIn != null && "in".equals(lastCheckIn.getType())) {
-            newType = "out";
-        }
-
-        CheckIn checkIn = new CheckIn();
-        checkIn.setStudent(student);
-        checkIn.setShuttle(shuttle);
-        checkIn.setType(newType);
-        checkIn.setStatus("success");
-        if ("rfid".equalsIgnoreCase(type)) checkIn.setRfidTag(value);
-        else checkIn.setFingerprintHash(value);
-
-        activityLogService.log(
-            String.format("%s checked %s to %s", student.getFullName(), newType, shuttle.getName()),
-            "SUCCESS",
-            student.getUser().getUserId()
-        );
-
-        return checkInRepository.save(checkIn);
-    }
 
     public CheckIn processSecureCheckIn(String rfidTag, String fingerprintHash, Long shuttleId) {
         // Step 1: Find Student by RFID (First Factor)
