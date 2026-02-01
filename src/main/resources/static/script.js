@@ -2317,6 +2317,12 @@ async function trackShuttle(id, lat, lng) {
 
                 // 3. Visualize ALL assigned students
                 if (data.assignedStudentLocations && Array.isArray(data.assignedStudentLocations)) {
+                    // Filter out students without location
+                    const validStudentLocations = data.assignedStudentLocations.filter(s =>
+                        s.latitude !== null && s.longitude !== null &&
+                        s.latitude !== undefined && s.longitude !== undefined
+                    );
+
                     // Fetch student ETAs from the new endpoint
                     let studentETAs = [];
                     try {
@@ -2331,9 +2337,9 @@ async function trackShuttle(id, lat, lng) {
                         console.error("Error fetching student ETAs:", etaError);
                     }
 
-                    currentTrackedStudents = data.assignedStudentLocations;
+                    currentTrackedStudents = validStudentLocations;
 
-                    data.assignedStudentLocations.forEach((stud, index) => {
+                    validStudentLocations.forEach((stud, index) => {
                         const el = document.createElement('div');
                         el.className = 'student-pin';
                         el.style.backgroundColor = '#4CAF50'; // Green
@@ -2349,9 +2355,9 @@ async function trackShuttle(id, lat, lng) {
                         const marker = new mapboxgl.Marker(el)
                             .setLngLat([stud.longitude, stud.latitude])
                             .setPopup(new mapboxgl.Popup().setHTML(`
-                                <b>${stud.name}</b><br>
+                                <b>${sanitizeHTML(stud.name)}</b><br>
                                 ID: ${stud.studentId}<br>
-                                <strong id="student-eta-${stud.studentId}">ETA: ${etaDisplay}</strong>
+                                <strong id="student-eta-${stud.studentId}">Arrives in: ${etaDisplay}</strong>
                             `))
                             .addTo(window.dashboardMap);
 
@@ -2359,15 +2365,13 @@ async function trackShuttle(id, lat, lng) {
                         marker.studentIndex = index;
                         window.studentMarkers.push(marker);
                     });
-                    showToast(`Showing ${data.assignedStudentLocations.length} student locations with ETAs.`);
 
-                    // 4. Set Waypoints for Routing (Route to all students)
-                    // Strategy: Origin=Shuttle -> Waypoints=Students[0..N-1] -> Destination=Students[N]
-                    if (data.assignedStudentLocations.length > 0) {
-                        currentWaypoints = data.assignedStudentLocations.map(s => [s.longitude, s.latitude]);
-                    } else {
-                        currentWaypoints = [];
+                    if (validStudentLocations.length > 0) {
+                        showToast(`Showing ${validStudentLocations.length} student locations with ETAs.`);
                     }
+
+                    // 4. Set Waypoints for Routing (Route to all students with location)
+                    currentWaypoints = validStudentLocations.map(s => [s.longitude, s.latitude]);
                 }
             }
         } catch (e) {
@@ -2384,41 +2388,60 @@ async function trackShuttle(id, lat, lng) {
 
 function updateDirectionRoute() {
     console.log("updateDirectionRoute called. Shuttle:", lastShuttleLoc, "Waypoints:", currentWaypoints.length, "Destination:", lastStudentLoc);
-    if (window.mapDirections && lastShuttleLoc) {
-        // Ensure origin is number
-        const origin = [parseFloat(lastShuttleLoc[0]), parseFloat(lastShuttleLoc[1])];
-        window.mapDirections.setOrigin(origin);
 
-        // Clear existing waypoints by removing them (mapbox-gl-directions quirk)
-        // The removeWaypoint method needs indices, so we loop backwards
-        try {
-            const waypointCount = window.mapDirections.getWaypoints().length;
-            for (let i = waypointCount - 1; i >= 0; i--) {
-                window.mapDirections.removeWaypoint(i);
+    if (!window.mapDirections) return;
+
+    // 1. Set Origin
+    if (lastShuttleLoc) {
+        const lng = parseFloat(lastShuttleLoc[0]);
+        const lat = parseFloat(lastShuttleLoc[1]);
+        if (!isNaN(lng) && !isNaN(lat) && Math.abs(lat) <= 90) {
+            window.mapDirections.setOrigin([lng, lat]);
+        }
+    }
+
+    // 2. Clear existing waypoints 
+    try {
+        const waypointCount = window.mapDirections.getWaypoints().length;
+        for (let i = waypointCount - 1; i >= 0; i--) {
+            window.mapDirections.removeWaypoint(i);
+        }
+    } catch (e) {
+        console.log("Could not clear waypoints:", e);
+    }
+
+    // 3. Set Destination
+    if (lastStudentLoc) {
+        const lng = parseFloat(lastStudentLoc[0]);
+        const lat = parseFloat(lastStudentLoc[1]);
+        if (!isNaN(lng) && !isNaN(lat) && Math.abs(lat) <= 90) {
+            window.mapDirections.setDestination([lng, lat]);
+        }
+    }
+
+    // 4. Add Waypoints
+    let addedCount = 0;
+    if (currentWaypoints.length > 0) {
+        currentWaypoints.forEach((wp, i) => {
+            const lng = parseFloat(wp[0]);
+            const lat = parseFloat(wp[1]);
+            if (!isNaN(lng) && !isNaN(lat) && Math.abs(lat) <= 90) {
+                try {
+                    window.mapDirections.addWaypoint(addedCount, [lng, lat]);
+                    addedCount++;
+                } catch (wpErr) {
+                    console.error("Error adding waypoint:", wpErr);
+                }
             }
-        } catch (e) {
-            console.log("Could not clear waypoints:", e);
-        }
+        });
+    }
 
-        // Set Destination: Driver Destination (lastStudentLoc now holds this)
-        if (lastStudentLoc) {
-            const dest = [parseFloat(lastStudentLoc[0]), parseFloat(lastStudentLoc[1])];
-            window.mapDirections.setDestination(dest);
-        }
-
-        // Add ALL students as waypoints (intermediate stops)
-        if (currentWaypoints.length > 0) {
-            for (let i = 0; i < currentWaypoints.length; i++) {
-                window.mapDirections.addWaypoint(i, currentWaypoints[i]);
-            }
-            showToast(`Route: Shuttle → ${currentWaypoints.length} Students → Destination`);
-        } else if (lastStudentLoc) {
-            showToast("Route: Shuttle → Destination");
-        } else {
-            showToast("No destination set. Use Driver Simulation to set one.");
-        }
+    if (addedCount > 0) {
+        showToast(`Route: Shuttle → ${addedCount} Students → Destination`);
+    } else if (lastStudentLoc) {
+        showToast("Route: Shuttle → Destination");
     } else {
-        console.log("mapDirections not ready or shuttle location unknown.");
+        showToast("No destination set. Use Driver Simulation to set one.");
     }
 }
 
