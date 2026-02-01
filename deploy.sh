@@ -19,4 +19,9 @@ echo "Building and restarting with Docker Compose..."
 docker compose down
 docker compose up -d --build
 
+# Optional: Cleanup unused images to save space
+echo "Cleaning up old images..."
+docker image prune -f
+
 echo "Deployment finished successfully!"
+
