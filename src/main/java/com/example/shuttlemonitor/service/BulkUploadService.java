@@ -387,4 +387,83 @@ public class BulkUploadService {
             errors.add("Row " + rowNum + ": Failed to create operator '" + dto.operatorUsername() + "': " + e.getMessage());
         }
     }
+
+    public byte[] generateParentStudentTemplate() throws IOException {
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("ParentsStudents");
+
+            // Headers
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {
+                    "Parent Username", "Parent Email", "Parent Password", "Parent Full Name", "Parent Contact", "Parent Address",
+                    "Student 1 Username", "Student 1 Email", "Student 1 Password", "Student 1 Name", "Student 1 Contact", "Student 1 Address", "Student 1 Grade", "Student 1 Section",
+                    "Student 2 Username", "Student 2 Email", "Student 2 Password", "Student 2 Name", "Student 2 Contact", "Student 2 Address", "Student 2 Grade", "Student 2 Section"
+                    // ... intended for up to 5, but let's just show 2 slots for brevity in template
+            };
+
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                sheet.setColumnWidth(i, 5000);
+            }
+
+            // Example Data Row
+            Row exampleRow = sheet.createRow(1);
+            exampleRow.createCell(0).setCellValue("parent_juan");
+            exampleRow.createCell(1).setCellValue("juan@example.com");
+            exampleRow.createCell(2).setCellValue("password123");
+            exampleRow.createCell(3).setCellValue("Juan Dela Cruz");
+            exampleRow.createCell(4).setCellValue("09123456789");
+            exampleRow.createCell(5).setCellValue("Naga City");
+            exampleRow.createCell(6).setCellValue("stud_maria");
+            exampleRow.createCell(7).setCellValue("maria@example.com");
+            exampleRow.createCell(8).setCellValue("password123");
+            exampleRow.createCell(9).setCellValue("Maria Dela Cruz");
+            exampleRow.createCell(10).setCellValue("09987654321");
+            exampleRow.createCell(11).setCellValue("Naga City");
+            exampleRow.createCell(12).setCellValue("Grade 10");
+            exampleRow.createCell(13).setCellValue("Section A");
+
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            workbook.write(out);
+            return out.toByteArray();
+        }
+    }
+
+    public byte[] generateOperatorDriverTemplate() throws IOException {
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("OperatorsDrivers");
+
+            // Headers
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {
+                    "Operator Username", "Operator Email", "Operator Password", "Operator Full Name", "Operator Contact",
+                    "Driver 1 Username", "Driver 1 Email", "Driver 1 Password", "Driver 1 Name", "Driver 1 Contact", "Driver 1 Emergency"
+            };
+
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                sheet.setColumnWidth(i, 5000);
+            }
+
+            // Example Data Row
+            Row exampleRow = sheet.createRow(1);
+            exampleRow.createCell(0).setCellValue("op_agency");
+            exampleRow.createCell(1).setCellValue("agency@example.com");
+            exampleRow.createCell(2).setCellValue("password123");
+            exampleRow.createCell(3).setCellValue("Transit Agency");
+            exampleRow.createCell(4).setCellValue("09123456789");
+            exampleRow.createCell(5).setCellValue("driver_pedro");
+            exampleRow.createCell(6).setCellValue("pedro@example.com");
+            exampleRow.createCell(7).setCellValue("password123");
+            exampleRow.createCell(8).setCellValue("Pedro Driver");
+            exampleRow.createCell(9).setCellValue("09987654321");
+            exampleRow.createCell(10).setCellValue("09112223333");
+
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            workbook.write(out);
+            return out.toByteArray();
+        }
+    }
 }

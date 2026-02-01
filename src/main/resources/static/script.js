@@ -270,7 +270,8 @@ async function showShuttleDetails(shuttleId) {
         currentShuttleStudents = students;
         currentShuttleId = shuttleId;
 
-        document.getElementById('modal-shuttle-id-display').textContent = ' - Shuttle #' + shuttleId;
+        const driverInfo = data.driver ? ` - Driver ID: ${data.driver.driverId}` : ' - No Driver';
+        document.getElementById('modal-shuttle-id-display').textContent = ' - Shuttle #' + shuttleId + driverInfo;
 
         renderShuttleStudents(students);
         document.getElementById('shuttleStudentsModal').style.display = 'flex';
@@ -1717,6 +1718,38 @@ function closeBulkUploadModal() {
     bulkType = '';
 }
 
+async function downloadBulkTemplate() {
+    if (!bulkType) return;
+    const type = bulkType === 'students' ? 'students' : 'drivers';
+    const endpoint = `${SERVER_URL}/api/admin/bulk-upload/template?type=${type}`;
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bulk_${type}_template.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } else {
+            const data = await response.json();
+            showToast('Failed to download template: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        showToast('Error downloading template: ' + error.message);
+    }
+}
+
 // Handle bulk upload form submission
 document.getElementById('bulkUploadForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -2176,6 +2209,21 @@ function updateMapMarkers(shuttlesData) {
                 .addTo(window.dashboardMap);
 
             window.mapMarkers.push(marker);
+
+            // New: Destination Marker
+            if (shuttle.destinationLatitude && shuttle.destinationLongitude) {
+                const destEl = document.createElement('div');
+                destEl.style.color = '#ff4d4f'; // Red
+                destEl.style.fontSize = '24px';
+                destEl.innerHTML = '<i class="fa-solid fa-flag-checkered"></i>';
+
+                const destMarker = new mapboxgl.Marker({ element: destEl })
+                    .setLngLat([shuttle.destinationLongitude, shuttle.destinationLatitude])
+                    .setPopup(new mapboxgl.Popup().setHTML(`<b>${sanitizeHTML(shuttle.name)} Destination</b>`))
+                    .addTo(window.dashboardMap);
+
+                window.mapMarkers.push(destMarker);
+            }
         }
     });
 
@@ -2223,7 +2271,11 @@ async function trackShuttle(id, lat, lng) {
                 const data = await response.json();
 
                 // 1. Set global "Target" student (for route line)
-                if (data.targetLatitude && data.targetLongitude) {
+                // 1. Set global "Target" student (for route line)
+                if (data.destinationLatitude && data.destinationLongitude) {
+                    // Prioritize manually set destination
+                    lastStudentLoc = [parseFloat(data.destinationLongitude), parseFloat(data.destinationLatitude)];
+                } else if (data.targetLatitude && data.targetLongitude) {
                     lastStudentLoc = [parseFloat(data.targetLongitude), parseFloat(data.targetLatitude)];
                 }
 
@@ -2275,33 +2327,42 @@ async function trackShuttle(id, lat, lng) {
 }
 
 function updateDirectionRoute() {
-    console.log("updateDirectionRoute called. Shuttle:", lastShuttleLoc, "Waypoints:", currentWaypoints.length);
+    console.log("updateDirectionRoute called. Shuttle:", lastShuttleLoc, "Waypoints:", currentWaypoints.length, "Destination:", lastStudentLoc);
     if (window.mapDirections && lastShuttleLoc) {
         // Ensure origin is number
         const origin = [parseFloat(lastShuttleLoc[0]), parseFloat(lastShuttleLoc[1])];
         window.mapDirections.setOrigin(origin);
 
-        // Clear existing waypoints first (mapbox-gl-directions doesn't have clearWaypoints, needs removeWaypoint)
-        // A simple way is to setOrigin/Dest and then add waypoints.
-
-        if (currentWaypoints.length > 0) {
-            // Use the LAST student as the final destination
-            const destIndex = currentWaypoints.length - 1;
-            const dest = currentWaypoints[destIndex];
-            window.mapDirections.setDestination(dest);
-
-            // Add others as waypoints
-            for (let i = 0; i < destIndex; i++) {
-                // addWaypoint(index, coordinates)
-                window.mapDirections.addWaypoint(i, currentWaypoints[i]);
+        // Clear existing waypoints by removing them (mapbox-gl-directions quirk)
+        // The removeWaypoint method needs indices, so we loop backwards
+        try {
+            const waypointCount = window.mapDirections.getWaypoints().length;
+            for (let i = waypointCount - 1; i >= 0; i--) {
+                window.mapDirections.removeWaypoint(i);
             }
-        } else if (lastStudentLoc) {
-            // Fallback to single student
+        } catch (e) {
+            console.log("Could not clear waypoints:", e);
+        }
+
+        // Set Destination: Driver Destination (lastStudentLoc now holds this)
+        if (lastStudentLoc) {
             const dest = [parseFloat(lastStudentLoc[0]), parseFloat(lastStudentLoc[1])];
             window.mapDirections.setDestination(dest);
         }
 
-        showToast("Calculating multi-stop route...");
+        // Add ALL students as waypoints (intermediate stops)
+        if (currentWaypoints.length > 0) {
+            for (let i = 0; i < currentWaypoints.length; i++) {
+                window.mapDirections.addWaypoint(i, currentWaypoints[i]);
+            }
+            showToast(`Route: Shuttle → ${currentWaypoints.length} Students → Destination`);
+        } else if (lastStudentLoc) {
+            showToast("Route: Shuttle → Destination");
+        } else {
+            showToast("No destination set. Use Driver Simulation to set one.");
+        }
+    } else {
+        console.log("mapDirections not ready or shuttle location unknown.");
     }
 }
 
@@ -2487,6 +2548,39 @@ async function simulateStudentLocation() {
             console.log("Student Pin: stored lastStudentLoc", lastStudentLoc);
             updateDirectionRoute();
 
+        } else {
+            showToast("Error: " + (data.error || "Failed"));
+        }
+    } catch (e) {
+        console.error(e);
+        showToast("Network Error");
+    }
+}
+
+async function simulateDriverDestination() {
+    const id = document.getElementById('sim-dest-shuttle-id').value;
+    const lat = document.getElementById('sim-dest-lat').value;
+    const lng = document.getElementById('sim-dest-lng').value;
+
+    if (!id || !lat || !lng) {
+        showToast("Please enter Shuttle ID, Latitude, and Longitude");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${SERVER_URL}/api/shuttles/${id}/destination`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ latitude: lat, longitude: lng })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            showToast("Destination Set!");
+            fetchMapShuttles();
         } else {
             showToast("Error: " + (data.error || "Failed"));
         }

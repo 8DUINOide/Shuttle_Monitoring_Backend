@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
         return buildErrorResponse(
                 "Invalid Request",
-                "Something in your request doesn't look right. Please check and try again.",
+                ex.getMessage(),
                 HttpStatus.BAD_REQUEST
         );
     }

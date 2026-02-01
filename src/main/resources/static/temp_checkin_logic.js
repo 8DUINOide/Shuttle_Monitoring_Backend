@@ -1,5 +1,3 @@
-}
-
 // CheckIn Management Logic
 async function loadCheckInManagement() {
     console.log("Loading Check-In Management...");

@@ -42,6 +42,9 @@ public class Shuttle {
     private Double latitude; // New: Current Latitude
     private Double longitude; // New: Current Longitude
 
+    private Double destinationLatitude; // New: Driver Destination Latitude
+    private Double destinationLongitude; // New: Driver Destination Longitude
+
 
     private LocalDateTime createdAt;
 

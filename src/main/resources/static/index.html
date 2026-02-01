@@ -511,7 +511,8 @@
                     </div>
                     <div class="map-container">
                         <div id="map" style="flex: 1; position: relative;"></div>
-                        <div class="active-shuttles" style="width: 30%; max-height: 600px; overflow-y: auto;">
+                        <div class="active-shuttles"
+                            style="width: 30%; max-height: calc(100vh - 160px); overflow-y: auto;">
                             <!-- New: Simulation Box -->
                             <div class="simulation-box"
                                 style="background: #e6f7ff; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #1890ff;">
@@ -519,10 +520,12 @@
                                 <p style="font-size: 12px; margin-bottom: 5px;">Simulate GPS data from hardware.</p>
                                 <input type="number" id="sim-shuttle-id" placeholder="Shuttle ID"
                                     style="width: 100%; margin-bottom: 5px; padding: 5px;">
-                                <input type="number" id="sim-lat" placeholder="Latitude" step="any"
-                                    style="width: 100%; margin-bottom: 5px; padding: 5px;">
-                                <input type="number" id="sim-lng" placeholder="Longitude" step="any"
-                                    style="width: 100%; margin-bottom: 5px; padding: 5px;">
+                                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                                    <input type="number" id="sim-lat" placeholder="Latitude" step="any"
+                                        style="width: 50%; padding: 5px;">
+                                    <input type="number" id="sim-lng" placeholder="Longitude" step="any"
+                                        style="width: 50%; padding: 5px;">
+                                </div>
                                 <button class="action-btn" onclick="simulateLocationUpdate()"
                                     style="width: 100%;">Update Location</button>
                             </div>
@@ -535,12 +538,32 @@
                                 </p>
                                 <input type="number" id="sim-stud-id" placeholder="Student ID"
                                     style="width: 100%; margin-bottom: 5px; padding: 5px;">
-                                <input type="number" id="sim-stud-lat" placeholder="Latitude" step="any"
-                                    style="width: 100%; margin-bottom: 5px; padding: 5px;">
-                                <input type="number" id="sim-stud-lng" placeholder="Longitude" step="any"
-                                    style="width: 100%; margin-bottom: 5px; padding: 5px;">
+                                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                                    <input type="number" id="sim-stud-lat" placeholder="Latitude" step="any"
+                                        style="width: 50%; padding: 5px;">
+                                    <input type="number" id="sim-stud-lng" placeholder="Longitude" step="any"
+                                        style="width: 50%; padding: 5px;">
+                                </div>
                                 <button class="action-btn" onclick="simulateStudentLocation()"
                                     style="width: 100%; background-color: #4CAF50;">Set My Pin</button>
+                            </div>
+
+                            <!-- New: Driver End Point Simulation Box -->
+                            <div class="simulation-box"
+                                style="background: #fff0f0; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #ff4d4f;">
+                                <h4 style="margin-top: 0; color: #cf1322;">Driver End Point Simulation</h4>
+                                <p style="font-size: 12px; margin-bottom: 5px;">Simulate Driver setting their
+                                    destination.</p>
+                                <input type="number" id="sim-dest-shuttle-id" placeholder="Shuttle ID"
+                                    style="width: 100%; margin-bottom: 5px; padding: 5px;">
+                                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                                    <input type="number" id="sim-dest-lat" placeholder="Latitude" step="any"
+                                        style="width: 50%; padding: 5px;">
+                                    <input type="number" id="sim-dest-lng" placeholder="Longitude" step="any"
+                                        style="width: 50%; padding: 5px;">
+                                </div>
+                                <button class="action-btn" onclick="simulateDriverDestination()"
+                                    style="width: 100%; background-color: #ff4d4f;">Set Destination</button>
                             </div>
                             <div id="mouse-coordinates"
                                 style="background: rgba(255, 255, 255, 0.8); padding: 5px; margin-bottom: 10px; border-radius: 4px; font-size: 12px; font-weight: bold;">
@@ -677,6 +700,12 @@
                                 if (document.getElementById('sim-stud-lat')) {
                                     document.getElementById('sim-stud-lat').value = e.lngLat.lat.toFixed(6);
                                     document.getElementById('sim-stud-lng').value = e.lngLat.lng.toFixed(6);
+                                }
+
+                                // Also fill driver destination inputs
+                                if (document.getElementById('sim-dest-lat')) {
+                                    document.getElementById('sim-dest-lat').value = e.lngLat.lat.toFixed(6);
+                                    document.getElementById('sim-dest-lng').value = e.lngLat.lng.toFixed(6);
                                 }
                             });
                         });
@@ -1241,6 +1270,10 @@
                         </div>
                         <p id="bulk-error" class="error-text" style="display: none;"></p>
                         <div class="modal-actions">
+                            <button type="button" class="action-btn" onclick="downloadBulkTemplate()"
+                                style="margin-right: auto; background-color: #2196F3;">
+                                <i class="fa-solid fa-download"></i> Download Template
+                            </button>
                             <button type="button" class="cancel-btn" onclick="closeBulkUploadModal()">Cancel</button>
                             <button type="submit" class="submit-btn">
                                 <i class="fa-solid fa-upload"></i> Upload File

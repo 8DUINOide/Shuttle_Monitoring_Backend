@@ -94,6 +94,8 @@ public class ShuttleController {
         // New: Location
         response.put("latitude", shuttle.getLatitude());
         response.put("longitude", shuttle.getLongitude());
+        response.put("destinationLatitude", shuttle.getDestinationLatitude());
+        response.put("destinationLongitude", shuttle.getDestinationLongitude());
 
         return ResponseEntity.ok(response);
     }
@@ -126,6 +128,8 @@ public class ShuttleController {
         // New: Location
         response.put("latitude", shuttle.getLatitude());
         response.put("longitude", shuttle.getLongitude());
+        response.put("destinationLatitude", shuttle.getDestinationLatitude());
+        response.put("destinationLongitude", shuttle.getDestinationLongitude());
 
         // New: Include ALL assigned students locations for visualization
         List<Map<String, Object>> studentLocations = shuttleService.getAssignedStudentLocations(shuttle);
@@ -198,6 +202,8 @@ public class ShuttleController {
         // New: Location
         response.put("latitude", shuttle.getLatitude());
         response.put("longitude", shuttle.getLongitude());
+        response.put("destinationLatitude", shuttle.getDestinationLatitude());
+        response.put("destinationLongitude", shuttle.getDestinationLongitude());
 
         return ResponseEntity.ok(response);
     }
@@ -243,6 +249,31 @@ public class ShuttleController {
             List<Map<String, Object>> studentLocations = shuttleService.getAssignedStudentLocations(shuttle);
             response.put("assignedStudentLocations", studentLocations);
 
+            return ResponseEntity.ok(response);
+        } else {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Latitude and Longitude are required");
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    // New: Update Destination Endpoint (For Driver Simulation)
+    @PostMapping("/{id}/destination")
+    public ResponseEntity<Map<String, Object>> updateDestination(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        Shuttle shuttle = shuttleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Shuttle not found"));
+
+        if (request.containsKey("latitude") && request.containsKey("longitude")) {
+            shuttle.setDestinationLatitude(Double.parseDouble(request.get("latitude").toString()));
+            shuttle.setDestinationLongitude(Double.parseDouble(request.get("longitude").toString()));
+            shuttleRepository.save(shuttle);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Destination updated successfully");
+            response.put("shuttleId", shuttle.getShuttleId());
+            response.put("destinationLatitude", shuttle.getDestinationLatitude());
+            response.put("destinationLongitude", shuttle.getDestinationLongitude());
+            
             return ResponseEntity.ok(response);
         } else {
             Map<String, Object> errorResponse = new HashMap<>();

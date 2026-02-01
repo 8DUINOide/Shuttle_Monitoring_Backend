@@ -58,4 +58,28 @@ public class BulkUploadController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to process file: " + e.getMessage()));
         }
     }
+    @org.springframework.web.bind.annotation.GetMapping("/template")
+    public ResponseEntity<byte[]> downloadTemplate(@RequestParam("type") String type) {
+        try {
+            byte[] content;
+            String filename;
+
+            if ("students".equalsIgnoreCase(type)) {
+                content = bulkUploadService.generateParentStudentTemplate();
+                filename = "bulk_students_template.xlsx";
+            } else if ("drivers".equalsIgnoreCase(type)) {
+                content = bulkUploadService.generateOperatorDriverTemplate();
+                filename = "bulk_drivers_template.xlsx";
+            } else {
+                return ResponseEntity.badRequest().body(null);
+            }
+
+            return ResponseEntity.ok()
+                    .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                    .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    .body(content);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }

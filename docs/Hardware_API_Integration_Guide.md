@@ -40,7 +40,7 @@ Get a JWT token to authenticate subsequent requests.
 ```json
 {
   "username": "admin",
-  "password": "admin123"
+  "password": "admin"
 }
 ```
 
