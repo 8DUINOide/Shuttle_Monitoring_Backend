@@ -2635,19 +2635,22 @@ async function simulateLocationUpdate() {
         if (response.ok) {
             showToast("Location updated! ETA: " + (data.eta || "Calculating..."));
 
+            // Get currently tracked shuttle ID from localStorage
+            const trackedShuttleId = localStorage.getItem('lastTrackedShuttleId');
+
             // Backend-driven Routing: Use target coordinates if provided
             if (data.targetLatitude && data.targetLongitude) {
                 lastStudentLoc = [parseFloat(data.targetLongitude), parseFloat(data.targetLatitude)];
                 console.log("Backend provided target student location:", lastStudentLoc);
             }
 
-            // Update lastShuttleLoc if we are simulating
-            if (window.dashboardMap) {
+            // Update lastShuttleLoc and refresh route ONLY if this shuttle is being tracked
+            if (window.dashboardMap && id == trackedShuttleId) {
                 // Convert to numbers just in case
                 lastShuttleLoc = [parseFloat(lng), parseFloat(lat)];
                 updateDirectionRoute();
             }
-            fetchMapShuttles(); // Refresh map
+            fetchMapShuttles(); // Refresh map (markers, etc.)
         } else {
             showToast("Error: " + (data.error || "Failed"));
         }
@@ -2733,12 +2736,18 @@ async function simulateStudentLocation() {
                     .addTo(window.dashboardMap);
             }
 
-            // Save for Directions API
-            const numLat = parseFloat(lat);
-            const numLng = parseFloat(lng);
-            lastStudentLoc = [numLng, numLat];
-            console.log("Student Pin: stored lastStudentLoc", lastStudentLoc);
-            updateDirectionRoute();
+            // Sync with Directions API ONLY if student is assigned to currently tracked shuttle
+            const trackedShuttleId = localStorage.getItem('lastTrackedShuttleId');
+
+            if (data.assignedShuttleId == trackedShuttleId) {
+                const numLat = parseFloat(lat);
+                const numLng = parseFloat(lng);
+                lastStudentLoc = [numLng, numLat];
+                console.log("Student Pin: update route (matching shuttle " + trackedShuttleId + ")");
+                updateDirectionRoute();
+            } else {
+                console.log("Student Pin: skip route update (student assigned to " + data.assignedShuttleId + ", tracking " + trackedShuttleId + ")");
+            }
 
         } else {
             showToast("Error: " + (data.error || "Failed"));

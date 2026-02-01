@@ -173,6 +173,7 @@ public class StudentController {
             response.put("studentId", student.getStudentId());
             response.put("latitude", student.getLatitude());
             response.put("longitude", student.getLongitude());
+            response.put("assignedShuttleId", student.getAssignedShuttle() != null ? student.getAssignedShuttle().getShuttleId() : null);
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.badRequest().body(Map.of("error", "Latitude and Longitude are required"));
