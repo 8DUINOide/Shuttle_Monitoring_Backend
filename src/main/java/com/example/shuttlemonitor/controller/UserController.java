@@ -86,7 +86,7 @@ public class UserController {
                 response.put("error", "Invalid image file");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
-            String uploadDir = "Uploads/profile-pictures/";
+            String uploadDir = "uploads/profile-pictures/";
             Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
@@ -117,7 +117,7 @@ public class UserController {
                     .orElseThrow(() -> new IllegalArgumentException("User not found"));
             String imagePath = user.getProfilePicturePath();
             if (imagePath == null || imagePath.isEmpty()) {
-                imagePath = "Uploads/profile-pictures/default-profile.jpg"; // Default image
+                imagePath = "uploads/profile-pictures/default-profile.jpg"; // Default image
             }
             File file = new File(imagePath);
             if (!file.exists() || !file.isFile()) {
