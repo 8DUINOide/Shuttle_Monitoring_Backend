@@ -80,6 +80,8 @@ public class BulkUploadService {
 
         result.put("successes", successes);
         result.put("errors", errors);
+        result.put("successfulCount", successes.size());
+        result.put("errorCount", errors.size());
         result.put("totalProcessed", successes.size() + errors.size());
         return result;
     }
@@ -277,35 +279,54 @@ public class BulkUploadService {
     }
 
     private void createParentWithStudents(BulkParentStudentDTO dto, List<String> successes, List<String> errors, int rowNum) {
-        // Check for duplicate – skip instead of throw
-        if (userRepository.findByEmail(dto.parentEmail()).isPresent() || userRepository.findByUsername(dto.parentUsername()) != null) {
-            errors.add("Row " + rowNum + ": Duplicate email or username for parent: " + dto.parentUsername() + " (skipped)");
-            return;
+        Parent parent = null;
+        boolean parentCreated = false;
+
+        // Check for existing parent user
+        User existingParentUser = userRepository.findByUsername(dto.parentUsername());
+        if (existingParentUser == null) {
+            existingParentUser = userRepository.findByEmail(dto.parentEmail()).orElse(null);
+        }
+
+        if (existingParentUser != null) {
+            if (existingParentUser.getRole() != Role.PARENT) {
+                errors.add("Row " + rowNum + ": Username '" + dto.parentUsername() + "' exists but is not a parent (skipped)");
+                return;
+            }
+            parent = parentRepository.findByUser(existingParentUser).orElse(null);
         }
 
         try {
-            // Create parent user
-            User parentUser = new User();
-            parentUser.setUsername(dto.parentUsername());
-            parentUser.setEmail(dto.parentEmail());
-            parentUser.setPassword(passwordEncoder.encode(dto.parentPassword()));
-            parentUser.setRole(Role.PARENT);
-            parentUser = userRepository.save(parentUser); // Save to get ID
+            if (parent == null) {
+                User parentUser;
+                if (existingParentUser != null) {
+                    parentUser = existingParentUser;
+                } else {
+                    // Create parent user
+                    parentUser = new User();
+                    parentUser.setUsername(dto.parentUsername());
+                    parentUser.setEmail(dto.parentEmail());
+                    parentUser.setPassword(passwordEncoder.encode(dto.parentPassword()));
+                    parentUser.setRole(Role.PARENT);
+                    parentUser = userRepository.save(parentUser);
+                }
 
-            // Create parent entity
-            Parent parent = new Parent();
-            parent.setUser(parentUser);
-            parent.setFullName(dto.parentFullName());
-            parent.setContactPhone(dto.parentContactPhone());
-            parent.setCurrentAddress(dto.parentCurrentAddress());
-            parent = parentRepository.save(parent);
+                // Create parent entity
+                parent = new Parent();
+                parent.setUser(parentUser);
+                parent.setFullName(dto.parentFullName());
+                parent.setContactPhone(dto.parentContactPhone());
+                parent.setCurrentAddress(dto.parentCurrentAddress());
+                parent = parentRepository.save(parent);
+                parentCreated = true;
+            }
 
             int createdStudents = 0;
             // Create students and link to parent
             for (BulkStudentDTO studentDto : dto.students()) {
                 // Check duplicate for student
                 if (userRepository.findByEmail(studentDto.email()).isPresent() || userRepository.findByUsername(studentDto.username()) != null) {
-                    errors.add("Row " + rowNum + ": Duplicate email or username for student '" + studentDto.username() + "' (skipped)");
+                    errors.add("Row " + rowNum + ": Student '" + studentDto.username() + "' already exists (skipped)");
                     continue;
                 }
 
@@ -328,41 +349,61 @@ public class BulkUploadService {
                 createdStudents++;
             }
 
-            successes.add("Row " + rowNum + ": Created parent '" + dto.parentUsername() + "' with " + createdStudents + " students");
+            String action = (parentCreated || createdStudents > 0) ? "Processed" : "Checked";
+            successes.add("Row " + rowNum + ": " + action + " parent '" + dto.parentUsername() + "' with " + createdStudents + " new students");
         } catch (Exception e) {
-            errors.add("Row " + rowNum + ": Failed to create parent '" + dto.parentUsername() + "': " + e.getMessage());
+            errors.add("Row " + rowNum + ": Failed to process parent '" + dto.parentUsername() + "': " + e.getMessage());
         }
     }
 
     private void createOperatorWithDrivers(BulkOperatorDriverDTO dto, List<String> successes, List<String> errors, int rowNum) {
-        // Check for duplicate – skip instead of throw
-        if (userRepository.findByEmail(dto.operatorEmail()).isPresent() || userRepository.findByUsername(dto.operatorUsername()) != null) {
-            errors.add("Row " + rowNum + ": Duplicate email or username for operator: " + dto.operatorUsername() + " (skipped)");
-            return;
+        Operator operator = null;
+        boolean operatorCreated = false;
+
+        // Check for existing operator user
+        User existingOperatorUser = userRepository.findByUsername(dto.operatorUsername());
+        if (existingOperatorUser == null) {
+            existingOperatorUser = userRepository.findByEmail(dto.operatorEmail()).orElse(null);
+        }
+
+        if (existingOperatorUser != null) {
+            if (existingOperatorUser.getRole() != Role.OPERATOR) {
+                errors.add("Row " + rowNum + ": Username '" + dto.operatorUsername() + "' exists but is not an operator (skipped)");
+                return;
+            }
+            operator = operatorRepository.findByUser(existingOperatorUser).orElse(null);
         }
 
         try {
-            // Create operator user
-            User operatorUser = new User();
-            operatorUser.setUsername(dto.operatorUsername());
-            operatorUser.setEmail(dto.operatorEmail());
-            operatorUser.setPassword(passwordEncoder.encode(dto.operatorPassword()));
-            operatorUser.setRole(Role.OPERATOR);
-            operatorUser = userRepository.save(operatorUser);
+            if (operator == null) {
+                User operatorUser;
+                if (existingOperatorUser != null) {
+                    operatorUser = existingOperatorUser;
+                } else {
+                    // Create operator user
+                    operatorUser = new User();
+                    operatorUser.setUsername(dto.operatorUsername());
+                    operatorUser.setEmail(dto.operatorEmail());
+                    operatorUser.setPassword(passwordEncoder.encode(dto.operatorPassword()));
+                    operatorUser.setRole(Role.OPERATOR);
+                    operatorUser = userRepository.save(operatorUser);
+                }
 
-            // Create operator entity
-            Operator operator = new Operator();
-            operator.setUser(operatorUser);
-            operator.setFullName(dto.operatorFullName());
-            operator.setContactPhone(dto.operatorContactPhone());
-            operator = operatorRepository.save(operator);
+                // Create operator entity
+                operator = new Operator();
+                operator.setUser(operatorUser);
+                operator.setFullName(dto.operatorFullName());
+                operator.setContactPhone(dto.operatorContactPhone());
+                operator = operatorRepository.save(operator);
+                operatorCreated = true;
+            }
 
             int createdDrivers = 0;
             // Create drivers and link to operator
             for (BulkDriverDTO driverDto : dto.drivers()) {
                 // Check duplicate for driver
                 if (userRepository.findByEmail(driverDto.email()).isPresent() || userRepository.findByUsername(driverDto.username()) != null) {
-                    errors.add("Row " + rowNum + ": Duplicate email or username for driver '" + driverDto.username() + "' (skipped)");
+                    errors.add("Row " + rowNum + ": Driver '" + driverDto.username() + "' already exists (skipped)");
                     continue;
                 }
 
@@ -382,9 +423,10 @@ public class BulkUploadService {
                 createdDrivers++;
             }
 
-            successes.add("Row " + rowNum + ": Created operator '" + dto.operatorUsername() + "' with " + createdDrivers + " drivers");
+            String action = (operatorCreated || createdDrivers > 0) ? "Processed" : "Checked";
+            successes.add("Row " + rowNum + ": " + action + " operator '" + dto.operatorUsername() + "' with " + createdDrivers + " new drivers");
         } catch (Exception e) {
-            errors.add("Row " + rowNum + ": Failed to create operator '" + dto.operatorUsername() + "': " + e.getMessage());
+            errors.add("Row " + rowNum + ": Failed to process operator '" + dto.operatorUsername() + "': " + e.getMessage());
         }
     }
 

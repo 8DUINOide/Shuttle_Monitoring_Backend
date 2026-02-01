@@ -151,6 +151,36 @@ public class ShuttleController {
         return ResponseEntity.ok(shuttles);
     }
 
+    // New: Map-specific endpoint with computed ETAs
+    @GetMapping("/map")
+    public ResponseEntity<List<Map<String, Object>>> getShuttlesForMap() {
+        List<Shuttle> shuttles = shuttleRepository.findAll();
+        List<Map<String, Object>> result = shuttles.stream()
+                .filter(s -> s.getLatitude() != null && s.getLongitude() != null)
+                .map(shuttle -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("shuttleId", shuttle.getShuttleId());
+                    map.put("name", shuttle.getName());
+                    map.put("status", shuttle.getStatus());
+                    map.put("route", shuttle.getRoute());
+                    map.put("latitude", shuttle.getLatitude());
+                    map.put("longitude", shuttle.getLongitude());
+                    map.put("destinationLatitude", shuttle.getDestinationLatitude());
+                    map.put("destinationLongitude", shuttle.getDestinationLongitude());
+                    map.put("eta", shuttleService.getETA(shuttle)); // Computed ETA from Mapbox
+                    
+                    // Driver info
+                    if (shuttle.getDriver() != null && shuttle.getDriver().getUser() != null) {
+                        map.put("driver", Map.of("username", shuttle.getDriver().getUser().getUsername()));
+                    }
+                    
+                    return map;
+                })
+                .collect(java.util.stream.Collectors.toList());
+        
+        return ResponseEntity.ok(result);
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') OR hasRole('DRIVER') OR hasRole('OPERATOR')")
     public ResponseEntity<Map<String, Object>> updateShuttle(@PathVariable Long id, @RequestBody Map<String, Object> request) {

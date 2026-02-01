@@ -1829,3 +1829,97 @@ tbody tr:hover {
     background: linear-gradient(135deg, #17a2b8, #138496);
     /* Info Teal to distinguish from Edit */
 }
+
+/* ETA Details Button */
+.action-btn.eta-details-btn {
+    background: linear-gradient(135deg, #28a745, #218838);
+    /* Green */
+}
+
+.action-btn.eta-details-btn:hover {
+    background: linear-gradient(135deg, #218838, #1e7e34);
+}
+
+/* === ETA Details Modal === */
+.eta-modal-content {
+    width: 400px;
+    max-width: 90%;
+    text-align: left;
+    margin: auto;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.eta-modal-content h2 {
+    margin: 0;
+    color: #003A6C;
+}
+
+/* ETA Modal Close Button */
+.eta-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #666;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 5px 10px;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.eta-close-btn:hover {
+    color: #dc3545;
+}
+
+.eta-modal-content h3 {
+    margin: 0 0 1rem 0;
+    color: #003A6C;
+    font-size: 1.1rem;
+}
+
+.student-eta-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.student-eta-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #fff;
+    border-radius: 8px;
+    border-left: 4px solid #28a745;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.student-eta-item strong {
+    color: #003A6C;
+    font-size: 1rem;
+}
+
+.student-eta-item span {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.eta-value {
+    color: #28a745 !important;
+    font-weight: bold;
+    font-size: 1rem !important;
+}
+
+.eta-updated {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: #888;
+    text-align: right;
+}
+
+.error {
+    color: #dc3545;
+    font-weight: bold;
+}

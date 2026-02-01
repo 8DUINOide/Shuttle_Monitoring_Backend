@@ -1786,8 +1786,21 @@ document.getElementById('bulkUploadForm').addEventListener('submit', async (e) =
         const result = await response.json();
 
         if (response.ok) {
-            showToast(`Bulk upload successful: ${result.successful || 'Multiple'} users added`);
-            closeBulkUploadModal();
+            const successCount = result.successfulCount || 0;
+            const errorCount = result.errorCount || 0;
+
+            if (errorCount === 0) {
+                showToast(`Bulk upload successful: ${successCount} entries added`);
+                closeBulkUploadModal();
+            } else {
+                showToast(`Bulk upload finished: ${successCount} success, ${errorCount} errors`);
+                // Don't close modal, show errors inside
+                errorElement.innerHTML = `<strong>Processed with ${errorCount} errors:</strong><br>` +
+                    result.errors.join('<br>');
+                errorElement.style.display = 'block';
+                errorElement.style.color = '#ff4d4f';
+            }
+
             if (bulkType === 'students') {
                 await loadStudents();
             } else {
@@ -2103,13 +2116,14 @@ document.getElementById('registerDeviceForm').addEventListener('submit', async (
 async function fetchMapShuttles() {
     if (!token) return;
     try {
-        const response = await fetch(`${SERVER_URL}/api/shuttles/all?page=0&size=100`, {
+        // Use /map endpoint which includes computed ETAs from Mapbox
+        const response = await fetch(`${SERVER_URL}/api/shuttles/map`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         if (!response.ok) return;
 
         const data = await response.json();
-        updateMapMarkers(data.content);
+        updateMapMarkers(data); // /map returns array directly, not Page object
     } catch (e) {
         console.error("Error fetching map shuttles:", e);
     }
@@ -2149,6 +2163,9 @@ function updateMapMarkers(shuttlesData) {
     const listContainer = document.getElementById('active-shuttles-list');
     if (listContainer) listContainer.innerHTML = '';
 
+    // Store data globally for marker updates
+    window.lastShuttleData = shuttlesData;
+
     shuttlesData.forEach(shuttle => {
         // Only show shuttles with valid location
         if (shuttle.latitude !== null && shuttle.longitude !== null && shuttle.latitude !== undefined && shuttle.longitude !== undefined) {
@@ -2163,14 +2180,15 @@ function updateMapMarkers(shuttlesData) {
                     if (shuttle.driver.username) driverName = shuttle.driver.username;
                     else if (shuttle.driver.user && shuttle.driver.user.username) driverName = shuttle.driver.user.username;
                 }
+                item.setAttribute('data-shuttle-id', shuttle.shuttleId);
                 item.innerHTML = `
                     <p><strong>${sanitizeHTML(shuttle.name)}</strong> - ${sanitizeHTML(shuttle.status)}<br>
                     Lat: ${shuttle.latitude}, Lng: ${shuttle.longitude}<br>
                     Driver: ${sanitizeHTML(driverName)}<br>
                     Route: ${sanitizeHTML(shuttle.route)}<br>
-                    <strong>ETA: ${shuttle.eta || 'Calculating...'}</strong></p>
+                    <strong><span id="eta-display-${shuttle.shuttleId}">ETA: ${shuttle.eta || 'Calculating...'}</span></strong></p>
                     <button class="action-btn track-btn" onclick="trackShuttle(${shuttle.shuttleId}, ${shuttle.latitude}, ${shuttle.longitude})">Track</button>
-                    ${shuttle.route ? `<button class="action-btn route-btn" onclick="showRoute('${sanitizeHTML(shuttle.name)}')">Show Route</button>` : ''}
+                    <button class="action-btn eta-details-btn" onclick="showStudentETAs(${shuttle.shuttleId})">ETA Details</button>
                 `;
                 listContainer.appendChild(item);
             }
@@ -2222,6 +2240,8 @@ function updateMapMarkers(shuttlesData) {
                     .setPopup(new mapboxgl.Popup().setHTML(`<b>${sanitizeHTML(shuttle.name)} Destination</b>`))
                     .addTo(window.dashboardMap);
 
+                destMarker.isDestination = true;
+                destMarker.markerShuttleId = shuttle.shuttleId;
                 window.mapMarkers.push(destMarker);
             }
         }
@@ -2250,11 +2270,19 @@ function restoreTrackingState(shuttles) {
 let lastShuttleLoc = null;
 let lastStudentLoc = null;
 let currentWaypoints = []; // New: Store waypoints for multi-stop routing
+let currentTrackedStudents = []; // New: To sync student popups with route legs
+let lastSyncedETA = null; // New: To sync modal with latest Mapbox ETA
+let individualStudentETAs = {}; // New: Store individual ETAs for waypoints
 
 // Track Shuttle
 async function trackShuttle(id, lat, lng) {
     if (window.dashboardMap) {
         window.dashboardMap.flyTo({ center: [lng, lat], zoom: 14 });
+
+        // Reset sync state for new shuttle
+        lastSyncedETA = null;
+        currentTrackedStudents = [];
+        individualStudentETAs = {};
 
         // Save state
         localStorage.setItem('lastTrackedShuttleId', id);
@@ -2287,7 +2315,23 @@ async function trackShuttle(id, lat, lng) {
 
                 // 3. Visualize ALL assigned students
                 if (data.assignedStudentLocations && Array.isArray(data.assignedStudentLocations)) {
-                    data.assignedStudentLocations.forEach(stud => {
+                    // Fetch student ETAs from the new endpoint
+                    let studentETAs = [];
+                    try {
+                        const etaResponse = await fetch(`${SERVER_URL}/api/eta/shuttle/${id}/students`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (etaResponse.ok) {
+                            const etaData = await etaResponse.json();
+                            studentETAs = etaData.students || [];
+                        }
+                    } catch (etaError) {
+                        console.error("Error fetching student ETAs:", etaError);
+                    }
+
+                    currentTrackedStudents = data.assignedStudentLocations;
+
+                    data.assignedStudentLocations.forEach((stud, index) => {
                         const el = document.createElement('div');
                         el.className = 'student-pin';
                         el.style.backgroundColor = '#4CAF50'; // Green
@@ -2296,14 +2340,24 @@ async function trackShuttle(id, lat, lng) {
                         el.style.borderRadius = '50%';
                         el.style.border = '2px solid white';
 
+                        // Find ETA for this student
+                        const studentETA = studentETAs.find(s => s.studentId === stud.studentId);
+                        const etaDisplay = studentETA ? studentETA.eta : 'Calculating...';
+
                         const marker = new mapboxgl.Marker(el)
                             .setLngLat([stud.longitude, stud.latitude])
-                            .setPopup(new mapboxgl.Popup().setHTML(`<b>${stud.name}</b><br>ID: ${stud.studentId}`))
+                            .setPopup(new mapboxgl.Popup().setHTML(`
+                                <b>${stud.name}</b><br>
+                                ID: ${stud.studentId}<br>
+                                <strong id="student-eta-${stud.studentId}">ETA: ${etaDisplay}</strong>
+                            `))
                             .addTo(window.dashboardMap);
 
+                        marker.studentId = stud.studentId;
+                        marker.studentIndex = index;
                         window.studentMarkers.push(marker);
                     });
-                    showToast(`Showing ${data.assignedStudentLocations.length} student locations for this shuttle.`);
+                    showToast(`Showing ${data.assignedStudentLocations.length} student locations with ETAs.`);
 
                     // 4. Set Waypoints for Routing (Route to all students)
                     // Strategy: Origin=Shuttle -> Waypoints=Students[0..N-1] -> Destination=Students[N]
@@ -2364,6 +2418,144 @@ function updateDirectionRoute() {
     } else {
         console.log("mapDirections not ready or shuttle location unknown.");
     }
+}
+
+// =================== SYNC ETA FROM MAPBOX DIRECTIONS (TEST) ===================
+// Listen for route updates from Mapbox Directions and update the Active Shuttles ETA
+function setupMapDirectionsSync() {
+    if (window.mapDirections) {
+        window.mapDirections.on('route', function (e) {
+            if (e.route && e.route.length > 0) {
+                const route = e.route[0];
+                const distanceKm = (route.distance / 1000).toFixed(1);
+                const durationMin = Math.round(route.duration / 60);
+
+                let formattedTotalETA;
+                if (durationMin >= 60) {
+                    const hours = Math.floor(durationMin / 60);
+                    const mins = durationMin % 60;
+                    formattedTotalETA = `${distanceKm}km ${hours}h ${mins}min`;
+                } else {
+                    formattedTotalETA = `${distanceKm}km ${durationMin}min`;
+                }
+
+                // 1. Calculate individual ETAs for each waypoint (student)
+                individualStudentETAs = {};
+                if (route.legs && route.legs.length > 1) {
+                    let cumulativeDist = 0;
+                    let cumulativeDur = 0;
+
+                    // Each leg i leads to waypoint i (Student i)
+                    route.legs.forEach((leg, index) => {
+                        cumulativeDist += leg.distance;
+                        cumulativeDur += leg.duration;
+
+                        if (index < route.legs.length - 1 && currentTrackedStudents[index]) {
+                            const student = currentTrackedStudents[index];
+                            const dKm = (cumulativeDist / 1000).toFixed(1);
+                            const dMin = Math.round(cumulativeDur / 60);
+
+                            let studentETA;
+                            if (dMin >= 60) {
+                                const h = Math.floor(dMin / 60);
+                                const m = dMin % 60;
+                                studentETA = `${dKm}km ${h}h ${m}min`;
+                            } else {
+                                studentETA = `${dKm}km ${dMin}min`;
+                            }
+                            individualStudentETAs[student.studentId] = studentETA;
+                        }
+                    });
+                }
+
+                // 2. Update the tracked shuttle's status and markers
+                const trackedShuttleId = localStorage.getItem('lastTrackedShuttleId');
+                if (trackedShuttleId) {
+                    lastSyncedETA = formattedTotalETA;
+                    updateShuttleETADisplay(trackedShuttleId, formattedTotalETA);
+
+                    // 2. Update ALL markers for this shuttle (Students get specific, Destination gets total)
+                    syncAllMarkersWithETA(trackedShuttleId, formattedTotalETA);
+
+                    // 3. Refresh the ETA Details modal if it's open
+                    refreshStudentETAModal(trackedShuttleId, formattedTotalETA);
+                }
+
+                console.log("Mapbox Directions Sync: All markers updated.");
+            }
+        });
+        console.log("Mapbox Directions sync listener attached.");
+    }
+}
+
+// Update all markers with individual or total ETAs
+function syncAllMarkersWithETA(shuttleId, totalETA) {
+    // Update Student Markers with their specific ETAs
+    if (window.studentMarkers) {
+        window.studentMarkers.forEach(marker => {
+            const student = currentTrackedStudents.find(s => s.studentId === marker.studentId);
+            if (student) {
+                const individualETA = individualStudentETAs[student.studentId];
+                const displayETA = individualETA || totalETA;
+                const label = individualETA ? "Arrives in:" : "Total Route ETA:";
+
+                marker.getPopup().setHTML(`
+                    <b>${sanitizeHTML(student.name)}</b><br>
+                    ID: ${student.studentId}<br>
+                    <strong style="color: #28a745;">${label} ${displayETA}</strong>
+                `);
+            }
+        });
+    }
+
+    // Update Destination Marker
+    if (window.mapMarkers) {
+        const destMarker = window.mapMarkers.find(m => m.isDestination && m.markerShuttleId == shuttleId);
+        if (destMarker) {
+            const shuttle = window.lastShuttleData ? window.lastShuttleData.find(s => s.shuttleId == shuttleId) : null;
+            const name = shuttle ? shuttle.name : 'Shuttle';
+            destMarker.getPopup().setHTML(`
+                <b>${sanitizeHTML(name)} Destination</b><br>
+                <strong style="color: #28a745;">Total Route ETA: ${totalETA}</strong>
+            `);
+        }
+    }
+}
+
+// Update the ETA display for a specific shuttle in the Active Shuttles list
+function updateShuttleETADisplay(shuttleId, eta) {
+    const etaElement = document.getElementById(`eta-display-${shuttleId}`);
+    if (etaElement) {
+        etaElement.textContent = `ETA: ${eta}`;
+        etaElement.style.color = '#28a745'; // Green to indicate it's synced with Mapbox
+    }
+}
+
+// Refresh the student ETA modal if it's currently open for the tracked shuttle
+function refreshStudentETAModal(shuttleId, totalETA) {
+    const modal = document.getElementById('eta-details-modal');
+    if (modal && modal.style.display === 'block') {
+        const body = document.getElementById('eta-details-body');
+        const items = body.querySelectorAll('.student-eta-item');
+
+        items.forEach(item => {
+            const studentId = item.dataset.studentId;
+            const etaElement = item.querySelector('.eta-value');
+            if (etaElement) {
+                const individualETA = individualStudentETAs[studentId] || totalETA;
+                const label = individualStudentETAs[studentId] ? "Arrives in:" : "Total Route ETA:";
+                etaElement.textContent = `${label} ${individualETA}`;
+                etaElement.style.color = '#28a745';
+                etaElement.style.fontWeight = 'bold';
+            }
+        });
+        console.log("ETA Details modal refreshed with individual ETAs.");
+    }
+}
+
+// Initialize sync when map is ready (called from index.html after map loads)
+if (typeof window !== 'undefined') {
+    window.setupMapDirectionsSync = setupMapDirectionsSync;
 }
 
 function drawRoute(shuttleName, currentPos) {
@@ -2643,6 +2835,180 @@ if (window.dashboardMap) {
         }
 
     }, 1000);
+}
+
+// =================== ETA DETAILS MODAL ===================
+
+/**
+ * Show a modal with student ETA details for a specific shuttle.
+ * Fetches ETAs from /api/eta/shuttle/{id}/students
+ */
+async function showStudentETAs(shuttleId) {
+    // Create or get existing modal
+    let modal = document.getElementById('eta-details-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'eta-details-modal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content eta-modal-content">
+                <div class="modal-header">
+                    <h2>ETA Details</h2>
+                    <button class="close-btn eta-close-btn" onclick="closeEtaDetailsModal()">&times;</button>
+                </div>
+                <div class="modal-body" id="eta-details-body">
+                    <p>Loading student ETAs...</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    // Show modal
+    modal.style.display = 'block';
+    const body = document.getElementById('eta-details-body');
+    body.innerHTML = '<p>Loading student ETAs...</p>';
+
+    try {
+        const response = await fetch(`${SERVER_URL}/api/eta/shuttle/${shuttleId}/students`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            body.innerHTML = '<p class="error">Failed to load ETA details.</p>';
+            return;
+        }
+
+        const data = await response.json();
+
+        if (data.students && data.students.length > 0) {
+            let html = `<h3>${data.shuttleName || 'Shuttle'} - Student ETAs</h3>`;
+            html += '<div class="student-eta-list">';
+
+            const trackedShuttleId = localStorage.getItem('lastTrackedShuttleId');
+            const isSynced = (trackedShuttleId == shuttleId && lastSyncedETA);
+
+            data.students.forEach(student => {
+                const individualETA = isSynced ? (individualStudentETAs[student.studentId] || lastSyncedETA) : (student.eta || 'Unknown');
+                const etaStyle = isSynced ? 'style="color: #28a745; font-weight: bold;"' : '';
+                const label = isSynced ? (individualStudentETAs[student.studentId] ? 'Arrives in:' : 'Total Route ETA:') : 'ETA:';
+
+                html += `
+                    <div class="student-eta-item" data-student-id="${student.studentId}">
+                        <strong>${sanitizeHTML(student.name)}</strong><br>
+                        <span>ID: ${student.studentId}</span><br>
+                        <span class="eta-value" ${etaStyle}>${label} ${individualETA}</span>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            html += `<p class="eta-updated">Updated: ${new Date(data.updatedAt).toLocaleTimeString()}</p>`;
+            body.innerHTML = html;
+        } else {
+            body.innerHTML = '<p>No students assigned to this shuttle.</p>';
+        }
+    } catch (error) {
+        console.error('Error fetching student ETAs:', error);
+        body.innerHTML = '<p class="error">Error loading ETA details.</p>';
+    }
+}
+
+function closeEtaDetailsModal() {
+    const modal = document.getElementById('eta-details-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.addEventListener('click', (e) => {
+    const modal = document.getElementById('eta-details-modal');
+    if (modal && e.target === modal) {
+        modal.style.display = 'none';
+    }
+});
+
+// =================== ETA POLLING (Mapbox API) ===================
+let etaPollInterval = null;
+const ETA_POLL_INTERVAL_MS = 300000; // 5 minutes
+
+/**
+ * Fetch real-time ETA for a specific shuttle using Mapbox API.
+ * Updates the ETA display in the Active Shuttles list.
+ */
+async function fetchShuttleETA(shuttleId) {
+    try {
+        const response = await fetch(`${SERVER_URL}/api/eta/shuttle/${shuttleId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            console.log(`ETA for Shuttle #${shuttleId}: ${data.eta}`);
+            return data.eta;
+        }
+    } catch (e) {
+        console.error(`Error fetching ETA for shuttle ${shuttleId}:`, e);
+    }
+    return null;
+}
+
+/**
+ * Fetch ETAs for all assigned students of a shuttle.
+ * Returns an array of {studentId, name, eta, distance, duration}.
+ */
+async function fetchStudentETAs(shuttleId) {
+    try {
+        const response = await fetch(`${SERVER_URL}/api/eta/shuttle/${shuttleId}/students`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            console.log(`Student ETAs for Shuttle #${shuttleId}:`, data.students);
+            return data.students || [];
+        }
+    } catch (e) {
+        console.error(`Error fetching student ETAs for shuttle ${shuttleId}:`, e);
+    }
+    return [];
+}
+
+/**
+ * Start polling for ETA updates.
+ * Polls every 5 minutes for the currently tracked shuttle.
+ */
+function startEtaPolling() {
+    if (etaPollInterval) return;
+
+    etaPollInterval = setInterval(async () => {
+        const trackedShuttleId = localStorage.getItem('lastTrackedShuttleId');
+        if (trackedShuttleId) {
+            console.log(`ETA Poll: Refreshing ETA for Shuttle #${trackedShuttleId}`);
+            fetchMapShuttles(); // Refresh all shuttle data including ETAs
+        }
+    }, ETA_POLL_INTERVAL_MS);
+
+    console.log(`ETA polling started (interval: ${ETA_POLL_INTERVAL_MS / 1000}s)`);
+}
+
+/**
+ * Stop ETA polling.
+ */
+function stopEtaPolling() {
+    if (etaPollInterval) {
+        clearInterval(etaPollInterval);
+        etaPollInterval = null;
+        console.log("ETA polling stopped");
+    }
+}
+
+// Start ETA polling when map is ready
+if (window.dashboardMap) {
+    startEtaPolling();
+} else {
+    setTimeout(() => {
+        if (window.dashboardMap) {
+            startEtaPolling();
+        }
+    }, 2000);
 }
 
 // =================== HARDWARE AUTO-SAVE ===================

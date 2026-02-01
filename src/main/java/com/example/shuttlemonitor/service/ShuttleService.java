@@ -84,25 +84,29 @@ public class ShuttleService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
-    // Updated: ETA calculation based on distance to next stop (simulated coordinates)
+    @Autowired
+    private MapboxService mapboxService;
+
+    // Updated: ETA calculation using Mapbox Directions API for real-time data
     public String getETA(Shuttle shuttle) {
         if (shuttle.getLatitude() == null || shuttle.getLongitude() == null) {
-            return "Unknown";
+            return "Location not set";
         }
 
-        // Target: For simulation, we assume a fixed destination (e.g., School/Terminal)
-        // In real implementation, this would be the next student's coordinates
-        double targetLat = 14.5995; // Example: Manila City Hall area
-        double targetLng = 120.9842;
+        // Use Driver's Destination if set, otherwise fallback to legacy behavior
+        Double destLat = shuttle.getDestinationLatitude();
+        Double destLng = shuttle.getDestinationLongitude();
 
-        double distanceKm = calculateDistance(shuttle.getLatitude(), shuttle.getLongitude(), targetLat, targetLng);
-        double averageSpeedKmH = 30.0; // Assume 30 km/h in city traffic
-        int minutes = (int) ((distanceKm / averageSpeedKmH) * 60);
+        if (destLat != null && destLng != null) {
+            // Use Mapbox Directions API for real ETA
+            return mapboxService.getETA(shuttle.getLatitude(), shuttle.getLongitude(), destLat, destLng);
+        }
 
-        // Add 2 min per stop/passenger logic if needed
-        return minutes + " min";
+        // Fallback: No destination set
+        return "Set destination";
     }
 
+    // Legacy distance calculation (kept for reference/fallback)
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         final int R = 6371; // Radius of the earth in km
         double latDistance = Math.toRadians(lat2 - lat1);

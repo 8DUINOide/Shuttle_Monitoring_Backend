@@ -633,6 +633,13 @@
                             });
                             map.addControl(window.mapDirections, 'top-left');
 
+                            // Initialize ETA sync between Mapbox Directions and Active Shuttles list
+                            setTimeout(() => {
+                                if (typeof setupMapDirectionsSync === 'function') {
+                                    setupMapDirectionsSync();
+                                }
+                            }, 1000);
+
                             // Add Geolocation Control
                             map.addControl(new mapboxgl.GeolocateControl({
                                 positionOptions: { enableHighAccuracy: true },
