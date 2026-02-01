@@ -32,6 +32,9 @@ public class StudentController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private ActivityLogService activityLogService;
+
     @GetMapping("/{id}")
     public ResponseEntity<Student> getStudent(@PathVariable Long id) {
         Student student = studentRepository.findById(id)
@@ -79,6 +82,8 @@ public class StudentController {
                 "assignedShuttleId", updatedStudent.getAssignedShuttle() != null ? updatedStudent.getAssignedShuttle().getShuttleId() : null,
                 "route", updatedStudent.getAssignedShuttle() != null ? updatedStudent.getAssignedShuttle().getRoute() : null
         );
+
+        activityLogService.log("Shuttle assigned to student: " + updatedStudent.getFullName(), "INFO");
         return ResponseEntity.ok(response);
     }
 

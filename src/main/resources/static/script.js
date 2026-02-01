@@ -878,22 +878,29 @@ async function updateDashboard() {
         });
     }
 
-    // Populate Recent Activity from Notifications tab
-    const notifRows = document.querySelectorAll('#notifications-table tr');
+    // Populate Recent Activity from backend Activity Logs
     const activityList = document.getElementById('recent-activity-list');
     if (activityList) {
-        activityList.innerHTML = '';
-        notifRows.forEach(row => {
-            const msg = row.querySelector('td:nth-child(1)')?.textContent || '';
-            const ts = row.querySelector('td:nth-child(2)')?.textContent || '';
-            const rel = relativeTime(ts);
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <div>${sanitizeHTML(msg)}</div>
-                <div class="activity-subtitle">${sanitizeHTML(rel)}</div>
-            `;
-            activityList.appendChild(li);
-        });
+        try {
+            const logResponse = await fetch(`${SERVER_URL}/api/activity-logs/recent`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (logResponse.ok) {
+                const logs = await logResponse.json();
+                activityList.innerHTML = '';
+                logs.forEach(log => {
+                    const rel = relativeTime(log.timestamp);
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div>${sanitizeHTML(log.message)}</div>
+                        <div class="activity-subtitle">${sanitizeHTML(rel)}</div>
+                    `;
+                    activityList.appendChild(li);
+                });
+            }
+        } catch (e) {
+            console.error("Error fetching activity logs:", e);
+        }
     }
 
     showProfile();

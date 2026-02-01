@@ -32,6 +32,9 @@ public class DriverController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private ActivityLogService activityLogService;
+
     @GetMapping("/{id}")
     public ResponseEntity<Driver> getDriver(@PathVariable Long id) {
         Driver driver = driverRepository.findById(id)
@@ -64,6 +67,7 @@ public class DriverController {
         driver.setEmergencyContact(updatedDriver.getEmergencyContact());
         // etc.
         driverRepository.save(driver);
+        activityLogService.log("Driver updated: " + driver.getFullName(), "INFO");
         return ResponseEntity.ok(driver);
     }
 
@@ -73,8 +77,10 @@ public class DriverController {
     public ResponseEntity<?> deleteDriver(@PathVariable Long id) {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Driver not found"));
+        String name = driver.getFullName();
         driverRepository.delete(driver);
         userRepository.delete(driver.getUser());
+        activityLogService.log("Driver deleted: " + name, "WARNING");
         return ResponseEntity.ok(Map.of("message", "Driver deleted successfully"));
     }
 }

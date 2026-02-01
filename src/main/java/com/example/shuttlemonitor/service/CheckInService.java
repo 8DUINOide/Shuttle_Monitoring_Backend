@@ -26,6 +26,9 @@ public class CheckInService {
     @Autowired
     private CheckInRepository checkInRepository;
 
+    @Autowired
+    private ActivityLogService activityLogService;
+
     public Student getStudentById(Long studentId) {
         return studentRepository.findById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found"));
@@ -115,6 +118,12 @@ public class CheckInService {
         if ("rfid".equalsIgnoreCase(type)) checkIn.setRfidTag(value);
         else checkIn.setFingerprintHash(value);
 
+        activityLogService.log(
+            String.format("%s checked %s to %s", student.getFullName(), newType, shuttle.getName()),
+            "SUCCESS",
+            student.getUser().getUserId()
+        );
+
         return checkInRepository.save(checkIn);
     }
 
@@ -168,6 +177,12 @@ public class CheckInService {
         checkIn.setStatus("success");
         checkIn.setRfidTag(rfidTag);
         checkIn.setFingerprintHash(fingerprintHash);
+
+        activityLogService.log(
+            String.format("%s checked %s to %s (Secure)", student.getFullName(), newType, shuttle.getName()),
+            "SUCCESS",
+            student.getUser().getUserId()
+        );
 
         return checkInRepository.save(checkIn);
     }

@@ -43,6 +43,9 @@ public class ShuttleController {
     @Autowired
     private ShuttleService shuttleService;
 
+    @Autowired
+    private ActivityLogService activityLogService;
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> createShuttle(@RequestBody Map<String, Object> request) {
@@ -75,6 +78,8 @@ public class ShuttleController {
         shuttle.setRoute(route);
         shuttle.setLicensePlate(licensePlate); // New
         shuttle = shuttleRepository.save(shuttle);
+
+        activityLogService.log("New shuttle created: " + shuttle.getName(), "SUCCESS");
 
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Shuttle created successfully");
@@ -217,6 +222,8 @@ public class ShuttleController {
 
         shuttle = shuttleRepository.save(shuttle);
 
+        activityLogService.log("Shuttle updated: " + shuttle.getName(), "INFO");
+
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Shuttle updated successfully");
         response.put("shuttleId", shuttle.getShuttleId());
@@ -241,7 +248,11 @@ public class ShuttleController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> deleteShuttle(@PathVariable Long id) {
+        Shuttle shuttle = shuttleRepository.findById(id).orElse(null);
+        String name = (shuttle != null) ? shuttle.getName() : "ID: " + id;
+        
         shuttleService.deleteShuttle(id);
+        activityLogService.log("Shuttle deleted: " + name, "WARNING");
 
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Shuttle deleted successfully");

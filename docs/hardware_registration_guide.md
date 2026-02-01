@@ -92,12 +92,68 @@ curl -X POST http://<server-ip>/api/check-in/register-device/1 \
 
 ---
 
-## Registration Workflow (Step-by-Step)
+## Testing with Postman (Troubleshooting Guide)
 
-1.  Admin opens the **Registration** tab in the Dashboard.
-2.  Admin clicks **"Register Device"** for a specific student.
-3.  The system starts polling for hardware input.
-4.  Admin taps an RFID tag or places a finger on the scanner.
-5.  The hardware `POST`s the data.
-6.  The Registration form **automatically fills** with the value.
-7.  The system **auto-submits** the registration once both RFID and Fingerprint are captured (or if manual submission is clicked).
+If the hardware developer is having issues, follow these steps to verify the server is working correctly.
+
+### 1. Test the "Waiting Room" (Hardware Scan)
+**Purpose:** Simulate the hardware sending a scan to the server.
+
+- **Method:** `POST`
+- **URL:** `{{SERVER_URL}}/api/hardware/scan`
+- **Auth:** No Auth (or Bearer Token if enabled)
+- **Body:** `raw` -> `JSON`
+- **Content:**
+  ```json
+  {
+    "type": "rfid",
+    "value": "POSTMAN-TEST-123"
+  }
+  ```
+- **Expected Success:** `200 OK` with message `"Scan received"`.
+
+### 2. Test the "Auto-Fill" (Frontend Polling)
+**Purpose:** Verify that scan data is correctly buffered and can be retrieved.
+
+- **Method:** `GET`
+- **URL:** `{{SERVER_URL}}/api/hardware/latest`
+- **Auth:** Bearer Token (Login as Admin first)
+- **Steps:**
+    1. Send the `POST` from Step 1.
+    2. Immediately send this `GET` request.
+- **Expected Success:** `200 OK` with body:
+  ```json
+  {
+    "rfid": "POSTMAN-TEST-123"
+  }
+  ```
+- **Crucial Hook:** If you send the `GET` request a second time, it should return `{}` (empty). This proves the "buffer clear" logic is working and preventing double-scans.
+
+### 3. Test Permanent Registration
+**Purpose:** Verify the final link to the student.
+
+- **Method:** `POST`
+- **URL:** `{{SERVER_URL}}/api/check-in/register-device/1` (Replace `1` with a real Student ID)
+- **Auth:** Bearer Token (Admin)
+- **Body:** `raw` -> `JSON`
+- **Content:**
+  ```json
+  {
+    "rfidTag": "POSTMAN-TEST-123",
+    "fingerprintHash": "FP-TEST-456"
+  }
+  ```
+- **Expected Success:** `200 OK` with `"Device registered successfully"`.
+
+---
+
+## Common Pitfalls for Hardware Developers
+
+> [!WARNING]
+> **1. JSON Formatting:** Ensure the hardware is sending a valid JSON string. Missing quotes around keys or trailing commas will cause the backend to return `400 Bad Request`.
+> 
+> **2. Content-Type Header:** The hardware **MUST** include the header `Content-Type: application/json`. Without this, the server might ignore the request body.
+> 
+> **3. Server Reachability:** Ensure the hardware is on the same network as the server or that the server's firewall allows incoming traffic on the specified port.
+> 
+> **4. Buffer Expiration:** The buffer is in-memory and volatile. If the server restarts, any unsaved scans are lost.
