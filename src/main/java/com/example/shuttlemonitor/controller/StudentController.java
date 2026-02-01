@@ -4,6 +4,7 @@ import com.example.shuttlemonitor.Entity.Shuttle;
 import com.example.shuttlemonitor.Entity.Student;
 import com.example.shuttlemonitor.Repository.StudentRepository;
 import com.example.shuttlemonitor.Repository.UserRepository;
+import com.example.shuttlemonitor.Repository.CheckInRepository;
 import com.example.shuttlemonitor.service.UserService;
 import com.example.shuttlemonitor.service.ActivityLogService;
 import jakarta.transaction.Transactional;
@@ -29,6 +30,9 @@ public class StudentController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private CheckInRepository checkInRepository;
 
     @Autowired
     private UserService userService;
@@ -131,6 +135,9 @@ public class StudentController {
     public ResponseEntity<?> deleteStudent(@PathVariable Long id) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+
+        // Delete associated check-ins first to avoid constraint violation
+        checkInRepository.deleteByStudent(student);
 
         studentRepository.delete(student);          // This now also deletes the User
         // No need to delete user separately anymore

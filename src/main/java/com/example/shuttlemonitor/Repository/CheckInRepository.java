@@ -24,4 +24,6 @@ public interface CheckInRepository extends JpaRepository<CheckIn, Long> {
             ") as latest_checks \n" +
             "WHERE type = 'in' AND status = 'success'", nativeQuery = true)
     Long countCurrentlyCheckedIn(@Param("since") LocalDateTime since);
+
+    void deleteByStudent(com.example.shuttlemonitor.Entity.Student student);
 }

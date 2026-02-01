@@ -7,6 +7,7 @@ import com.example.shuttlemonitor.Repository.CheckInRepository;
 import com.example.shuttlemonitor.Repository.ShuttleRepository;
 import com.example.shuttlemonitor.Repository.StudentRepository;
 import com.example.shuttlemonitor.service.ActivityLogService;
+import com.example.shuttlemonitor.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,9 @@ public class CheckInService {
 
     @Autowired
     private ActivityLogService activityLogService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     public Student getStudentById(Long studentId) {
         return studentRepository.findById(studentId)
@@ -88,6 +92,9 @@ public class CheckInService {
             throw new IllegalArgumentException("RFID not recognized: " + rfidTag);
         }
         Student student = studentOpt.get();
+        // Acquire Lock to prevent race conditions
+        student = studentRepository.findByIdLocked(student.getStudentId())
+                .orElseThrow(() -> new IllegalArgumentException("Student not found during lock acquisition"));
 
         // Step 2: Verify Fingerprint (Second Factor)
         if (student.getFingerprintHash() == null || !student.getFingerprintHash().equals(fingerprintHash)) {
@@ -119,6 +126,15 @@ public class CheckInService {
 
         // Step 4: Determine In/Out
         CheckIn lastCheckIn = checkInRepository.findTopByStudent_StudentIdOrderByTimestampDesc(student.getStudentId());
+
+        // [Prevention] Duplicate Check / Cooldown
+        if (lastCheckIn != null) {
+            long secondsSinceLast = java.time.temporal.ChronoUnit.SECONDS.between(lastCheckIn.getTimestamp(), LocalDateTime.now());
+            if (secondsSinceLast < 30) {
+                 throw new IllegalArgumentException("Scan too frequent. Please wait " + (30 - secondsSinceLast) + "s.");
+            }
+        }
+
         String newType = "in";
         if (lastCheckIn != null && "in".equals(lastCheckIn.getType())) {
             newType = "out";
@@ -137,6 +153,12 @@ public class CheckInService {
             "SUCCESS",
             student.getUser().getUserId()
         );
+
+        // Targeted Notifications
+        String msg = String.format("Your child %s has checked %s (Shuttle: %s).", student.getFullName(), newType.toUpperCase(), shuttle.getName());
+        notificationService.notifyParent(student.getParent(), msg);
+        
+        notificationService.notifyAdmins(String.format("User %s checked %s.", student.getFullName(), newType.toUpperCase()));
 
         return checkInRepository.save(checkIn);
     }

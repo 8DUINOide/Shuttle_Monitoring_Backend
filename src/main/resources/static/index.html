@@ -86,6 +86,83 @@
             padding: 5px;
             font-size: 14px;
         }
+
+        /* Notification Styles */
+        /* Notification Styles - Enhanced */
+        .notification-item {
+            background-color: #fff;
+            border-left: 4px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 1px solid #eee;
+            border-left-width: 4px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .notification-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .notification-item.unread {
+            background-color: #f0f7ff;
+            border-left-color: #2196F3;
+        }
+
+        .notification-icon {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .notification-content {
+            flex-grow: 1;
+        }
+
+        .notification-body {
+            font-size: 0.95rem;
+            color: #333;
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .notification-time {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .notification-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #2196F3;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .notification-badge {
+            background-color: #ff4d4f;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 10px;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            display: none;
+            /* Hidden by default */
+        }
     </style>
 </head>
 
@@ -127,7 +204,11 @@
                 <li onclick="showTab('shuttles')"><i class="fa-solid fa-bus"></i> Shuttles</li>
                 <li onclick="showTab('registration')"><i class="fa-solid fa-id-card"></i> Registration</li>
                 <li onclick="showTab('checkin')"><i class="fa-solid fa-clipboard-check"></i> Check-In</li>
-                <li onclick="showTab('notifications')"><i class="fa-solid fa-bell"></i> Notifications</li>
+
+                <li onclick="showTab('notifications')" style="position: relative;">
+                    <i class="fa-solid fa-bell"></i> Notifications
+                    <span id="notification-badge" class="notification-badge">0</span>
+                </li>
                 <li onclick="showTab('profile')"><i class="fa-solid fa-user"></i> Profile</li>
                 <li onclick="showLogoutConfirmModal()"><i class="fa-solid fa-sign-out-alt"></i> Logout</li>
             </ul>
@@ -429,64 +510,7 @@
                 </table>
             </div>
 
-            <div id="notifications" class="tab">
-                <header>
-                    <div class="title-container">
-                        <i class="fa-solid fa-bell"></i>
-                        <h2>Notifications</h2>
-                    </div>
-                    <p>Real-time system alerts and activity updates</p>
-                </header>
-                <div class="table-header">
-                    <h3>System Notifications</h3>
-                    <div class="table-actions">
-                        <button class="action-btn" onclick="markAllAsRead()">Mark All as Read</button>
-                        <button class="action-btn" onclick="clearAllNotifications()">Clear All</button>
-                    </div>
-                </div>
-                <div class="search-container">
-                    <input id="searchNotifications" type="text" placeholder="Search notifications..."
-                        oninput="filterNotifications()">
-                    <select id="notificationStatusFilter" onchange="filterNotifications()">
-                        <option value="all">All Status</option>
-                        <option value="unread">Unread</option>
-                        <option value="read">Read</option>
-                    </select>
-                </div>
-                <p id="no-notifications-message" style="display:none; color: red; margin-top: 10px;">No notifications
-                    found.</p>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Notification Message</th>
-                            <th>Timestamp</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="notifications-table">
-                        <tr>
-                            <td>Sarah Johnson checked in to Shuttle #3</td>
-                            <td>2025-09-22 12:16:00</td>
-                            <td><span class="status-badge badge-unread">Unread</span></td>
-                        </tr>
-                        <tr>
-                            <td>Shuttle #2 is running 5 minutes behind schedule</td>
-                            <td>2025-09-22 12:13:00</td>
-                            <td><span class="status-badge badge-read">Read</span></td>
-                        </tr>
-                        <tr>
-                            <td>Mike Chen checked out from Shuttle #2</td>
-                            <td>2025-09-22 12:10:00</td>
-                            <td><span class="status-badge badge-unread">Unread</span></td>
-                        </tr>
-                        <tr>
-                            <td>Route A delayed by 10 minutes</td>
-                            <td>2025-09-22 12:00:00</td>
-                            <td><span class="status-badge badge-read">Read</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+
 
             <div id="live-map" class="tab">
                 <div class="live-map-wrapper">
@@ -868,6 +892,22 @@
                 </div>
             </div>
 
+
+            <div id="notifications" class="tab">
+                <header>
+                    <h2>Notifications</h2>
+                    <button class="action-btn" onclick="markAllNotificationsRead()" style="margin-left: auto;">
+                        <i class="fa-solid fa-check-double"></i> Mark All Read
+                    </button>
+                </header>
+                <div class="active-shuttles">
+                    <div id="notification-list">
+                        <!-- Populated by JS -->
+                        <p style="text-align: center; color: #666;">No new notifications.</p>
+                    </div>
+                </div>
+            </div>
+
             <div id="profile" class="tab">
                 <header>
                     <h2>Profile</h2>
@@ -926,389 +966,206 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Add Shuttle Modal -->
-            <div id="addShuttleModal" class="modal" style="display: none;">
-                <div class="modal-content add-form-modal">
-                    <div class="modal-header">
-                        <h3><i class="fa-solid fa-bus"></i> Add Shuttle</h3>
-                        <span class="close-modal" onclick="closeAddShuttleModal()">&times;</span>
-                    </div>
-                    <form id="addShuttleForm">
-                        <div class="form-group">
-                            <label for="nameInput">Name (Optional)</label>
-                            <input type="text" id="nameInput" placeholder="e.g., Shuttle A1">
-                        </div>
-                        <div class="form-group">
-                            <label for="licensePlateInput">License Plate *</label>
-                            <input type="text" id="licensePlateInput" required placeholder="e.g., ABC-1234">
-                        </div>
-                        <div class="form-group">
-                            <label for="operatorSelect">Operator *</label>
-                            <select id="operatorSelect" required
-                                onchange="loadDriversForOperator('operatorSelect', 'driverSelect')">
-                                <option value="">Select Operator</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="driverSelect">Driver *</label>
-                            <select id="driverSelect" required>
-                                <option value="">Select Driver</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="routeInput">Route *</label>
-                            <input type="text" id="routeInput" required placeholder="e.g., Route A">
-                        </div>
-                        <div class="form-group">
-                            <label for="maxCapacityInput">Max Capacity *</label>
-                            <input type="number" id="maxCapacityInput" required min="1" value="50">
-                        </div>
-                        <p id="add-shuttle-error" class="error-text" style="display: none;"></p>
-                        <div class="modal-actions">
-                            <button type="button" class="cancel-btn" onclick="closeAddShuttleModal()">Cancel</button>
-                            <button type="submit" class="submit-btn">
-                                <i class="fa-solid fa-save"></i> Add Shuttle
-                            </button>
-                        </div>
-                    </form>
-                </div>
+    <!-- Add Shuttle Modal -->
+    <div id="addShuttleModal" class="modal" style="display: none;">
+        <div class="modal-content add-form-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-bus"></i> Add Shuttle</h3>
+                <span class="close-modal" onclick="closeAddShuttleModal()">&times;</span>
             </div>
-
-            <!-- Edit Shuttle Modal -->
-            <div id="editShuttleModal" class="modal" style="display: none;">
-                <div class="modal-content add-form-modal">
-                    <div class="modal-header">
-                        <h3><i class="fa-solid fa-edit"></i> Edit Shuttle</h3>
-                        <span class="close-modal" onclick="closeEditShuttleModal()">&times;</span>
-                    </div>
-                    <form id="editShuttleForm">
-                        <input type="hidden" id="edit-shuttle-id">
-                        <div class="form-group">
-                            <label for="edit-name-input">Name</label>
-                            <input type="text" id="edit-name-input" placeholder="e.g., Shuttle A1">
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-license-plate-input">License Plate *</label>
-                            <input type="text" id="edit-license-plate-input" required placeholder="e.g., ABC-1234">
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-status-select">Status *</label>
-                            <select id="edit-status-select" required>
-                                <option value="ACTIVE">Active</option>
-                                <option value="INACTIVE">Inactive</option>
-                                <option value="MAINTENANCE">Maintenance</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-operator-select">Operator *</label>
-                            <select id="edit-operator-select" required
-                                onchange="loadDriversForOperator('edit-operator-select', 'edit-driver-select')">
-                                <option value="">Select Operator</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-driver-select">Driver *</label>
-                            <select id="edit-driver-select" required>
-                                <option value="">Select Driver</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-route-input">Route *</label>
-                            <input type="text" id="edit-route-input" required placeholder="e.g., Route A">
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-max-capacity-input">Max Capacity *</label>
-                            <input type="number" id="edit-max-capacity-input" required min="1" value="50">
-                        </div>
-                        <p id="edit-shuttle-error" class="error-text" style="display: none;"></p>
-                        <div class="modal-actions">
-                            <button type="button" class="cancel-btn" onclick="closeEditShuttleModal()">Cancel</button>
-                            <button type="submit" class="submit-btn">
-                                <i class="fa-solid fa-save"></i> Update Shuttle
-                            </button>
-                        </div>
-                    </form>
+            <form id="addShuttleForm">
+                <div class="form-group">
+                    <label for="nameInput">Name (Optional)</label>
+                    <input type="text" id="nameInput" placeholder="e.g., Shuttle A1">
                 </div>
-            </div>
+                <div class="form-group">
+                    <label for="licensePlateInput">License Plate *</label>
+                    <input type="text" id="licensePlateInput" required placeholder="e.g., ABC-1234">
+                </div>
+                <div class="form-group">
+                    <label for="operatorSelect">Operator *</label>
+                    <select id="operatorSelect" required
+                        onchange="loadDriversForOperator('operatorSelect', 'driverSelect')">
+                        <option value="">Select Operator</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="driverSelect">Driver *</label>
+                    <select id="driverSelect" required>
+                        <option value="">Select Driver</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="routeInput">Route *</label>
+                    <input type="text" id="routeInput" required placeholder="e.g., Route A">
+                </div>
+                <div class="form-group">
+                    <label for="maxCapacityInput">Max Capacity *</label>
+                    <input type="number" id="maxCapacityInput" required min="1" value="50">
+                </div>
+                <p id="add-shuttle-error" class="error-text" style="display: none;"></p>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeAddShuttleModal()">Cancel</button>
+                    <button type="submit" class="submit-btn">
+                        <i class="fa-solid fa-save"></i> Add Shuttle
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-            <!-- Add Parent & Students Modal -->
-            <div id="addParentModal" class="modal" style="display: none;">
-                <div class="modal-content add-form-modal">
-                    <div class="modal-header">
-                        <h3><i class="fa-solid fa-users"></i> Add Parent & Students</h3>
-                        <span class="close-modal" onclick="closeAddParentModal()">&times;</span>
+    <!-- Edit Shuttle Modal -->
+    <div id="editShuttleModal" class="modal" style="display: none;">
+        <div class="modal-content add-form-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-edit"></i> Edit Shuttle</h3>
+                <span class="close-modal" onclick="closeEditShuttleModal()">&times;</span>
+            </div>
+            <form id="editShuttleForm">
+                <input type="hidden" id="edit-shuttle-id">
+                <div class="form-group">
+                    <label for="edit-name-input">Name</label>
+                    <input type="text" id="edit-name-input" placeholder="e.g., Shuttle A1">
+                </div>
+                <div class="form-group">
+                    <label for="edit-license-plate-input">License Plate *</label>
+                    <input type="text" id="edit-license-plate-input" required placeholder="e.g., ABC-1234">
+                </div>
+                <div class="form-group">
+                    <label for="edit-status-select">Status *</label>
+                    <select id="edit-status-select" required>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                        <option value="MAINTENANCE">Maintenance</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-operator-select">Operator *</label>
+                    <select id="edit-operator-select" required
+                        onchange="loadDriversForOperator('edit-operator-select', 'edit-driver-select')">
+                        <option value="">Select Operator</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-driver-select">Driver *</label>
+                    <select id="edit-driver-select" required>
+                        <option value="">Select Driver</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-route-input">Route *</label>
+                    <input type="text" id="edit-route-input" required placeholder="e.g., Route A">
+                </div>
+                <div class="form-group">
+                    <label for="edit-max-capacity-input">Max Capacity *</label>
+                    <input type="number" id="edit-max-capacity-input" required min="1" value="50">
+                </div>
+                <p id="edit-shuttle-error" class="error-text" style="display: none;"></p>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeEditShuttleModal()">Cancel</button>
+                    <button type="submit" class="submit-btn">
+                        <i class="fa-solid fa-save"></i> Update Shuttle
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Parent & Students Modal -->
+    <div id="addParentModal" class="modal" style="display: none;">
+        <div class="modal-content add-form-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-users"></i> Add Parent & Students</h3>
+                <span class="close-modal" onclick="closeAddParentModal()">&times;</span>
+            </div>
+            <form id="addParentForm">
+                <div class="form-section">
+                    <h4><i class="fa-solid fa-user"></i> Parent Information</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="parent-username">Username *</label>
+                            <input type="text" id="parent-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="parent-email">Email *</label>
+                            <input type="email" id="parent-email" required>
+                        </div>
                     </div>
-                    <form id="addParentForm">
-                        <div class="form-section">
-                            <h4><i class="fa-solid fa-user"></i> Parent Information</h4>
+                    <div class="form-row">
+                        <div class="form-group password-wrapper">
+                            <label for="parent-password">Password *</label>
+                            <input type="password" id="parent-password" required>
+                            <span class="toggle-password" onclick="togglePassword('parent-password', this)">
+                                <i class="fa-solid fa-eye-slash"></i>
+                            </span>
+                        </div>
+                        <div class="form-group">
+                            <label for="parent-fullname">Full Name *</label>
+                            <input type="text" id="parent-fullname" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="parent-phone">Contact Phone *</label>
+                            <input type="tel" id="parent-phone" placeholder="+63-912-345-6789" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="parent-address">Current Address *</label>
+                            <input type="text" id="parent-address" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-header">
+                        <h4><i class="fa-solid fa-graduation-cap"></i> Students Information</h4>
+                        <button type="button" class="add-student-btn" onclick="addStudentForm()">
+                            <i class="fa-solid fa-plus"></i> Add Student
+                        </button>
+                    </div>
+                    <div id="students-container">
+                        <div class="student-form" data-student="1">
+                            <div class="student-header">
+                                <h5>Student 1</h5>
+                                <button type="button" class="remove-student-btn" onclick="removeStudentForm(1)"
+                                    style="display: none;">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="parent-username">Username *</label>
-                                    <input type="text" id="parent-username" required>
+                                    <label for="student-1-username">Username *</label>
+                                    <input type="text" id="student-1-username" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="parent-email">Email *</label>
-                                    <input type="email" id="parent-email" required>
+                                    <label for="student-1-email">Email *</label>
+                                    <input type="email" id="student-1-email" required>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group password-wrapper">
-                                    <label for="parent-password">Password *</label>
-                                    <input type="password" id="parent-password" required>
-                                    <span class="toggle-password" onclick="togglePassword('parent-password', this)">
+                                    <label for="student-1-password">Password *</label>
+                                    <input type="password" id="student-1-password" required>
+                                    <span class="toggle-password" onclick="togglePassword('student-1-password', this)">
                                         <i class="fa-solid fa-eye-slash"></i>
                                     </span>
                                 </div>
                                 <div class="form-group">
-                                    <label for="parent-fullname">Full Name *</label>
-                                    <input type="text" id="parent-fullname" required>
+                                    <label for="student-1-fullname">Full Name *</label>
+                                    <input type="text" id="student-1-fullname" required>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="parent-phone">Contact Phone *</label>
-                                    <input type="tel" id="parent-phone" placeholder="+63-912-345-6789" required>
+                                    <label for="student-1-address">Current Address *</label>
+                                    <input type="text" id="student-1-address" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="parent-address">Current Address *</label>
-                                    <input type="text" id="parent-address" required>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-section">
-                            <div class="section-header">
-                                <h4><i class="fa-solid fa-graduation-cap"></i> Students Information</h4>
-                                <button type="button" class="add-student-btn" onclick="addStudentForm()">
-                                    <i class="fa-solid fa-plus"></i> Add Student
-                                </button>
-                            </div>
-                            <div id="students-container">
-                                <div class="student-form" data-student="1">
-                                    <div class="student-header">
-                                        <h5>Student 1</h5>
-                                        <button type="button" class="remove-student-btn" onclick="removeStudentForm(1)"
-                                            style="display: none;">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label for="student-1-username">Username *</label>
-                                            <input type="text" id="student-1-username" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="student-1-email">Email *</label>
-                                            <input type="email" id="student-1-email" required>
-                                        </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group password-wrapper">
-                                            <label for="student-1-password">Password *</label>
-                                            <input type="password" id="student-1-password" required>
-                                            <span class="toggle-password"
-                                                onclick="togglePassword('student-1-password', this)">
-                                                <i class="fa-solid fa-eye-slash"></i>
-                                            </span>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="student-1-fullname">Full Name *</label>
-                                            <input type="text" id="student-1-fullname" required>
-                                        </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label for="student-1-address">Current Address *</label>
-                                            <input type="text" id="student-1-address" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="student-1-grade">Grade *</label>
-                                            <select id="student-1-grade" required>
-                                                <option value="">Select Grade</option>
-                                                <option value="Grade 7">Grade 7</option>
-                                                <option value="Grade 8">Grade 8</option>
-                                                <option value="Grade 9">Grade 9</option>
-                                                <option value="Grade 10">Grade 10</option>
-                                                <option value="Grade 11">Grade 11</option>
-                                                <option value="Grade 12">Grade 12</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label for="student-1-section">Section *</label>
-                                            <input type="text" id="student-1-section" placeholder="e.g., Section A"
-                                                required>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <p id="add-parent-error" class="error-text" style="display: none;"></p>
-                        <div class="modal-actions">
-                            <button type="button" class="cancel-btn" onclick="closeAddParentModal()">Cancel</button>
-                            <button type="submit" class="submit-btn">
-                                <i class="fa-solid fa-save"></i> Register Parent & Students
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Add Operator & Drivers Modal -->
-            <div id="addOperatorModal" class="modal" style="display: none;">
-                <div class="modal-content add-form-modal">
-                    <div class="modal-header">
-                        <h3><i class="fa-solid fa-bus"></i> Add Operator & Drivers</h3>
-                        <span class="close-modal" onclick="closeAddOperatorModal()">&times;</span>
-                    </div>
-                    <form id="addOperatorForm">
-                        <div class="form-section">
-                            <h4><i class="fa-solid fa-user-tie"></i> Operator Information</h4>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="operator-username">Username *</label>
-                                    <input type="text" id="operator-username" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="operator-email">Email *</label>
-                                    <input type="email" id="operator-email" required>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group password-wrapper">
-                                    <label for="operator-password">Password *</label>
-                                    <input type="password" id="operator-password" required>
-                                    <span class="toggle-password" onclick="togglePassword('operator-password', this)">
-                                        <i class="fa-solid fa-eye-slash"></i>
-                                    </span>
-                                </div>
-                                <div class="form-group">
-                                    <label for="operator-fullname">Full Name *</label>
-                                    <input type="text" id="operator-fullname" required>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="operator-phone">Contact Phone *</label>
-                                    <input type="tel" id="operator-phone" placeholder="+63-912-345-6789" required>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-section">
-                            <div class="section-header">
-                                <h4><i class="fa-solid fa-id-card"></i> Drivers Information</h4>
-                                <button type="button" class="add-driver-btn" onclick="addDriverForm()">
-                                    <i class="fa-solid fa-plus"></i> Add Driver
-                                </button>
-                            </div>
-                            <div id="drivers-container">
-                                <div class="driver-form" data-driver="1">
-                                    <div class="driver-header">
-                                        <h5>Driver 1</h5>
-                                        <button type="button" class="remove-driver-btn" onclick="removeDriverForm(1)"
-                                            style="display: none;">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label for="driver-1-username">Username *</label>
-                                            <input type="text" id="driver-1-username" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="driver-1-email">Email *</label>
-                                            <input type="email" id="driver-1-email" required>
-                                        </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group password-wrapper">
-                                            <label for="driver-1-password">Password *</label>
-                                            <input type="password" id="driver-1-password" required>
-                                            <span class="toggle-password"
-                                                onclick="togglePassword('driver-1-password', this)">
-                                                <i class="fa-solid fa-eye-slash"></i>
-                                            </span>
-                                        </div>
-
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label for="driver-1-phone">Contact Phone *</label>
-                                            <input type="tel" id="driver-1-phone" placeholder="+63-912-345-6789"
-                                                required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="driver-1-emergency">Emergency Contact *</label>
-                                            <input type="tel" id="driver-1-emergency" placeholder="+63-912-345-6789"
-                                                required>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <p id="add-operator-error" class="error-text" style="display: none;"></p>
-                        <div class="modal-actions">
-                            <button type="button" class="cancel-btn" onclick="closeAddOperatorModal()">Cancel</button>
-                            <button type="submit" class="submit-btn">
-                                <i class="fa-solid fa-save"></i> Register Operator & Drivers
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Bulk Upload Modal -->
-            <div id="bulkUploadModal" class="modal" style="display: none;">
-                <div class="modal-content bulk-upload-modal">
-                    <div class="modal-header">
-                        <h3 id="bulk-title"><i class="fa-solid fa-upload"></i> Bulk Upload</h3>
-                        <span class="close-modal" onclick="closeBulkUploadModal()">&times;</span>
-                    </div>
-                    <form id="bulkUploadForm">
-                        <div class="form-group">
-                            <label for="bulk-file">Select XLSX File *</label>
-                            <input type="file" id="bulk-file" accept=".xlsx" required>
-                            <small>Upload an Excel file with user data.</small>
-                        </div>
-                        <p id="bulk-error" class="error-text" style="display: none;"></p>
-                        <div class="modal-actions">
-                            <button type="button" class="action-btn" onclick="downloadBulkTemplate()"
-                                style="margin-right: auto; background-color: #2196F3;">
-                                <i class="fa-solid fa-download"></i> Download Template
-                            </button>
-                            <button type="button" class="cancel-btn" onclick="closeBulkUploadModal()">Cancel</button>
-                            <button type="submit" class="submit-btn">
-                                <i class="fa-solid fa-upload"></i> Upload File
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Edit Student Modal -->
-            <div id="editStudentModal" class="modal" style="display: none;">
-                <div class="modal-content add-form-modal">
-                    <div class="modal-header">
-                        <h3><i class="fa-solid fa-user-edit"></i> Edit Student</h3>
-                        <span class="close-modal" onclick="closeEditStudentModal()">&times;</span>
-                    </div>
-                    <form id="editStudentForm">
-                        <input type="hidden" id="edit-student-id">
-                        <div class="form-section">
-                            <h4><i class="fa-solid fa-graduation-cap"></i> Student Information</h4>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="edit-student-fullname">Full Name *</label>
-                                    <input type="text" id="edit-student-fullname" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="edit-student-grade">Grade *</label>
-                                    <select id="edit-student-grade" required>
+                                    <label for="student-1-grade">Grade *</label>
+                                    <select id="student-1-grade" required>
                                         <option value="">Select Grade</option>
                                         <option value="Grade 7">Grade 7</option>
                                         <option value="Grade 8">Grade 8</option>
@@ -1321,232 +1178,409 @@
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="edit-student-section">Section *</label>
-                                    <input type="text" id="edit-student-section" placeholder="e.g., Section A" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="edit-student-address">Current Address *</label>
-                                    <input type="text" id="edit-student-address" required>
+                                    <label for="student-1-section">Section *</label>
+                                    <input type="text" id="student-1-section" placeholder="e.g., Section A" required>
                                 </div>
                             </div>
-                        </div>
-                        <div class="form-section">
-                            <h4><i class="fa-solid fa-user"></i> Parent Information</h4>
-                            <input type="hidden" id="edit-parent-id">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="edit-parent-fullname">Full Name *</label>
-                                    <input type="text" id="edit-parent-fullname" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="edit-parent-phone">Contact Phone *</label>
-                                    <input type="tel" id="edit-parent-phone" placeholder="+63-912-345-6789" required>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="edit-parent-address">Current Address *</label>
-                                    <input type="text" id="edit-parent-address" required>
-                                </div>
-                            </div>
-                        </div>
-                        <p id="edit-student-error" class="error-text" style="display: none;"></p>
-                        <div class="modal-actions">
-                            <button type="button" class="cancel-btn" onclick="closeEditStudentModal()">Cancel</button>
-                            <button type="submit" class="submit-btn">
-                                <i class="fa-solid fa-save"></i> Update Student & Parent
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Edit Driver Modal -->
-            <div id="editDriverModal" class="modal" style="display: none;">
-                <div class="modal-content add-form-modal">
-                    <div class="modal-header">
-                        <h3><i class="fa-solid fa-user-edit"></i> Edit Driver</h3>
-                        <span class="close-modal" onclick="closeEditDriverModal()">&times;</span>
-                    </div>
-                    <form id="editDriverForm">
-                        <input type="hidden" id="edit-driver-id">
-                        <div class="form-section">
-                            <h4><i class="fa-solid fa-id-card"></i> Driver Information</h4>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="edit-driver-contact">Contact Phone *</label>
-                                    <input type="tel" id="edit-driver-contact" placeholder="+63-912-345-6789" required>
-                                </div>
-
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="edit-driver-emergency">Emergency Contact *</label>
-                                    <input type="tel" id="edit-driver-emergency" placeholder="+63-912-345-6789"
-                                        required>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-section">
-                            <h4><i class="fa-solid fa-user-tie"></i> Operator Information</h4>
-                            <input type="hidden" id="edit-operator-id">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="edit-operator-fullname">Full Name *</label>
-                                    <input type="text" id="edit-operator-fullname" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="edit-operator-phone">Contact Phone *</label>
-                                    <input type="tel" id="edit-operator-phone" placeholder="+63-912-345-6789" required>
-                                </div>
-                            </div>
-                        </div>
-                        <p id="edit-driver-error" class="error-text" style="display: none;"></p>
-                        <div class="modal-actions">
-                            <button type="button" class="cancel-btn" onclick="closeEditDriverModal()">Cancel</button>
-                            <button type="submit" class="submit-btn">
-                                <i class="fa-solid fa-save"></i> Update Driver & Operator
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Delete Confirmation Modal -->
-            <div id="deleteConfirmModal" class="modal-confirm" style="display: none;">
-                <div class="modal-confirm-content">
-                    <h3>Confirm Delete</h3>
-                    <p id="deleteConfirmMessage">Are you sure you want to delete this item? This action cannot be
-                        undone.</p>
-                    <input type="hidden" id="deleteItemId">
-                    <input type="hidden" id="deleteItemType">
-                    <button class="confirm-action" onclick="confirmDelete()">Delete</button>
-                    <button class="cancel-action" onclick="cancelDelete()">Cancel</button>
-                </div>
-            </div>
-
-            <!-- Shuttle Students Modal -->
-            <div id="shuttleStudentsModal" class="modal">
-                <div class="modal-content" style="width: 95%; max-width: 700px;">
-                    <div class="modal-header">
-                        <h3>Assigned Students <span id="modal-shuttle-id-display"
-                                style="font-weight:normal; font-size: 0.8em; color: gray;"></span></h3>
-                        <span class="close-modal" onclick="closeShuttleStudentsModal()">&times;</span>
-                    </div>
-                    <div class="modal-body">
-                        <input type="text" id="searchShuttleStudents" placeholder="Search students..."
-                            style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;"
-                            oninput="filterShuttleStudents()">
-                        <div style="max-height: 500px; overflow-y: auto;">
-                            <table style="width: 100%; border-collapse: collapse;">
-                                <thead>
-                                    <tr style="background-color: #f2f2f2; position: sticky; top: 0;">
-                                        <th
-                                            style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">
-                                            ID
-                                        </th>
-                                        <th
-                                            style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">
-                                            Name
-                                        </th>
-                                        <th
-                                            style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">
-                                            Location</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="shuttle-students-tbody">
-                                    <!-- Populated dynamically -->
-                                </tbody>
-                            </table>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div id="logoutConfirmModal" class="modal-confirm" style="display: none;">
-                <div class="modal-confirm-content">
-                    <h3>Confirm Logout</h3>
-                    <p>Are you sure you want to log out?</p>
-                    <button class="confirm-action" onclick="confirmLogout()">Logout</button>
-                    <button class="cancel-action" onclick="cancelLogout()">Cancel</button>
-                </div>
-            </div>
-        </div>
-
-
-
-        <div id="toast" class="toast" style="display: none;"></div>
-
-
-
-        <!-- Assign Shuttle Modal -->
-        <div id="assignShuttleModal" class="modal">
-            <div class="modal-content">
-                <span class="close-btn" onclick="closeAssignShuttleModal()">&times;</span>
-                <h2>Assign Shuttle</h2>
-                <form id="assignShuttleForm">
-                    <input type="hidden" id="assign-student-id">
-                    <div class="form-group">
-                        <label>Select Shuttle</label>
-                        <select id="assign-shuttle-select" required></select>
-                    </div>
-                    <button type="submit" class="submit-btn">Save Assignment</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Register Device Modal -->
-        <div id="registerDeviceModal" class="modal">
-            <div class="modal-content">
-                <span class="close-btn" onclick="closeRegisterDeviceModal()">&times;</span>
-                <h2><i class="fa-solid fa-id-card"></i> Register Device</h2>
-                <form id="registerDeviceForm">
-                    <input type="hidden" id="register-device-student-id">
-                    <div class="form-group">
-                        <label>Student Name</label>
-                        <input type="text" id="register-device-student-name" readonly
-                            style="background-color: #f0f0f0;">
-                    </div>
-                    <div class="form-group">
-                        <label>RFID Tag</label>
-                        <input type="text" id="rfidInput" placeholder="Scan RFID Card">
-                    </div>
-                    <div class="form-group">
-                        <label>Fingerprint Hash</label>
-                        <input type="text" id="fingerprintInput" placeholder="Scan Fingerprint">
-                    </div>
-                    <p id="register-device-error" class="error-text" style="display: none;"></p>
-                    <button type="submit" class="submit-btn"
-                        style="background: linear-gradient(135deg, #4CAF50, #388E3C);">
-                        <i class="fa-solid fa-save"></i> Register Device
+                <p id="add-parent-error" class="error-text" style="display: none;"></p>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeAddParentModal()">Cancel</button>
+                    <button type="submit" class="submit-btn">
+                        <i class="fa-solid fa-save"></i> Register Parent & Students
                     </button>
-                </form>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Operator & Drivers Modal -->
+    <div id="addOperatorModal" class="modal" style="display: none;">
+        <div class="modal-content add-form-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-bus"></i> Add Operator & Drivers</h3>
+                <span class="close-modal" onclick="closeAddOperatorModal()">&times;</span>
+            </div>
+            <form id="addOperatorForm">
+                <div class="form-section">
+                    <h4><i class="fa-solid fa-user-tie"></i> Operator Information</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="operator-username">Username *</label>
+                            <input type="text" id="operator-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="operator-email">Email *</label>
+                            <input type="email" id="operator-email" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group password-wrapper">
+                            <label for="operator-password">Password *</label>
+                            <input type="password" id="operator-password" required>
+                            <span class="toggle-password" onclick="togglePassword('operator-password', this)">
+                                <i class="fa-solid fa-eye-slash"></i>
+                            </span>
+                        </div>
+                        <div class="form-group">
+                            <label for="operator-fullname">Full Name *</label>
+                            <input type="text" id="operator-fullname" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="operator-phone">Contact Phone *</label>
+                            <input type="tel" id="operator-phone" placeholder="+63-912-345-6789" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-header">
+                        <h4><i class="fa-solid fa-id-card"></i> Drivers Information</h4>
+                        <button type="button" class="add-driver-btn" onclick="addDriverForm()">
+                            <i class="fa-solid fa-plus"></i> Add Driver
+                        </button>
+                    </div>
+                    <div id="drivers-container">
+                        <div class="driver-form" data-driver="1">
+                            <div class="driver-header">
+                                <h5>Driver 1</h5>
+                                <button type="button" class="remove-driver-btn" onclick="removeDriverForm(1)"
+                                    style="display: none;">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="driver-1-username">Username *</label>
+                                    <input type="text" id="driver-1-username" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="driver-1-email">Email *</label>
+                                    <input type="email" id="driver-1-email" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group password-wrapper">
+                                    <label for="driver-1-password">Password *</label>
+                                    <input type="password" id="driver-1-password" required>
+                                    <span class="toggle-password" onclick="togglePassword('driver-1-password', this)">
+                                        <i class="fa-solid fa-eye-slash"></i>
+                                    </span>
+                                </div>
+
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="driver-1-phone">Contact Phone *</label>
+                                    <input type="tel" id="driver-1-phone" placeholder="+63-912-345-6789" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="driver-1-emergency">Emergency Contact *</label>
+                                    <input type="tel" id="driver-1-emergency" placeholder="+63-912-345-6789" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p id="add-operator-error" class="error-text" style="display: none;"></p>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeAddOperatorModal()">Cancel</button>
+                    <button type="submit" class="submit-btn">
+                        <i class="fa-solid fa-save"></i> Register Operator & Drivers
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Upload Modal -->
+    <div id="bulkUploadModal" class="modal" style="display: none;">
+        <div class="modal-content bulk-upload-modal">
+            <div class="modal-header">
+                <h3 id="bulk-title"><i class="fa-solid fa-upload"></i> Bulk Upload</h3>
+                <span class="close-modal" onclick="closeBulkUploadModal()">&times;</span>
+            </div>
+            <form id="bulkUploadForm">
+                <div class="form-group">
+                    <label for="bulk-file">Select XLSX File *</label>
+                    <input type="file" id="bulk-file" accept=".xlsx" required>
+                    <small>Upload an Excel file with user data.</small>
+                </div>
+                <p id="bulk-error" class="error-text" style="display: none;"></p>
+                <div class="modal-actions">
+                    <button type="button" class="action-btn" onclick="downloadBulkTemplate()"
+                        style="margin-right: auto; background-color: #2196F3;">
+                        <i class="fa-solid fa-download"></i> Download Template
+                    </button>
+                    <button type="button" class="cancel-btn" onclick="closeBulkUploadModal()">Cancel</button>
+                    <button type="submit" class="submit-btn">
+                        <i class="fa-solid fa-upload"></i> Upload File
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Student Modal -->
+    <div id="editStudentModal" class="modal" style="display: none;">
+        <div class="modal-content add-form-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-edit"></i> Edit Student</h3>
+                <span class="close-modal" onclick="closeEditStudentModal()">&times;</span>
+            </div>
+            <form id="editStudentForm">
+                <input type="hidden" id="edit-student-id">
+                <div class="form-section">
+                    <h4><i class="fa-solid fa-graduation-cap"></i> Student Information</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-student-fullname">Full Name *</label>
+                            <input type="text" id="edit-student-fullname" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-student-grade">Grade *</label>
+                            <select id="edit-student-grade" required>
+                                <option value="">Select Grade</option>
+                                <option value="Grade 7">Grade 7</option>
+                                <option value="Grade 8">Grade 8</option>
+                                <option value="Grade 9">Grade 9</option>
+                                <option value="Grade 10">Grade 10</option>
+                                <option value="Grade 11">Grade 11</option>
+                                <option value="Grade 12">Grade 12</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-student-section">Section *</label>
+                            <input type="text" id="edit-student-section" placeholder="e.g., Section A" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-student-address">Current Address *</label>
+                            <input type="text" id="edit-student-address" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <h4><i class="fa-solid fa-user"></i> Parent Information</h4>
+                    <input type="hidden" id="edit-parent-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-parent-fullname">Full Name *</label>
+                            <input type="text" id="edit-parent-fullname" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-parent-phone">Contact Phone *</label>
+                            <input type="tel" id="edit-parent-phone" placeholder="+63-912-345-6789" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-parent-address">Current Address *</label>
+                            <input type="text" id="edit-parent-address" required>
+                        </div>
+                    </div>
+                </div>
+                <p id="edit-student-error" class="error-text" style="display: none;"></p>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeEditStudentModal()">Cancel</button>
+                    <button type="submit" class="submit-btn">
+                        <i class="fa-solid fa-save"></i> Update Student & Parent
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Driver Modal -->
+    <div id="editDriverModal" class="modal" style="display: none;">
+        <div class="modal-content add-form-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-edit"></i> Edit Driver</h3>
+                <span class="close-modal" onclick="closeEditDriverModal()">&times;</span>
+            </div>
+            <form id="editDriverForm">
+                <input type="hidden" id="edit-driver-id">
+                <div class="form-section">
+                    <h4><i class="fa-solid fa-id-card"></i> Driver Information</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-driver-contact">Contact Phone *</label>
+                            <input type="tel" id="edit-driver-contact" placeholder="+63-912-345-6789" required>
+                        </div>
+
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-driver-emergency">Emergency Contact *</label>
+                            <input type="tel" id="edit-driver-emergency" placeholder="+63-912-345-6789" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <h4><i class="fa-solid fa-user-tie"></i> Operator Information</h4>
+                    <input type="hidden" id="edit-operator-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-operator-fullname">Full Name *</label>
+                            <input type="text" id="edit-operator-fullname" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-operator-phone">Contact Phone *</label>
+                            <input type="tel" id="edit-operator-phone" placeholder="+63-912-345-6789" required>
+                        </div>
+                    </div>
+                </div>
+                <p id="edit-driver-error" class="error-text" style="display: none;"></p>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeEditDriverModal()">Cancel</button>
+                    <button type="submit" class="submit-btn">
+                        <i class="fa-solid fa-save"></i> Update Driver & Operator
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="modal-confirm" style="display: none;">
+        <div class="modal-confirm-content">
+            <h3>Confirm Delete</h3>
+            <p id="deleteConfirmMessage">Are you sure you want to delete this item? This action cannot be
+                undone.</p>
+            <input type="hidden" id="deleteItemId">
+            <input type="hidden" id="deleteItemType">
+            <button class="confirm-action" onclick="confirmDelete()">Delete</button>
+            <button class="cancel-action" onclick="cancelDelete()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Shuttle Students Modal -->
+    <div id="shuttleStudentsModal" class="modal">
+        <div class="modal-content" style="width: 95%; max-width: 700px;">
+            <div class="modal-header">
+                <h3>Assigned Students <span id="modal-shuttle-id-display"
+                        style="font-weight:normal; font-size: 0.8em; color: gray;"></span></h3>
+                <span class="close-modal" onclick="closeShuttleStudentsModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="searchShuttleStudents" placeholder="Search students..."
+                    style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;"
+                    oninput="filterShuttleStudents()">
+                <div style="max-height: 500px; overflow-y: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2; position: sticky; top: 0;">
+                                <th
+                                    style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">
+                                    ID
+                                </th>
+                                <th
+                                    style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">
+                                    Name
+                                </th>
+                                <th
+                                    style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">
+                                    Location</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shuttle-students-tbody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
+    </div>
 
-        <script src="script.js"></script>
-        <script>
-            function togglePassword(id, iconSpan) {
-                const input = document.getElementById(id);
-                const icon = iconSpan.querySelector('i');
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    icon.classList.remove('fa-eye-slash');
-                    icon.classList.add('fa-eye');
-                } else {
-                    input.type = 'password';
-                    icon.classList.remove('fa-eye');
-                    icon.classList.add('fa-eye-slash');
-                }
-            }
+    <div id="logoutConfirmModal" class="modal-confirm" style="display: none;">
+        <div class="modal-confirm-content">
+            <h3>Confirm Logout</h3>
+            <p>Are you sure you want to log out?</p>
+            <button class="confirm-action" onclick="confirmLogout()">Logout</button>
+            <button class="cancel-action" onclick="cancelLogout()">Cancel</button>
+        </div>
+    </div>
+    </div>
 
-            function showToast(message) {
-                const toast = document.getElementById('toast');
-                toast.textContent = message;
-                toast.style.display = 'block';
-                setTimeout(() => toast.style.display = 'none', 4000);
+
+
+    <div id="toast" class="toast" style="display: none;"></div>
+
+
+
+    <!-- Assign Shuttle Modal -->
+    <div id="assignShuttleModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeAssignShuttleModal()">&times;</span>
+            <h2>Assign Shuttle</h2>
+            <form id="assignShuttleForm">
+                <input type="hidden" id="assign-student-id">
+                <div class="form-group">
+                    <label>Select Shuttle</label>
+                    <select id="assign-shuttle-select" required></select>
+                </div>
+                <button type="submit" class="submit-btn">Save Assignment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Device Modal -->
+    <div id="registerDeviceModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeRegisterDeviceModal()">&times;</span>
+            <h2><i class="fa-solid fa-id-card"></i> Register Device</h2>
+            <form id="registerDeviceForm">
+                <input type="hidden" id="register-device-student-id">
+                <div class="form-group">
+                    <label>Student Name</label>
+                    <input type="text" id="register-device-student-name" readonly style="background-color: #f0f0f0;">
+                </div>
+                <div class="form-group">
+                    <label>RFID Tag</label>
+                    <input type="text" id="rfidInput" placeholder="Scan RFID Card">
+                </div>
+                <div class="form-group">
+                    <label>Fingerprint Hash</label>
+                    <input type="text" id="fingerprintInput" placeholder="Scan Fingerprint">
+                </div>
+                <p id="register-device-error" class="error-text" style="display: none;"></p>
+                <button type="submit" class="submit-btn" style="background: linear-gradient(135deg, #4CAF50, #388E3C);">
+                    <i class="fa-solid fa-save"></i> Register Device
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        function togglePassword(id, iconSpan) {
+            const input = document.getElementById(id);
+            const icon = iconSpan.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
             }
-        </script>
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 4000);
+        }
+    </script>
 </body>
 
 </html>

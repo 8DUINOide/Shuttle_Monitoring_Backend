@@ -79,6 +79,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadAllData();
         updateDashboard();
         showProfile();
+
+        // Start Notification Polling
+        fetchNotifications();
+        setInterval(fetchNotifications, 30000); // Poll every 30s
     }
 });
 
@@ -145,6 +149,113 @@ async function login() {
     } catch (error) {
         errorElement.textContent = "Network error: " + error.message;
         errorElement.style.display = "block";
+    }
+}
+
+
+// =================== NOTIFICATIONS ===================
+async function fetchNotifications() {
+    if (!token) return;
+    try {
+        // 1. Get Unread Count
+        const countRes = await fetch(`${SERVER_URL}/api/notifications/unread-count`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (countRes.ok) {
+            const data = await countRes.json();
+            const badge = document.getElementById('notification-badge');
+            if (badge) {
+                badge.textContent = data.count;
+                badge.style.display = data.count > 0 ? 'inline-block' : 'none';
+            }
+        }
+
+        // 2. Get List (Only if tab is active or just to cache?)
+        // Let's fetch list when checking notifications tab, OR always fetch top 5 for dropdown (if we had one)
+        // For now, let's fetch list every time to keep the tab updated if open
+        const listRes = await fetch(`${SERVER_URL}/api/notifications`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (listRes.ok) {
+            const list = await listRes.json();
+            renderNotifications(list);
+        }
+    } catch (e) {
+        console.error("Error fetching notifications:", e);
+    }
+}
+
+function renderNotifications(notifications) {
+    const container = document.getElementById('notification-list');
+    if (!container) return;
+
+    if (notifications.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #888;"><i class="fa-regular fa-bell-slash" style="font-size: 48px; margin-bottom: 10px;"></i><p>No new notifications</p></div>';
+        return;
+    }
+
+    container.innerHTML = '';
+    notifications.forEach(notif => {
+        const item = document.createElement('div');
+        item.className = `notification-item ${notif.read ? '' : 'unread'}`;
+
+        // Determine icon and color based on content/type
+        let iconClass = 'fa-circle-info';
+        let iconColor = '#2196F3'; // Default blue
+
+        // Simple heuristic for icons based on keywords if type isn't specific enough
+        const lowerMsg = (notif.message + " " + notif.type).toLowerCase();
+
+        if (lowerMsg.includes('check in') || lowerMsg.includes('checked in')) {
+            iconClass = 'fa-circle-check';
+            iconColor = '#4CAF50'; // Green
+        } else if (lowerMsg.includes('check out') || lowerMsg.includes('checked out')) {
+            iconClass = 'fa-person-walking-arrow-right';
+            iconColor = '#FF9800'; // Orange
+        } else if (lowerMsg.includes('alert') || lowerMsg.includes('warning') || lowerMsg.includes('delay')) {
+            iconClass = 'fa-triangle-exclamation';
+            iconColor = '#f44336'; // Red
+        }
+
+        item.innerHTML = `
+            <div class="notification-icon" style="color: ${iconColor};">
+                <i class="fa-solid ${iconClass}"></i>
+            </div>
+            <div class="notification-content">
+                <div class="notification-body">${sanitizeHTML(notif.message)}</div>
+                <div class="notification-time">${new Date(notif.timestamp).toLocaleString()}</div>
+            </div>
+            ${!notif.read ? '<div class="notification-dot"></div>' : ''}
+        `;
+        item.onclick = () => markNotificationRead(notif.id);
+        container.appendChild(item);
+    });
+}
+
+async function markNotificationRead(id) {
+    if (!token) return;
+    try {
+        await fetch(`${SERVER_URL}/api/notifications/${id}/read`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        fetchNotifications(); // Refresh
+    } catch (e) {
+        console.error("Error marking read:", e);
+    }
+}
+
+async function markAllNotificationsRead() {
+    if (!token) return;
+    try {
+        await fetch(`${SERVER_URL}/api/notifications/read-all`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        fetchNotifications(); // Refresh
+        showToast("All notifications marked as read.");
+    } catch (e) {
+        console.error("Error marking all read:", e);
     }
 }
 

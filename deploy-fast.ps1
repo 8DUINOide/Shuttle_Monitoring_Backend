@@ -15,12 +15,17 @@ if ($LASTEXITCODE -ne 0) {
     exit
 }
 
-# Step 2: Upload the JAR to the server
-Write-Host "Step 2: Uploading JAR to server via SCP..." -ForegroundColor Green
-scp target/*.jar "${SERVER_USER}@${SERVER_IP}:${REMOTE_PATH}/target/"
+# Step 2: Upload source code to server
+Write-Host "Step 2: Uploading source code to server via SCP..." -ForegroundColor Green
+# First ensure the directory exists
+ssh "${SERVER_USER}@${SERVER_IP}" "mkdir -p ${REMOTE_PATH}"
+# Upload src directory (this contains script.js and java files)
+scp -r src "${SERVER_USER}@${SERVER_IP}:${REMOTE_PATH}/"
+# Upload pom.xml and docker-compose.yml in case they changed
+scp pom.xml docker-compose.yml "${SERVER_USER}@${SERVER_IP}:${REMOTE_PATH}/"
 
-# Step 3: Trigger deployment on server (Skip compilation on server)
-Write-Host "Step 3: Restarting containers on server..." -ForegroundColor Green
+# Step 3: Trigger deployment on server
+Write-Host "Step 3: Building and restarting containers on server..." -ForegroundColor Green
 ssh "${SERVER_USER}@${SERVER_IP}" "cd ${REMOTE_PATH} && docker compose up -d --build"
 
 Write-Host "--- Deployment Complete! ---" -ForegroundColor Cyan
