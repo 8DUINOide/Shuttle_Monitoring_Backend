@@ -25,14 +25,19 @@ public class CheckInController {
     public ResponseEntity<Map<String, Object>> registerDevice(@PathVariable Long studentId,
                                                               @RequestBody Map<String, String> deviceData) {
         String rfidTag = deviceData.get("rfidTag");
-        String fingerprintHash = deviceData.get("fingerprintHash");
-        if (rfidTag == null || fingerprintHash == null) {
+        
+        // Support both new (hash1, 2, 3) and legacy (fingerprintHash) formats
+        String hash1 = deviceData.getOrDefault("fingerprintHash1", deviceData.get("fingerprintHash"));
+        String hash2 = deviceData.get("fingerprintHash2");
+        String hash3 = deviceData.get("fingerprintHash3");
+
+        if (rfidTag == null || hash1 == null) {
             Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "RFID tag and fingerprint hash required");
+            errorResponse.put("error", "RFID tag and at least one fingerprint hash required");
             return ResponseEntity.badRequest().body(errorResponse);
         }
 
-        checkInService.registerDevice(studentId, rfidTag, fingerprintHash);
+        checkInService.registerDevice(studentId, rfidTag, hash1, hash2, hash3);
 
         // Fetch updated student for detailed response
         Student student = checkInService.getStudentById(studentId); // Add this method to CheckInService if needed
@@ -42,7 +47,9 @@ public class CheckInController {
         response.put("studentId", studentId);
         response.put("studentUsername", student.getUser().getUsername());
         response.put("rfidTag", rfidTag);
-        response.put("fingerprintHash", fingerprintHash);
+        response.put("fingerprintHash1", hash1);
+        response.put("fingerprintHash2", hash2);
+        response.put("fingerprintHash3", hash3);
         response.put("timestamp", java.time.LocalDateTime.now().toString());
 
         return ResponseEntity.ok(response);

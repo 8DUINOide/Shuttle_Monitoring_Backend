@@ -38,14 +38,16 @@ public class CheckInService {
         return studentRepository.findById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found"));
     }
-    public CheckIn registerDevice(Long studentId, String rfidTag, String fingerprintHash) {
+    public CheckIn registerDevice(Long studentId, String rfidTag, String fingerprintHash1, String fingerprintHash2, String fingerprintHash3) {
         Optional<Student> studentOpt = studentRepository.findById(studentId);
         if (studentOpt.isEmpty()) {
             throw new IllegalArgumentException("Student not found");
         }
         Student student = studentOpt.get();
         student.setRfidTag(rfidTag);
-        student.setFingerprintHash(fingerprintHash);
+        student.setFingerprintHash1(fingerprintHash1);
+        student.setFingerprintHash2(fingerprintHash2);
+        student.setFingerprintHash3(fingerprintHash3);
         studentRepository.save(student);
         return null; // Or return confirmation object if needed
     }
@@ -58,7 +60,11 @@ public class CheckInService {
         Student student = studentOpt.get();
 
         // Verify RFID/Fingerprint
-        if (!rfidTag.equals(student.getRfidTag()) || !fingerprintHash.equals(student.getFingerprintHash())) {
+        boolean fingerprintMatch = fingerprintHash.equals(student.getFingerprintHash1()) ||
+                                   fingerprintHash.equals(student.getFingerprintHash2()) ||
+                                   fingerprintHash.equals(student.getFingerprintHash3());
+
+        if (!rfidTag.equals(student.getRfidTag()) || !fingerprintMatch) {
             CheckIn failedCheckIn = new CheckIn();
             failedCheckIn.setStudent(student);
             failedCheckIn.setStatus("failed");
@@ -97,7 +103,11 @@ public class CheckInService {
                 .orElseThrow(() -> new IllegalArgumentException("Student not found during lock acquisition"));
 
         // Step 2: Verify Fingerprint (Second Factor)
-        if (student.getFingerprintHash() == null || !student.getFingerprintHash().equals(fingerprintHash)) {
+        boolean fingerprintMatch = (student.getFingerprintHash1() != null && student.getFingerprintHash1().equals(fingerprintHash)) ||
+                                   (student.getFingerprintHash2() != null && student.getFingerprintHash2().equals(fingerprintHash)) ||
+                                   (student.getFingerprintHash3() != null && student.getFingerprintHash3().equals(fingerprintHash));
+
+        if (!fingerprintMatch) {
              // Log failed attempt?
              CheckIn failed = new CheckIn();
              failed.setStudent(student);

@@ -642,7 +642,8 @@ async function loadRegistration() {
                     assignedShuttle = `${shuttleName}(${student.assignedShuttle.route})`;
                 }
                 const hasRfid = student.rfidTag ? '<i class="fa-solid fa-check-circle" style="color: green;"></i> RFID' : '<i class="fa-solid fa-times-circle" style="color: red;"></i> RFID';
-                const hasFingerprint = student.fingerprintHash ? '<i class="fa-solid fa-check-circle" style="color: green;"></i> Fingerprint' : '<i class="fa-solid fa-times-circle" style="color: red;"></i> Fingerprint';
+                const fpCount = (student.fingerprintHash1 ? 1 : 0) + (student.fingerprintHash2 ? 1 : 0) + (student.fingerprintHash3 ? 1 : 0);
+                const hasFingerprint = fpCount > 0 ? `<i class="fa-solid fa-check-circle" style="color: green;"></i> Fingerprint (${fpCount}/3)` : '<i class="fa-solid fa-times-circle" style="color: red;"></i> Fingerprint';
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -2170,7 +2171,9 @@ function showRegisterDeviceModal(studentId) {
     document.getElementById('register-device-student-id').value = studentId;
     document.getElementById('register-device-student-name').value = student.fullName;
     document.getElementById('rfidInput').value = student.rfidTag || '';
-    document.getElementById('fingerprintInput').value = student.fingerprintHash || '';
+    document.getElementById('fingerprintInput1').value = student.fingerprintHash1 || student.fingerprintHash || '';
+    document.getElementById('fingerprintInput2').value = student.fingerprintHash2 || '';
+    document.getElementById('fingerprintInput3').value = student.fingerprintHash3 || '';
     document.getElementById('register-device-error').style.display = 'none';
 
     document.getElementById('registerDeviceModal').style.display = 'flex';
@@ -2185,7 +2188,9 @@ document.getElementById('registerDeviceForm').addEventListener('submit', async (
     e.preventDefault();
     const studentId = document.getElementById('register-device-student-id').value;
     const rfidTag = document.getElementById('rfidInput').value;
-    const fingerprintHash = document.getElementById('fingerprintInput').value;
+    const fingerprintHash1 = document.getElementById('fingerprintInput1').value;
+    const fingerprintHash2 = document.getElementById('fingerprintInput2').value;
+    const fingerprintHash3 = document.getElementById('fingerprintInput3').value;
     const submitBtn = e.target.querySelector('.submit-btn');
     const errorEl = document.getElementById('register-device-error');
 
@@ -2199,7 +2204,7 @@ document.getElementById('registerDeviceForm').addEventListener('submit', async (
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ rfidTag, fingerprintHash })
+            body: JSON.stringify({ rfidTag, fingerprintHash1, fingerprintHash2, fingerprintHash3 })
         });
 
         const result = await response.json();
@@ -3192,20 +3197,52 @@ async function pollHardwareInput() {
                 updated = true;
             }
 
-            // Handle Fingerprint
-            if (data.fingerprint && fingerprintInput) {
-                fingerprintInput.value = data.fingerprint;
-                fingerprintInput.style.backgroundColor = '#e8f0fe';
-                updated = true;
+            // Handle Fingerprint - Fill first empty slot
+            if (data.fingerprint) {
+                const fp1 = document.getElementById('fingerprintInput1');
+                const fp2 = document.getElementById('fingerprintInput2');
+                const fp3 = document.getElementById('fingerprintInput3');
+
+                if (fp1 && !fp1.value) {
+                    fp1.value = data.fingerprint;
+                    fp1.style.backgroundColor = '#e8f0fe';
+                    updated = true;
+                } else if (fp2 && !fp2.value) {
+                    fp2.value = data.fingerprint;
+                    fp2.style.backgroundColor = '#e8f0fe';
+                    updated = true;
+                } else if (fp3 && !fp3.value) {
+                    fp3.value = data.fingerprint;
+                    fp3.style.backgroundColor = '#e8f0fe';
+                    updated = true;
+                }
             }
 
-            // Auto-submit if we have incoming data and both fields are valid
-            if (updated && rfidInput && fingerprintInput && rfidInput.value && fingerprintInput.value) {
+            // Update Progress Bar
+            const fp1Val = document.getElementById('fingerprintInput1').value;
+            const fp2Val = document.getElementById('fingerprintInput2').value;
+            const fp3Val = document.getElementById('fingerprintInput3').value;
+
+            const count = (fp1Val ? 1 : 0) + (fp2Val ? 1 : 0) + (fp3Val ? 1 : 0);
+            const progressBar = document.getElementById('fp-progress-bar');
+            const progressText = document.getElementById('fp-progress-text');
+
+            if (progressBar && progressText) {
+                const pct = (count / 3) * 100;
+                progressBar.style.width = pct + '%';
+                progressText.textContent = `${count}/3 Scanned`;
+            }
+
+            // Auto-submit if we have incoming data and valid inputs
+            // STRICT REQUIREMENT: Only auto-submit if ALL 3 fingerprints are present
+            const allFingerprintsCaptured = (fp1Val && fp2Val && fp3Val);
+
+            if (updated && rfidInput && rfidInput.value && allFingerprintsCaptured) {
                 const btn = document.querySelector('#registerDeviceForm .submit-btn');
                 if (btn && !btn.disabled) {
-                    console.log("Auto-submitting hardware registration...");
+                    console.log("Auto-submitting hardware registration (3/3 Fingerprints)...");
                     btn.click();
-                    showToast("Device registered automatically from hardware scan");
+                    showToast("Device registered automatically (3/3 Fingerprints)");
                 }
             }
         }

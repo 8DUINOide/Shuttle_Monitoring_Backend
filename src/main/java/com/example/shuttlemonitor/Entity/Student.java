@@ -32,7 +32,14 @@ public class Student {
 
     private String rfidTag;
 
-    private String fingerprintHash;
+    @Column(name = "fingerprint_hash1")
+    private String fingerprintHash1;
+
+    @Column(name = "fingerprint_hash2")
+    private String fingerprintHash2;
+
+    @Column(name = "fingerprint_hash3")
+    private String fingerprintHash3;
 
     @ManyToOne
     @JoinColumn(name = "parent_id")

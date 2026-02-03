@@ -244,7 +244,7 @@ public class AuthController {
         }
 
         student.setRfidTag(rfidTag);
-        student.setFingerprintHash(fingerprintHash);
+        student.setFingerprintHash1(fingerprintHash);
         studentRepository.save(student);
 
         return ResponseEntity.ok(student);

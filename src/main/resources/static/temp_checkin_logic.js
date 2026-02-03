@@ -131,7 +131,7 @@ async function simulateCheckInScan(type) {
         });
         const fullStudent = await studRes.json();
 
-        let value = type === 'rfid' ? fullStudent.rfidTag : fullStudent.fingerprintHash;
+        let value = type === 'rfid' ? fullStudent.rfidTag : (fullStudent.fingerprintHash1 || fullStudent.fingerprintHash2 || fullStudent.fingerprintHash3 || fullStudent.fingerprintHash);
 
         if (!value) {
             showToast(`Student ${student.name} has no ${type} registered!`);

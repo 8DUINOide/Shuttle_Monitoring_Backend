@@ -178,7 +178,7 @@ async function simulateCheckInScan(type) {
                 studentId: student.studentId,
                 name: student.name,
                 rfid: fullStudent.rfidTag,
-                fingerprint: fullStudent.fingerprintHash,
+                fingerprint: fullStudent.fingerprintHash1 || fullStudent.fingerprintHash2 || fullStudent.fingerprintHash3 || fullStudent.fingerprintHash,
                 shuttleId: shuttleId
             };
 

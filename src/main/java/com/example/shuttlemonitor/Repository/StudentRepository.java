@@ -17,7 +17,8 @@ import java.util.Optional;
 public interface StudentRepository extends JpaRepository<Student, Long> {
     Optional<Student> findByUser(User user);
     Optional<Student> findByRfidTag(String rfidTag);
-    Optional<Student> findByFingerprintHash(String fingerprintHash);
+    @Query("SELECT s FROM Student s WHERE s.fingerprintHash1 = :hash OR s.fingerprintHash2 = :hash OR s.fingerprintHash3 = :hash")
+    Optional<Student> findByAnyFingerprint(@Param("hash") String hash);
 
     // New: Find students assigned to a shuttle
     @Query("SELECT s FROM Student s WHERE s.assignedShuttle = :shuttle")
