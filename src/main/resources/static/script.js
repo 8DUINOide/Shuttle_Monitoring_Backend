@@ -592,8 +592,17 @@ async function loadCheckInManagement() {
 
             let checkInTime = '-';
             if (student.lastCheckInTime) {
-                const checkInDate = new Date(student.lastCheckInTime);
-                checkInTime = checkInDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                // Ensure the timestamp from backend is parsed correctly for Asia/Manila
+                const isoString = student.lastCheckInTime.replace(' ', 'T') + '+08:00';
+                const checkInDate = new Date(isoString);
+                checkInTime = checkInDate.toLocaleString('en-PH', {
+                    timeZone: 'Asia/Manila',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
             }
 
             const assignedShuttle = student.assignedShuttle ? `Shuttle #${student.assignedShuttle.shuttleId}` : 'Not Assigned';
@@ -648,8 +657,22 @@ async function loadRideHistory() {
 
         history.forEach(item => {
             const tr = document.createElement('tr');
-            const startTime = item.startTime ? new Date(item.startTime).toLocaleString('en-PH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
-            const endTime = item.endTime ? new Date(item.endTime).toLocaleString('en-PH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+
+            const formatOptions = {
+                timeZone: 'Asia/Manila',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+
+            const startTime = item.startTime
+                ? new Date(item.startTime.replace(' ', 'T') + '+08:00').toLocaleString('en-PH', formatOptions)
+                : 'N/A';
+            const endTime = item.endTime
+                ? new Date(item.endTime.replace(' ', 'T') + '+08:00').toLocaleString('en-PH', formatOptions)
+                : 'N/A';
 
             tr.innerHTML = `
                 <td><strong>#${item.rideId}</strong></td>
@@ -1020,17 +1043,31 @@ document.getElementById("profile-picture-input").addEventListener("change", uplo
 
 // =================== DASHBOARD UPDATE ===================
 function relativeTime(timestamp) {
-    const date = new Date(timestamp.replace(' ', 'T') + 'Z');
-    const now = new Date('2025-09-22T12:24:00-07:00'); // Current time: 12:24 PM PST
+    // Backend LocalDateTime is in Asia/Manila (UTC+8)
+    // Convert 'YYYY-MM-DD HH:mm:ss' to 'YYYY-MM-DDTHH:mm:ss+08:00' for reliable parsing
+    const isoString = timestamp.replace(' ', 'T') + '+08:00';
+    const date = new Date(isoString);
+    const now = new Date();
     const diffMs = now - date;
     const diffSec = Math.floor(diffMs / 1000);
-    const diffMin = Math.floor(diffSec / 60);
-    const diffHr = Math.floor(diffMin / 60);
-    const diffDay = Math.floor(diffHr / 24);
+
+    if (diffSec < 0) return "just now";
     if (diffSec < 60) return `${diffSec} seconds ago`;
+
+    const diffMin = Math.floor(diffSec / 60);
     if (diffMin < 60) return `${diffMin} minutes ago`;
+
+    const diffHr = Math.floor(diffMin / 60);
     if (diffHr < 24) return `${diffHr} hours ago`;
-    return `${diffDay} days ago`;
+
+    const diffDay = Math.floor(diffHr / 24);
+    if (diffDay < 30) return `${diffDay} days ago`;
+
+    const diffMonth = Math.floor(diffDay / 30);
+    if (diffMonth < 12) return `${diffMonth} months ago`;
+
+    const diffYear = Math.floor(diffMonth / 12);
+    return `${diffYear} years ago`;
 }
 
 async function updateDashboard() {
