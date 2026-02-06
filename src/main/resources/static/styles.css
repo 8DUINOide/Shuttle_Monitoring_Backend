@@ -1610,6 +1610,118 @@ tbody tr:hover {
     font-size: 0.85rem;
 }
 
+/* === Simulation Card Styling === */
+.simulation-card {
+    background: #fff;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e8e8e8;
+    border-left: 5px solid #003A6C;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.simulation-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.simulation-card h4 {
+    margin: 0 0 10px 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #003A6C;
+}
+
+.simulation-card p {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 12px !important;
+}
+
+.simulation-card.hardware {
+    border-left-color: #1890ff;
+    background-color: #f0f7ff;
+}
+
+.simulation-card.student {
+    border-left-color: #52c41a;
+    background-color: #f6ffed;
+}
+
+.simulation-card.driver {
+    border-left-color: #ff4d4f;
+    background-color: #fff1f0;
+}
+
+.simulation-card .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.simulation-card input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+}
+
+.simulation-card .coord-row {
+    display: flex;
+    gap: 10px;
+}
+
+.simulation-card .coord-row input {
+    flex: 1;
+}
+
+.simulation-card .btn-row {
+    display: flex;
+    gap: 10px;
+}
+
+.simulation-card button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.simulation-card.hardware button {
+    background: #1890ff;
+    color: white;
+}
+
+.simulation-card.student button {
+    background: #52c41a;
+    color: white;
+}
+
+.simulation-card.driver button.start-btn {
+    background: #52c41a;
+    color: white;
+}
+
+.simulation-card.driver button.end-btn {
+    background: #ff4d4f;
+    color: white;
+}
+
+.simulation-card button:hover {
+    opacity: 0.9;
+}
+
 /* === Recent Activity List === */
 #recent-activity-list {
     list-style: none;

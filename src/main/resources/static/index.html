@@ -616,60 +616,47 @@
                         <div id="map" style="flex: 1; position: relative;"></div>
                         <div class="active-shuttles"
                             style="width: 30%; max-height: calc(100vh - 160px); overflow-y: auto;">
-                            <!-- New: Simulation Box -->
-                            <div class="simulation-box"
-                                style="background: #e6f7ff; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #1890ff;">
-                                <h4 style="margin-top: 0; color: #003A6C;">Hardware Simulation</h4>
-                                <p style="font-size: 12px; margin-bottom: 5px;">Simulate GPS data from hardware.</p>
-                                <input type="number" id="sim-shuttle-id" placeholder="Shuttle ID"
-                                    style="width: 100%; margin-bottom: 5px; padding: 5px;">
-                                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-                                    <input type="number" id="sim-lat" placeholder="Latitude" step="any"
-                                        style="width: 50%; padding: 5px;">
-                                    <input type="number" id="sim-lng" placeholder="Longitude" step="any"
-                                        style="width: 50%; padding: 5px;">
+                            <!-- Simulation Boxes -->
+                            <div class="simulation-card hardware">
+                                <h4><i class="fa-solid fa-microchip"></i> Hardware Simulation</h4>
+                                <p>Simulate GPS data from hardware.</p>
+                                <div class="input-group">
+                                    <input type="number" id="sim-shuttle-id" placeholder="Shuttle ID">
+                                    <div class="coord-row">
+                                        <input type="number" id="sim-lat" placeholder="Latitude" step="any">
+                                        <input type="number" id="sim-lng" placeholder="Longitude" step="any">
+                                    </div>
                                 </div>
-                                <button class="action-btn" onclick="simulateLocationUpdate()"
-                                    style="width: 100%;">Update Location</button>
+                                <button onclick="simulateLocationUpdate()">Update Location</button>
                             </div>
 
-                            <!-- New: Student Simulation Box -->
-                            <div class="simulation-box"
-                                style="background: #f0f5ff; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #4CAF50;">
-                                <h4 style="margin-top: 0; color: #2E7D32;">Student Pin Simulation</h4>
-                                <p style="font-size: 12px; margin-bottom: 5px;">Simulate Student setting their location.
-                                </p>
-                                <input type="number" id="sim-stud-id" placeholder="Student ID"
-                                    style="width: 100%; margin-bottom: 5px; padding: 5px;">
-                                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-                                    <input type="number" id="sim-stud-lat" placeholder="Latitude" step="any"
-                                        style="width: 50%; padding: 5px;">
-                                    <input type="number" id="sim-stud-lng" placeholder="Longitude" step="any"
-                                        style="width: 50%; padding: 5px;">
+                            <div class="simulation-card student">
+                                <h4><i class="fa-solid fa-map-pin"></i> Student Pin Simulation</h4>
+                                <p>Simulate Student setting their location.</p>
+                                <div class="input-group">
+                                    <input type="number" id="sim-stud-id" placeholder="Student ID">
+                                    <div class="coord-row">
+                                        <input type="number" id="sim-stud-lat" placeholder="Latitude" step="any">
+                                        <input type="number" id="sim-stud-lng" placeholder="Longitude" step="any">
+                                    </div>
                                 </div>
-                                <button class="action-btn" onclick="simulateStudentLocation()"
-                                    style="width: 100%; background-color: #4CAF50;">Set My Pin</button>
+                                <button onclick="simulateStudentLocation()">Set My Pin</button>
                             </div>
 
-                            <!-- Driver Ride Control Simulation Box -->
-                            <div class="simulation-box"
-                                style="background: #fff0f0; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #ff4d4f;">
-                                <h4 style="margin-top: 0; color: #cf1322;">Driver Ride Control</h4>
-                                <p style="font-size: 12px; margin-bottom: 5px;">Simulate Driver Starting/Ending Ride.
-                                </p>
-                                <input type="number" id="sim-dest-shuttle-id" placeholder="Shuttle ID"
-                                    style="width: 100%; margin-bottom: 5px; padding: 5px;">
-                                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-                                    <input type="number" id="sim-dest-lat" placeholder="Latitude" step="any"
-                                        style="width: 50%; padding: 5px;">
-                                    <input type="number" id="sim-dest-lng" placeholder="Longitude" step="any"
-                                        style="width: 50%; padding: 5px;">
+                            <div class="simulation-card driver">
+                                <h4><i class="fa-solid fa-car"></i> Driver Ride Control</h4>
+                                <p>Simulate Driver Starting/Ending Ride.</p>
+                                <div class="input-group">
+                                    <input type="number" id="sim-dest-shuttle-id" placeholder="Shuttle ID">
+                                    <div class="coord-row">
+                                        <input type="number" id="sim-dest-lat" placeholder="Latitude" step="any">
+                                        <input type="number" id="sim-dest-lng" placeholder="Longitude" step="any">
+                                    </div>
                                 </div>
-                                <div style="display: flex; gap: 5px;">
-                                    <button class="action-btn" onclick="simulateStartRide()"
-                                        style="width: 50%; background-color: #28a745;">Start Ride</button>
-                                    <button class="action-btn" onclick="simulateDriverDestination()"
-                                        style="width: 50%; background-color: #ff4d4f;">End Ride (Set Dest)</button>
+                                <div class="btn-row">
+                                    <button class="start-btn" onclick="simulateStartRide()">Start Ride</button>
+                                    <button class="end-btn" onclick="simulateDriverDestination()">End Ride (Set
+                                        Dest)</button>
                                 </div>
                             </div>
                             <div id="mouse-coordinates"
