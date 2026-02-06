@@ -572,12 +572,12 @@
                                     style="width: 100%; background-color: #4CAF50;">Set My Pin</button>
                             </div>
 
-                            <!-- New: Driver End Point Simulation Box -->
+                            <!-- Driver Ride Control Simulation Box -->
                             <div class="simulation-box"
                                 style="background: #fff0f0; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #ff4d4f;">
-                                <h4 style="margin-top: 0; color: #cf1322;">Driver End Point Simulation</h4>
-                                <p style="font-size: 12px; margin-bottom: 5px;">Simulate Driver setting their
-                                    destination.</p>
+                                <h4 style="margin-top: 0; color: #cf1322;">Driver Ride Control</h4>
+                                <p style="font-size: 12px; margin-bottom: 5px;">Simulate Driver Starting/Ending Ride.
+                                </p>
                                 <input type="number" id="sim-dest-shuttle-id" placeholder="Shuttle ID"
                                     style="width: 100%; margin-bottom: 5px; padding: 5px;">
                                 <div style="display: flex; gap: 5px; margin-bottom: 5px;">
@@ -586,8 +586,12 @@
                                     <input type="number" id="sim-dest-lng" placeholder="Longitude" step="any"
                                         style="width: 50%; padding: 5px;">
                                 </div>
-                                <button class="action-btn" onclick="simulateDriverDestination()"
-                                    style="width: 100%; background-color: #ff4d4f;">Set Destination</button>
+                                <div style="display: flex; gap: 5px;">
+                                    <button class="action-btn" onclick="simulateStartRide()"
+                                        style="width: 50%; background-color: #28a745;">Start Ride</button>
+                                    <button class="action-btn" onclick="simulateDriverDestination()"
+                                        style="width: 50%; background-color: #ff4d4f;">End Ride (Set Dest)</button>
+                                </div>
                             </div>
                             <div id="mouse-coordinates"
                                 style="background: rgba(255, 255, 255, 0.8); padding: 5px; margin-bottom: 10px; border-radius: 4px; font-size: 12px; font-weight: bold;">
@@ -1565,6 +1569,29 @@
                     <i class="fa-solid fa-save"></i> Register Device
                 </button>
             </form>
+        </div>
+    </div>
+    <!-- Registration Details Modal -->
+    <div id="registrationDetailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeRegistrationDetailsModal()">&times;</span>
+            <h2><i class="fa-solid fa-list-check"></i> Registration Details</h2>
+            <div id="registration-details-content" style="padding: 10px;">
+                <div class="detail-row"
+                    style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                    <strong style="color: #003A6C;">Student:</strong> <span id="reg-detail-name"></span>
+                </div>
+                <div class="detail-row"
+                    style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                    <strong style="color: #003A6C;">RFID Tag:</strong> <span id="reg-detail-rfid"
+                        style="font-family: monospace; background: #f5f5f5; padding: 2px 5px; border-radius: 3px;"></span>
+                </div>
+                <div class="detail-row">
+                    <strong style="color: #003A6C;">Fingerprint Status:</strong>
+                    <ul id="reg-detail-fingerprints" style="list-style: none; padding-left: 10px; margin-top: 5px;">
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -101,7 +101,10 @@ public class ShuttleController {
         response.put("latitude", shuttle.getLatitude());
         response.put("longitude", shuttle.getLongitude());
         response.put("destinationLatitude", shuttle.getDestinationLatitude());
+        response.put("destinationLatitude", shuttle.getDestinationLatitude());
         response.put("destinationLongitude", shuttle.getDestinationLongitude());
+        response.put("startLatitude", shuttle.getStartLatitude());
+        response.put("startLongitude", shuttle.getStartLongitude());
 
         return ResponseEntity.ok(response);
     }
@@ -135,7 +138,10 @@ public class ShuttleController {
         response.put("latitude", shuttle.getLatitude());
         response.put("longitude", shuttle.getLongitude());
         response.put("destinationLatitude", shuttle.getDestinationLatitude());
+        response.put("destinationLatitude", shuttle.getDestinationLatitude());
         response.put("destinationLongitude", shuttle.getDestinationLongitude());
+        response.put("startLatitude", shuttle.getStartLatitude());
+        response.put("startLongitude", shuttle.getStartLongitude());
 
         // New: Include ALL assigned students locations for visualization
         List<Map<String, Object>> studentLocations = shuttleService.getAssignedStudentLocations(shuttle);
@@ -173,6 +179,10 @@ public class ShuttleController {
                     map.put("longitude", shuttle.getLongitude());
                     map.put("destinationLatitude", shuttle.getDestinationLatitude());
                     map.put("destinationLongitude", shuttle.getDestinationLongitude());
+                    map.put("destinationLatitude", shuttle.getDestinationLatitude());
+                    map.put("destinationLongitude", shuttle.getDestinationLongitude());
+                    map.put("startLatitude", shuttle.getStartLatitude());
+                    map.put("startLongitude", shuttle.getStartLongitude());
                     map.put("eta", shuttleService.getETA(shuttle)); // Computed ETA from Mapbox
                     
                     // Driver info
@@ -241,7 +251,10 @@ public class ShuttleController {
         response.put("latitude", shuttle.getLatitude());
         response.put("longitude", shuttle.getLongitude());
         response.put("destinationLatitude", shuttle.getDestinationLatitude());
+        response.put("destinationLatitude", shuttle.getDestinationLatitude());
         response.put("destinationLongitude", shuttle.getDestinationLongitude());
+        response.put("startLatitude", shuttle.getStartLatitude());
+        response.put("startLongitude", shuttle.getStartLongitude());
 
         return ResponseEntity.ok(response);
     }
@@ -291,6 +304,40 @@ public class ShuttleController {
             List<Map<String, Object>> studentLocations = shuttleService.getAssignedStudentLocations(shuttle);
             response.put("assignedStudentLocations", studentLocations);
 
+            return ResponseEntity.ok(response);
+        } else {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Latitude and Longitude are required");
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    // New: Start Ride Endpoint (For Driver Simulation)
+    @PostMapping("/{id}/start-ride")
+    public ResponseEntity<Map<String, Object>> startRide(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        Shuttle shuttle = shuttleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Shuttle not found"));
+
+        if (request.containsKey("latitude") && request.containsKey("longitude")) {
+            Double lat = Double.parseDouble(request.get("latitude").toString());
+            Double lng = Double.parseDouble(request.get("longitude").toString());
+
+            shuttle.setStartLatitude(lat);
+            shuttle.setStartLongitude(lng);
+            shuttle.setLatitude(lat); // Also set current location
+            shuttle.setLongitude(lng);
+            shuttle.setStatus(Status.ACTIVE); // Activate shuttle
+            
+            shuttleRepository.save(shuttle);
+            activityLogService.log("Shuttle started ride: " + shuttle.getName(), "INFO");
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Ride started successfully");
+            response.put("shuttleId", shuttle.getShuttleId());
+            response.put("startLatitude", shuttle.getStartLatitude());
+            response.put("startLongitude", shuttle.getStartLongitude());
+            response.put("status", shuttle.getStatus());
+            
             return ResponseEntity.ok(response);
         } else {
             Map<String, Object> errorResponse = new HashMap<>();

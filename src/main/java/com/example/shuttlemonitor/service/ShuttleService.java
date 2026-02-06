@@ -76,9 +76,22 @@ public class ShuttleService {
                 .map(s -> {
                     java.util.Map<String, Object> map = new java.util.HashMap<>();
                     map.put("studentId", s.getStudentId());
-                    map.put("name", s.getFullName()); // Or just "Student #" + id
+                    map.put("name", s.getFullName());
                     map.put("latitude", s.getLatitude());
                     map.put("longitude", s.getLongitude());
+
+                    // Determine boarding status
+                    CheckIn lastCheck = checkInRepository.findTopByStudent_StudentIdOrderByTimestampDesc(s.getStudentId());
+                    String status = "Not Boarded";
+                    if (lastCheck != null && "success".equals(lastCheck.getStatus())) {
+                        if ("in".equals(lastCheck.getType())) {
+                            status = "Boarded";
+                        } else if ("out".equals(lastCheck.getType())) {
+                            status = "Checked Out";
+                        }
+                    }
+                    map.put("status", status);
+
                     return map;
                 })
                 .collect(java.util.stream.Collectors.toList());

@@ -655,7 +655,10 @@ async function loadRegistration() {
                     </td>
                     <td>${hasRfid} &nbsp; ${hasFingerprint}</td>
                     <td>
-                        <button class="action-btn" onclick="showRegisterDeviceModal(${student.studentId})"><i class="fa-solid fa-id-card"></i> Register Device</button>
+                        <div style="display: inline-flex; gap: 5px; align-items: center;">
+                            <button class="action-btn" onclick="showRegistrationDetails(${student.studentId})" title="Show Details"><i class="fa-solid fa-list"></i></button>
+                            <button class="action-btn" onclick="showRegisterDeviceModal(${student.studentId})"><i class="fa-solid fa-id-card"></i> Register Device</button>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -667,6 +670,45 @@ async function loadRegistration() {
         console.error('Error loading registration:', error);
         showToast('Error loading registration data');
     }
+}
+
+// =================== REGISTRATION DETAILS ===================
+async function showRegistrationDetails(studentId) {
+    console.log("Showing registration details for student:", studentId);
+    if (!token) return;
+    try {
+        const response = await fetch(`${SERVER_URL}/api/students/${studentId}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch student registration details');
+        const student = await response.json();
+
+        document.getElementById('reg-detail-name').textContent = student.fullName;
+        document.getElementById('reg-detail-rfid').textContent = student.rfidTag || 'None Registered';
+
+        const fpList = document.getElementById('reg-detail-fingerprints');
+        fpList.innerHTML = '';
+
+        const fpHashes = [student.fingerprintHash1, student.fingerprintHash2, student.fingerprintHash3];
+        fpHashes.forEach((hash, index) => {
+            const li = document.createElement('li');
+            const status = hash
+                ? `<i class="fa-solid fa-check" style="color: green;"></i> <span style="font-family: monospace; background: #e8f5e9; padding: 2px 5px; border-radius: 3px; font-size: 0.9em;">${hash}</span>`
+                : '<i class="fa-solid fa-times" style="color: red;"></i> Not Registered';
+            li.innerHTML = `<strong>Finger ${index + 1}:</strong> ${status}`;
+            li.style.marginBottom = "5px";
+            fpList.appendChild(li);
+        });
+
+        document.getElementById('registrationDetailsModal').style.display = 'flex';
+    } catch (error) {
+        console.error('Error loading registration details:', error);
+        showToast('Error loading registration details');
+    }
+}
+
+function closeRegistrationDetailsModal() {
+    document.getElementById('registrationDetailsModal').style.display = 'none';
 }
 
 
@@ -2247,21 +2289,7 @@ async function fetchMapShuttles() {
     }
 }
 
-// Simulated Routes (Lat/Lng arrays) - In real app, these come from DB
-const shuttleRoutes = {
-    'Shuttle #1': [
-        [120.9842, 14.5995], [120.9850, 14.6000], [120.9880, 14.6020],
-        [120.9900, 14.6050], [120.9950, 14.6080], [121.0000, 14.6100]
-    ],
-    'Shuttle #2': [
-        [121.0437, 14.6760], [121.0450, 14.6750], [121.0480, 14.6720],
-        [121.0500, 14.6700], [121.0550, 14.6650]
-    ],
-    'Shuttle #3': [
-        [121.0813, 14.5580], [121.0800, 14.5550], [121.0750, 14.5500],
-        [121.0700, 14.5450]
-    ]
-};
+// Legacy shuttleRoutes removed. Dynamic routing used instead.
 
 function updateMapMarkers(shuttlesData) {
     if (!window.dashboardMap || !window.mapboxgl) return;
@@ -2362,6 +2390,36 @@ function updateMapMarkers(shuttlesData) {
                 destMarker.markerShuttleId = shuttle.shuttleId;
                 window.mapMarkers.push(destMarker);
             }
+
+            // New: Start Marker
+            if (shuttle.startLatitude && shuttle.startLongitude) {
+                const startEl = document.createElement('div');
+                startEl.style.color = '#28a745'; // Green
+                startEl.style.fontSize = '24px';
+                startEl.innerHTML = '<i class="fa-solid fa-flag"></i>';
+
+                const startMarker = new mapboxgl.Marker({ element: startEl })
+                    .setLngLat([shuttle.startLongitude, shuttle.startLatitude])
+                    .setPopup(new mapboxgl.Popup().setHTML(`<b>${sanitizeHTML(shuttle.name)} Start Point</b>`))
+                    .addTo(window.dashboardMap);
+
+                startMarker.isStart = true;
+                startMarker.markerShuttleId = shuttle.shuttleId;
+                window.mapMarkers.push(startMarker);
+            }
+
+            // Gray Route (Traveled Path)
+            if (shuttle.startLatitude && shuttle.startLongitude) {
+                drawTraveledRoute(shuttle.shuttleId, [shuttle.startLongitude, shuttle.startLatitude], [shuttle.longitude, shuttle.latitude]);
+            }
+
+
+            // Auto-update tracking if this is the tracked shuttle
+            const trackedId = localStorage.getItem('lastTrackedShuttleId');
+            if (trackedId && shuttle.shuttleId == trackedId) {
+                // Call trackShuttle silently to update route and students
+                trackShuttle(shuttle.shuttleId, shuttle.latitude, shuttle.longitude, true);
+            }
         }
     });
 
@@ -2391,16 +2449,19 @@ let currentWaypoints = []; // New: Store waypoints for multi-stop routing
 let currentTrackedStudents = []; // New: To sync student popups with route legs
 let lastSyncedETA = null; // New: To sync modal with latest Mapbox ETA
 let individualStudentETAs = {}; // New: Store individual ETAs for waypoints
+let traveledRouteCache = {}; // New: Cache coordinates for the gray route to avoid redundant API calls
 
 // Track Shuttle
-async function trackShuttle(id, lat, lng) {
+async function trackShuttle(id, lat, lng, isSilent = false) {
     if (window.dashboardMap) {
         window.dashboardMap.flyTo({ center: [lng, lat], zoom: 14 });
 
-        // Reset sync state for new shuttle
-        lastSyncedETA = null;
-        currentTrackedStudents = [];
-        individualStudentETAs = {};
+        // Reset sync state for new shuttle (only if not silent update)
+        if (!isSilent) {
+            lastSyncedETA = null;
+            currentTrackedStudents = [];
+            individualStudentETAs = {};
+        }
 
         // Save state
         localStorage.setItem('lastTrackedShuttleId', id);
@@ -2417,7 +2478,6 @@ async function trackShuttle(id, lat, lng) {
                 const data = await response.json();
 
                 // 1. Set global "Target" student (for route line)
-                // 1. Set global "Target" student (for route line)
                 if (data.destinationLatitude && data.destinationLongitude) {
                     // Prioritize manually set destination
                     lastStudentLoc = [parseFloat(data.destinationLongitude), parseFloat(data.destinationLatitude)];
@@ -2433,13 +2493,14 @@ async function trackShuttle(id, lat, lng) {
 
                 // 3. Visualize ALL assigned students
                 if (data.assignedStudentLocations && Array.isArray(data.assignedStudentLocations)) {
-                    // Filter out students without location
-                    const validStudentLocations = data.assignedStudentLocations.filter(s =>
+                    // Filter out students without location OR who are already BOARDED
+                    const filteredLocations = data.assignedStudentLocations.filter(s =>
                         s.latitude !== null && s.longitude !== null &&
-                        s.latitude !== undefined && s.longitude !== undefined
+                        s.latitude !== undefined && s.longitude !== undefined &&
+                        s.status !== 'Boarded' // Hide boarded students from map and route
                     );
 
-                    // Fetch student ETAs from the new endpoint
+                    // Fetch student ETAs
                     let studentETAs = [];
                     try {
                         const etaResponse = await fetch(`${SERVER_URL}/api/eta/shuttle/${id}/students`, {
@@ -2453,18 +2514,20 @@ async function trackShuttle(id, lat, lng) {
                         console.error("Error fetching student ETAs:", etaError);
                     }
 
-                    currentTrackedStudents = validStudentLocations;
+                    currentTrackedStudents = filteredLocations;
 
-                    validStudentLocations.forEach((stud, index) => {
+                    filteredLocations.forEach((stud, index) => {
                         const el = document.createElement('div');
                         el.className = 'student-pin';
-                        el.style.backgroundColor = '#4CAF50'; // Green
-                        el.style.width = '15px';
-                        el.style.height = '15px';
+
+                        // Remaining students are 'Not Boarded' or 'Checked Out'
+                        el.style.backgroundColor = '#FFA000'; // Amber/Orange
+                        el.style.width = '18px';
+                        el.style.height = '18px';
                         el.style.borderRadius = '50%';
                         el.style.border = '2px solid white';
+                        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
 
-                        // Find ETA for this student
                         const studentETA = studentETAs.find(s => s.studentId === stud.studentId);
                         const etaDisplay = studentETA ? studentETA.eta : 'Calculating...';
 
@@ -2472,6 +2535,7 @@ async function trackShuttle(id, lat, lng) {
                             .setLngLat([stud.longitude, stud.latitude])
                             .setPopup(new mapboxgl.Popup().setHTML(`
                                 <b>${sanitizeHTML(stud.name)}</b><br>
+                                Status: <span style="color: #FFA000; font-weight: bold;">${sanitizeHTML(stud.status)}</span><br>
                                 ID: ${stud.studentId}<br>
                                 <strong id="student-eta-${stud.studentId}">Arrives in: ${etaDisplay}</strong>
                             `))
@@ -2482,28 +2546,28 @@ async function trackShuttle(id, lat, lng) {
                         window.studentMarkers.push(marker);
                     });
 
-                    if (validStudentLocations.length > 0) {
-                        showToast(`Showing ${validStudentLocations.length} student locations with ETAs.`);
+                    if (!isSilent && filteredLocations.length > 0) {
+                        showToast(`Showing ${filteredLocations.length} waiting students.`);
                     }
 
-                    // 4. Set Waypoints for Routing (Route to all students with location)
-                    currentWaypoints = validStudentLocations.map(s => [s.longitude, s.latitude]);
+                    // 4. Set Waypoints for Routing (Only for students still waiting)
+                    currentWaypoints = filteredLocations.map(s => [s.longitude, s.latitude]);
                 }
             }
         } catch (e) {
             console.error("Error fetching shuttle details for tracking", e);
         }
 
-        updateDirectionRoute();
+        updateDirectionRoute(isSilent);
 
-        let shuttleName = `Shuttle #${id}`;
-        drawRoute(shuttleName, [lng, lat]);
-        showToast(`Tracking Shuttle #${id}`);
+        if (!isSilent) {
+            showToast(`Tracking Shuttle #${id}`);
+        }
     }
 }
 
-function updateDirectionRoute() {
-    console.log("updateDirectionRoute called. Shuttle:", lastShuttleLoc, "Waypoints:", currentWaypoints.length, "Destination:", lastStudentLoc);
+function updateDirectionRoute(isSilent = false) {
+    console.log("updateDirectionRoute called. Silent:", isSilent);
 
     if (!window.mapDirections) return;
 
@@ -2552,12 +2616,14 @@ function updateDirectionRoute() {
         });
     }
 
-    if (addedCount > 0) {
-        showToast(`Route: Shuttle → ${addedCount} Students → Destination`);
-    } else if (lastStudentLoc) {
-        showToast("Route: Shuttle → Destination");
-    } else {
-        showToast("No destination set. Use Driver Simulation to set one.");
+    if (!isSilent) {
+        if (addedCount > 0) {
+            showToast(`Route: Shuttle → ${addedCount} Students → Destination`);
+        } else if (lastStudentLoc) {
+            showToast("Route: Shuttle → Destination");
+        } else {
+            showToast("No destination set. Use Driver Simulation to set one.");
+        }
     }
 }
 
@@ -2699,52 +2765,144 @@ if (typeof window !== 'undefined') {
     window.setupMapDirectionsSync = setupMapDirectionsSync;
 }
 
-function drawRoute(shuttleName, currentPos) {
-    const routeCoords = shuttleRoutes[shuttleName];
-    if (!routeCoords) return;
-
+// New: Draw Traveled Route (Gray Line from Start -> Current)
+// Now updated to follow roads using Mapbox Directions API
+async function drawTraveledRoute(shuttleId, startLoc, currentLoc) {
     const map = window.dashboardMap;
+    const sourceId = `traveled-route-source-${shuttleId}`;
+    const layerId = `traveled-route-layer-${shuttleId}`;
 
-    // Remove if exists
-    if (map.getLayer('route-line')) {
-        map.removeLayer('route-line');
-        map.removeSource('route-source');
+    if (!startLoc || !currentLoc) return;
+
+    // Check Cache to avoid redundant API calls (pk is in index.html)
+    const cacheKey = `${shuttleId}-${startLoc.join(',')}-${currentLoc.join(',')}`;
+    let coordinates = traveledRouteCache[shuttleId] ? traveledRouteCache[shuttleId].coordinates : null;
+    const lastPos = traveledRouteCache[shuttleId] ? traveledRouteCache[shuttleId].lastPos : null;
+
+    // Only fetch if coordinates are missing or if current position has changed significantly
+    const dist = lastPos ? Math.sqrt(Math.pow(currentLoc[0] - lastPos[0], 2) + Math.pow(currentLoc[1] - lastPos[1], 2)) : 1;
+
+    if (!coordinates || dist > 0.0001) { // ~10 meters change
+        const accessToken = 'pk.eyJ1IjoiYWxmcmFuY2lzYnA0IiwiYSI6ImNtZnRqaDU2dzBsbGIyanM4cHFhbDY1MjMifQ.-ZQAt1NphjZJLxYUeMkZ7g';
+        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${startLoc[0]},${startLoc[1]};${currentLoc[0]},${currentLoc[1]}?geometries=geojson&access_token=${accessToken}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.routes && data.routes.length > 0) {
+                coordinates = data.routes[0].geometry.coordinates;
+                traveledRouteCache[shuttleId] = { coordinates, lastPos: currentLoc };
+            }
+        } catch (e) {
+            console.error("Error fetching traveled route:", e);
+            coordinates = [startLoc, currentLoc]; // Fallback to straight line
+        }
     }
 
-    // Add Route Source
-    map.addSource('route-source', {
+    if (!coordinates) return;
+
+    // Remove if exists
+    if (map.getLayer(layerId)) map.removeLayer(layerId);
+    if (map.getSource(sourceId)) map.removeSource(sourceId);
+
+    map.addSource(sourceId, {
         'type': 'geojson',
         'data': {
             'type': 'Feature',
             'properties': {},
             'geometry': {
                 'type': 'LineString',
-                'coordinates': routeCoords
+                'coordinates': coordinates
             }
         }
     });
 
-    // Add Route Layer
     map.addLayer({
-        'id': 'route-line',
+        'id': layerId,
         'type': 'line',
-        'source': 'route-source',
+        'source': sourceId,
         'layout': {
             'line-join': 'round',
             'line-cap': 'round'
         },
         'paint': {
-            'line-color': '#003A6C', // Shuttle Blue
-            'line-width': 6,
-            'line-opacity': 0.8
+            'line-color': '#808080', // Gray
+            'line-width': 4,
+            'line-dasharray': [2, 2], // Dashed line to indicate past/simulation
+            'line-opacity': 0.7
         }
     });
+}
 
-    // Fit bounds - DISABLED to prevent overriding trackShuttle center
-    // const bounds = new mapboxgl.LngLatBounds();
-    // routeCoords.forEach(coord => bounds.extend(coord));
-    // bounds.extend(currentPos);
-    // map.fitBounds(bounds, { padding: 50 });
+async function simulateStartRide() {
+    const id = document.getElementById('sim-dest-shuttle-id').value; // Reuse ID input
+    const lat = document.getElementById('sim-dest-lat').value;
+    const lng = document.getElementById('sim-dest-lng').value;
+
+    if (!id || !lat || !lng) {
+        showToast("Please enter Shuttle ID, Lat, and Lng");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${SERVER_URL}/api/shuttles/${id}/start-ride`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ latitude: lat, longitude: lng })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            showToast("Ride Started! Start Point Set.");
+            fetchMapShuttles();
+        } else {
+            showToast("Error: " + (data.error || "Failed"));
+        }
+    } catch (e) {
+        console.error(e);
+        showToast("Network Error");
+    }
+}
+
+function simulateDriverDestination() {
+    // Just an alias for simulateDestinationUpdate but using the new inputs
+    const id = document.getElementById('sim-dest-shuttle-id').value;
+    const lat = document.getElementById('sim-dest-lat').value;
+    const lng = document.getElementById('sim-dest-lng').value;
+
+    // Inject values into the hidden/other inputs that simulateDestinationUpdate might use
+    // OR just copy the logic here. Let's copy/call logic.
+    // The previous simulateDriverDestination (if it existed) or we just use simulateLocationUpdate logic?
+    // Wait, we need a specific simulateDriverDestination function if it doesn't exist.
+    // I'll implement it here.
+
+    if (!id || !lat || !lng) {
+        showToast("Please enter Shuttle ID, Lat, and Lng");
+        return;
+    }
+
+    // Call API
+    fetch(`${SERVER_URL}/api/shuttles/${id}/destination`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ latitude: lat, longitude: lng })
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.message) {
+                showToast("Destination Set (End Ride Simulation)");
+                fetchMapShuttles();
+            } else {
+                showToast("Error: " + (data.error || "Failed"));
+            }
+        })
+        .catch(e => showToast("Network Error"));
 }
 
 async function simulateLocationUpdate() {
