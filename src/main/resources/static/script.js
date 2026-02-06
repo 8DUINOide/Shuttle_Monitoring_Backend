@@ -11,6 +11,8 @@ let driverCounter = 1;
 let bulkType = '';
 let allDrivers = [];
 let currentDashboardView = 'home';
+let currentChatContactId = null;
+let messagePollingInterval = null;
 
 // Pagination State
 const paginationState = {
@@ -83,6 +85,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Start Notification Polling
         fetchNotifications();
         setInterval(fetchNotifications, 30000); // Poll every 30s
+
+        // Start Message Polling
+        fetchUnreadMessageCount();
+        setInterval(fetchUnreadMessageCount, 10000); // Poll every 10s
     }
 });
 
@@ -348,6 +354,7 @@ function showTab(tabId) {
     if (tabId === 'registration') loadRegistration();
     if (tabId === 'checkin') loadCheckInManagement();
     if (tabId === 'ride-history') loadRideHistory();
+    if (tabId === 'messages') loadMessagesTab();
 
     // Fix map size when switching to live-map tab
     if (tabId === 'live-map' && window.dashboardMap) {
@@ -3753,4 +3760,177 @@ async function simulateCheckInScan(type) {
 function resetSimHeader() {
     const simHeader = document.querySelector('#checkin-hardware-simulator h4');
     if (simHeader) simHeader.innerHTML = '<i class="fa-solid fa-microchip"></i> Hardware Simulator';
+}
+
+// =================== MESSAGING ===================
+async function loadMessagesTab() {
+    await fetchContacts();
+    if (currentChatContactId) {
+        await loadChatHistory(currentChatContactId);
+    }
+
+    // Refresh chat history every 5 seconds while in messages tab
+    if (messagePollingInterval) clearInterval(messagePollingInterval);
+    messagePollingInterval = setInterval(() => {
+        if (currentDashboardView === 'messages' && currentChatContactId) {
+            loadChatHistory(currentChatContactId, true); // true for background refresh
+        }
+    }, 5000);
+}
+
+async function fetchContacts() {
+    if (!token) return;
+    try {
+        const response = await fetch(`${SERVER_URL}/api/messages/contacts`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const contacts = await response.json();
+            renderContacts(contacts);
+        }
+    } catch (e) {
+        console.error("Error fetching contacts:", e);
+    }
+}
+
+function renderContacts(contacts) {
+    const list = document.getElementById('contacts-list');
+    if (!list) return;
+
+    if (contacts.length === 0) {
+        list.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">No contacts available</div>';
+        return;
+    }
+
+    list.innerHTML = '';
+    contacts.forEach(contact => {
+        const item = document.createElement('div');
+        item.className = `contact-item ${currentChatContactId == contact.userId ? 'active' : ''}`;
+        item.onclick = () => selectContact(contact);
+
+        const initials = contact.username.substring(0, 2).toUpperCase();
+
+        item.innerHTML = `
+            <div class="contact-avatar">${initials}</div>
+            <div class="contact-info">
+                <span class="contact-name">${sanitizeHTML(contact.username)}</span>
+                <span class="contact-role">${contact.role}</span>
+            </div>
+        `;
+        list.appendChild(item);
+    });
+}
+
+function selectContact(contact) {
+    currentChatContactId = contact.userId;
+    document.getElementById('chat-with-name').textContent = `Chat with ${contact.username}`;
+
+    // Update active state in UI
+    document.querySelectorAll('.contact-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.querySelector('.contact-name').textContent === contact.username) {
+            item.classList.add('active');
+        }
+    });
+
+    loadChatHistory(contact.userId);
+}
+
+async function loadChatHistory(otherUserId, isBackground = false) {
+    if (!token) return;
+    try {
+        const response = await fetch(`${SERVER_URL}/api/messages/history/${otherUserId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const history = await response.json();
+            renderChatHistory(history, isBackground);
+        }
+    } catch (e) {
+        console.error("Error fetching chat history:", e);
+    }
+}
+
+function renderChatHistory(messages, isBackground) {
+    const container = document.getElementById('chat-history');
+    if (!container) return;
+
+    // If it's a background refresh and we have the same number of messages, don't re-render everything
+    if (isBackground && container.children.length === messages.length) return;
+
+    const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
+
+    container.innerHTML = '';
+    messages.forEach(msg => {
+        const bubble = document.createElement('div');
+        const isSentByMe = msg.sender.userId == currentUserId;
+        bubble.className = `message-bubble ${isSentByMe ? 'sent' : 'received'}`;
+
+        const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        bubble.innerHTML = `
+            <div class="message-content">${sanitizeHTML(msg.content)}</div>
+            <span class="message-time">${time}</span>
+        `;
+        container.appendChild(bubble);
+    });
+
+    if (wasAtBottom || !isBackground) {
+        container.scrollTop = container.scrollHeight;
+    }
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('message-input');
+    const content = input.value.trim();
+    if (!content || !currentChatContactId || !token) return;
+
+    try {
+        const response = await fetch(`${SERVER_URL}/api/messages/send`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                receiverId: currentChatContactId,
+                content: content
+            })
+        });
+
+        if (response.ok) {
+            input.value = '';
+            await loadChatHistory(currentChatContactId);
+        } else {
+            showToast("Failed to send message: " + (await response.text()));
+        }
+    } catch (e) {
+        console.error("Error sending message:", e);
+        showToast("Error sending message");
+    }
+}
+
+function handleMessageKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendChatMessage();
+    }
+}
+
+async function fetchUnreadMessageCount() {
+    if (!token) return;
+    try {
+        const response = await fetch(`${SERVER_URL}/api/messages/unread-count`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            const badge = document.getElementById('messages-badge');
+            if (badge) {
+                badge.textContent = data.count;
+                badge.style.display = data.count > 0 ? 'inline-block' : 'none';
+            }
+        }
+    } catch (e) {
+        console.error("Error fetching unread count:", e);
+    }
 }

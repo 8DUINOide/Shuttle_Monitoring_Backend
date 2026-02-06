@@ -210,6 +210,10 @@
                     <i class="fa-solid fa-bell"></i> Notifications
                     <span id="notification-badge" class="notification-badge">0</span>
                 </li>
+                <li onclick="showTab('messages')" style="position: relative;">
+                    <i class="fa-solid fa-message"></i> Messages
+                    <span id="messages-badge" class="notification-badge">0</span>
+                </li>
                 <li onclick="showTab('profile')"><i class="fa-solid fa-user"></i> Profile</li>
                 <li onclick="showLogoutConfirmModal()"><i class="fa-solid fa-sign-out-alt"></i> Logout</li>
             </ul>
@@ -508,6 +512,39 @@
                     </thead>
                     <tbody id="ride-history-table"></tbody>
                 </table>
+            </div>
+
+            <div id="messages" class="tab">
+                <header>
+                    <div class="title-container">
+                        <i class="fa-solid fa-message"></i>
+                        <h2>Messages</h2>
+                    </div>
+                    <p>Communicate with allowed contacts</p>
+                </header>
+                <div class="messaging-container">
+                    <div class="contacts-sidebar">
+                        <div class="contacts-header">
+                            <h3>Contacts</h3>
+                        </div>
+                        <div id="contacts-list" class="contacts-list">
+                            <!-- Contacts will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="chat-area">
+                        <div id="chat-header" class="chat-header">
+                            <h3 id="chat-with-name">Select a contact to start messaging</h3>
+                        </div>
+                        <div id="chat-history" class="chat-history">
+                            <!-- Chat messages will be loaded here -->
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" id="message-input" placeholder="Type a message..."
+                                onkeypress="handleMessageKeyPress(event)">
+                            <button onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div id="drivers" class="tab users-tab">
