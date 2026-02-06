@@ -204,6 +204,7 @@
                 <li onclick="showTab('shuttles')"><i class="fa-solid fa-bus"></i> Shuttles</li>
                 <li onclick="showTab('registration')"><i class="fa-solid fa-id-card"></i> Registration</li>
                 <li onclick="showTab('checkin')"><i class="fa-solid fa-clipboard-check"></i> Check-In</li>
+                <li onclick="showTab('ride-history')"><i class="fa-solid fa-clock-rotate-left"></i> Ride History</li>
 
                 <li onclick="showTab('notifications')" style="position: relative;">
                     <i class="fa-solid fa-bell"></i> Notifications
@@ -465,6 +466,47 @@
                         </tr>
                     </thead>
                     <tbody id="checkin-table"></tbody>
+                </table>
+            </div>
+
+            <div id="ride-history" class="tab users-tab">
+                <header>
+                    <div class="title-container">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <h2>Shuttle Ride History</h2>
+                    </div>
+                    <p>View historical records of completed shuttle rides</p>
+                </header>
+
+                <div class="table-header">
+                    <div class="table-title-section">
+                        <h3>History Log</h3>
+                        <p>Detailed list of all previous shuttle operations</p>
+                    </div>
+                    <div class="table-actions">
+                        <button class="add-btn" onclick="loadRideHistory()">
+                            <i class="fa-solid fa-arrows-rotate"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div class="search-container">
+                    <input id="searchRideHistory" type="text" placeholder="Search shuttle or driver..."
+                        oninput="filterRideHistory()">
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th><i class="fa-solid fa-hashtag"></i> ID</th>
+                            <th><i class="fa-solid fa-bus"></i> Shuttle</th>
+                            <th><i class="fa-solid fa-user-tie"></i> Driver</th>
+                            <th><i class="fa-solid fa-route"></i> Route</th>
+                            <th><i class="fa-solid fa-clock"></i> Start</th>
+                            <th><i class="fa-solid fa-flag-checkered"></i> End</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ride-history-table"></tbody>
                 </table>
             </div>
 

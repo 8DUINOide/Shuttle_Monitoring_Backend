@@ -347,6 +347,7 @@ function showTab(tabId) {
     if (tabId === 'notifications') filterNotifications();
     if (tabId === 'registration') loadRegistration();
     if (tabId === 'checkin') loadCheckInManagement();
+    if (tabId === 'ride-history') loadRideHistory();
 
     // Fix map size when switching to live-map tab
     if (tabId === 'live-map' && window.dashboardMap) {
@@ -614,6 +615,48 @@ async function loadCheckInManagement() {
     } catch (error) {
         console.error('Error loading checkin:', error);
         showToast('Error loading check-in data');
+    }
+}
+
+async function loadRideHistory() {
+    if (!token) return;
+    try {
+        const response = await fetch(`${SERVER_URL}/api/shuttles/history`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch ride history');
+
+        const history = await response.json();
+        const tbody = document.getElementById('ride-history-table');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+        if (history.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">No ride history found.</td></tr>';
+            return;
+        }
+
+        // Sort history by ID desc (newest first) if not already
+        history.sort((a, b) => b.rideId - a.rideId);
+
+        history.forEach(item => {
+            const tr = document.createElement('tr');
+            const startTime = item.startTime ? new Date(item.startTime).toLocaleString('en-PH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+            const endTime = item.endTime ? new Date(item.endTime).toLocaleString('en-PH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+
+            tr.innerHTML = `
+                <td><strong>#${item.rideId}</strong></td>
+                <td><i class="fa-solid fa-bus" style="color: #003A6C; margin-right: 5px;"></i> ${sanitizeHTML(item.shuttleName)}</td>
+                <td><i class="fa-solid fa-user" style="color: #003A6C; margin-right: 5px;"></i> ${sanitizeHTML(item.driverName)}</td>
+                <td><i class="fa-solid fa-map-location-dot" style="color: #003A6C; margin-right: 5px;"></i> ${sanitizeHTML(item.route)}</td>
+                <td><small><i class="fa-solid fa-calendar-day"></i> ${startTime}</small></td>
+                <td><small><i class="fa-solid fa-calendar-check"></i> ${endTime}</small></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error loading ride history:', error);
+        showToast('Error loading ride history');
     }
 }
 
@@ -3068,7 +3111,8 @@ async function simulateDriverDestination() {
     }
 
     try {
-        const response = await fetch(`${SERVER_URL}/api/shuttles/${id}/destination`, {
+        // Use the new end-ride endpoint to save history and reset shuttle status
+        const response = await fetch(`${SERVER_URL}/api/shuttles/${id}/end-ride`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -3079,7 +3123,7 @@ async function simulateDriverDestination() {
 
         const data = await response.json();
         if (response.ok) {
-            showToast("Destination Set!");
+            showToast("Ride Ended and History Saved!");
             fetchMapShuttles();
         } else {
             showToast("Error: " + (data.error || "Failed"));
@@ -3570,6 +3614,24 @@ function filterStudents() {
     });
 
     document.getElementById("no-students-message").style.display = visibleCount === 0 ? "block" : "none";
+}
+
+function filterRideHistory() {
+    const searchValue = document.getElementById("searchRideHistory").value.toLowerCase();
+    const rows = document.querySelectorAll("#ride-history-table tr");
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const rowText = row.textContent.toLowerCase();
+        if (rowText.includes(searchValue)) {
+            row.style.display = "";
+            visibleCount++;
+        } else {
+            row.style.display = "none";
+        }
+    });
+
+    // Note: We don't have a no-history-message div yet, but we could add one if needed.
 }
 
 async function loadShuttlesForSimulation() {

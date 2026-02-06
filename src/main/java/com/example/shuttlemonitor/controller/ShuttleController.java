@@ -4,9 +4,11 @@ import com.example.shuttlemonitor.Entity.Driver;
 import com.example.shuttlemonitor.Entity.Operator;
 import com.example.shuttlemonitor.Entity.Shuttle;
 import com.example.shuttlemonitor.Entity.Status;
+import com.example.shuttlemonitor.Entity.RideHistory;
 import com.example.shuttlemonitor.Repository.DriverRepository;
 import com.example.shuttlemonitor.Repository.OperatorRepository;
 import com.example.shuttlemonitor.Repository.ShuttleRepository;
+import com.example.shuttlemonitor.Repository.RideHistoryRepository;
 import com.example.shuttlemonitor.service.ShuttleService;
 import com.example.shuttlemonitor.service.UserService;
 import com.example.shuttlemonitor.service.ActivityLogService;
@@ -20,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +49,9 @@ public class ShuttleController {
 
     @Autowired
     private ActivityLogService activityLogService;
+
+    @Autowired
+    private RideHistoryRepository rideHistoryRepository;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -369,5 +375,58 @@ public class ShuttleController {
             errorResponse.put("error", "Latitude and Longitude are required");
             return ResponseEntity.badRequest().body(errorResponse);
         }
+    }
+
+    // New: End Ride Endpoint (Save to History)
+    @PostMapping("/{id}/end-ride")
+    public ResponseEntity<Map<String, Object>> endRide(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        Shuttle shuttle = shuttleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Shuttle not found"));
+
+        Double endLat = Double.parseDouble(request.getOrDefault("latitude", 0.0).toString());
+        Double endLng = Double.parseDouble(request.getOrDefault("longitude", 0.0).toString());
+
+        // Create Ride History Record
+        RideHistory history = new RideHistory();
+        history.setShuttleId(shuttle.getShuttleId());
+        history.setShuttleName(shuttle.getName());
+        
+        String driverName = "Unknown";
+        if (shuttle.getDriver() != null && shuttle.getDriver().getUser() != null) {
+            driverName = shuttle.getDriver().getUser().getUsername();
+        }
+        history.setDriverName(driverName);
+        
+        history.setRoute(shuttle.getRoute());
+        history.setStartTime(shuttle.getCreatedAt() != null ? shuttle.getCreatedAt() : LocalDateTime.now());
+        history.setEndTime(LocalDateTime.now());
+        history.setStartLatitude(shuttle.getStartLatitude());
+        history.setStartLongitude(shuttle.getStartLongitude());
+        history.setEndLatitude(endLat);
+        history.setEndLongitude(endLng);
+        
+        rideHistoryRepository.save(history);
+
+        // Reset shuttle session data
+        shuttle.setStatus(Status.INACTIVE);
+        shuttle.setStartLatitude(null);
+        shuttle.setStartLongitude(null);
+        shuttle.setDestinationLatitude(null);
+        shuttle.setDestinationLongitude(null);
+        shuttleRepository.save(shuttle);
+
+        activityLogService.log("Shuttle ended ride: " + shuttle.getName(), "INFO");
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Ride ended and saved to history");
+        response.put("rideId", history.getRideId());
+        return ResponseEntity.ok(response);
+    }
+
+    // New: Get Ride History Endpoint
+    @GetMapping("/history")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<RideHistory>> getRideHistory() {
+        return ResponseEntity.ok(rideHistoryRepository.findAll());
     }
 }
