@@ -2740,11 +2740,11 @@ function drawRoute(shuttleName, currentPos) {
         }
     });
 
-    // Fit bounds 
-    const bounds = new mapboxgl.LngLatBounds();
-    routeCoords.forEach(coord => bounds.extend(coord));
-    bounds.extend(currentPos);
-    map.fitBounds(bounds, { padding: 50 });
+    // Fit bounds - DISABLED to prevent overriding trackShuttle center
+    // const bounds = new mapboxgl.LngLatBounds();
+    // routeCoords.forEach(coord => bounds.extend(coord));
+    // bounds.extend(currentPos);
+    // map.fitBounds(bounds, { padding: 50 });
 }
 
 async function simulateLocationUpdate() {
