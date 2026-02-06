@@ -92,14 +92,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-function showToast(message) {
+function showToast(message, type = 'info') {
     const toast = document.createElement("div");
     toast.className = "toast";
     toast.textContent = message;
 
-    // Determine toast color based on message content
-    const isError = message.toLowerCase().includes("error") || message.toLowerCase().includes("failed");
-    toast.style.backgroundColor = isError ? "red" : "green";
+    // Determine toast color based on type or fallback to message content
+    let backgroundColor;
+    if (type === 'error') {
+        backgroundColor = "#f44336"; // Red
+    } else if (type === 'success') {
+        backgroundColor = "#4CAF50"; // Green
+    } else if (type === 'warning') {
+        backgroundColor = "#FF9800"; // Orange
+    } else {
+        // Fallback heuristic
+        const msgLower = message.toLowerCase();
+        const isError = msgLower.includes("error") ||
+            msgLower.includes("failed") ||
+            msgLower.includes("please") ||
+            msgLower.includes("invalid") ||
+            msgLower.includes("no student") ||
+            msgLower.includes("not assigned");
+        backgroundColor = isError ? "#f44336" : "#4CAF50"; // Default green if no keyword
+    }
+
+    // Force background to override any potential CSS gradients or images
+    toast.style.background = backgroundColor;
+    toast.style.setProperty('background-color', backgroundColor, 'important');
 
     document.body.appendChild(toast);
     setTimeout(() => {
@@ -2539,7 +2559,23 @@ let individualStudentETAs = {}; // New: Store individual ETAs for waypoints
 let traveledRouteCache = {}; // New: Cache coordinates for the gray route to avoid redundant API calls
 
 // Track Shuttle
+// Track Shuttle
 async function trackShuttle(id, lat, lng, isSilent = false) {
+    // Check for inactive status first
+    if (window.lastShuttleData) {
+        const shuttle = window.lastShuttleData.find(s => s.shuttleId == id);
+        if (shuttle && shuttle.status === 'INACTIVE') {
+            if (!isSilent) {
+                showToast("Error: Cannot track an inactive shuttle", "error");
+            }
+            // Stop tracking this inactive shuttle
+            if (localStorage.getItem('lastTrackedShuttleId') == id) {
+                localStorage.removeItem('lastTrackedShuttleId');
+            }
+            return;
+        }
+    }
+
     if (window.dashboardMap) {
         window.dashboardMap.flyTo({ center: [lng, lat], zoom: 14 });
 
@@ -2927,7 +2963,7 @@ async function simulateStartRide() {
     const lng = document.getElementById('sim-dest-lng').value;
 
     if (!id || !lat || !lng) {
-        showToast("Please enter Shuttle ID, Lat, and Lng");
+        showToast("Please enter Shuttle ID, Lat, and Lng", "error");
         return;
     }
 
@@ -2967,7 +3003,7 @@ function simulateDriverDestination() {
     // I'll implement it here.
 
     if (!id || !lat || !lng) {
-        showToast("Please enter Shuttle ID, Lat, and Lng");
+        showToast("Please enter Shuttle ID, Lat, and Lng", "error");
         return;
     }
 
@@ -2998,7 +3034,7 @@ async function simulateLocationUpdate() {
     const lng = document.getElementById('sim-lng').value;
 
     if (!id || !lat || !lng) {
-        showToast("Please enter Student ID, Latitude, and Longitude");
+        showToast("Please enter Student ID, Latitude, and Longitude", "error");
         return;
     }
 
@@ -3088,7 +3124,7 @@ async function simulateStudentLocation() {
     const lng = document.getElementById('sim-stud-lng').value;
 
     if (!id || !lat || !lng) {
-        showToast("Please enter Student ID, Latitude, and Longitude");
+        showToast("Please enter Student ID, Latitude, and Longitude", "error");
         return;
     }
 
@@ -3704,7 +3740,7 @@ let pendingVerification = null; // Store pending check-in context
 async function simulateCheckInScan(type) {
     const shuttleId = document.getElementById('sim-shuttle-select').value;
     if (!shuttleId) {
-        showToast("Please select a shuttle context first!");
+        showToast("Please select a shuttle context first!", "error");
         return;
     }
 
@@ -3716,7 +3752,7 @@ async function simulateCheckInScan(type) {
         const students = data.assignedStudentLocations || [];
 
         if (students.length === 0) {
-            showToast("No students assigned to this shuttle to simulate!");
+            showToast("No students assigned to this shuttle to simulate!", "error");
             return;
         }
 
@@ -3729,7 +3765,7 @@ async function simulateCheckInScan(type) {
             const fullStudent = await studRes.json();
 
             if (!fullStudent.rfidTag) {
-                showToast(`Student ${student.name} has no RFID tag!`);
+                showToast(`Student ${student.name} has no RFID tag!`, "error");
                 return;
             }
 
@@ -3748,12 +3784,12 @@ async function simulateCheckInScan(type) {
 
         } else if (type === 'fingerprint') {
             if (!pendingVerification) {
-                showToast("Please Scan RFID first!");
+                showToast("Please Scan RFID first!", "error");
                 return;
             }
 
             if (!pendingVerification.fingerprint) {
-                showToast(`Student ${pendingVerification.name} has no Fingerprint registered!`);
+                showToast(`Student ${pendingVerification.name} has no Fingerprint registered!`, "error");
                 pendingVerification = null;
                 resetSimHeader();
                 return;
@@ -3781,14 +3817,14 @@ async function simulateCheckInScan(type) {
                 pendingVerification = null;
                 resetSimHeader();
             } else {
-                showToast("Scan Failed: " + (scanResult.error || "Unknown"));
+                showToast("Scan Failed: " + (scanResult.error || "Unknown"), "error");
                 pendingVerification = null;
                 resetSimHeader();
             }
         }
 
     } catch (e) {
-        showToast("Simulation Error: " + e.message);
+        showToast("Simulation Error: " + e.message, "error");
         pendingVerification = null;
         resetSimHeader();
     }
@@ -3939,11 +3975,11 @@ async function sendChatMessage() {
             input.value = '';
             await loadChatHistory(currentChatContactId);
         } else {
-            showToast("Failed to send message: " + (await response.text()));
+            showToast("Failed to send message: " + (await response.text()), "error");
         }
     } catch (e) {
         console.error("Error sending message:", e);
-        showToast("Error sending message");
+        showToast("Error sending message", "error");
     }
 }
 
