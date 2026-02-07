@@ -93,6 +93,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function showToast(message, type = 'info') {
+    // Remove any existing toasts to prevent stacking
+    const existingToasts = document.querySelectorAll('.toast');
+    existingToasts.forEach(t => t.remove());
+
     const toast = document.createElement("div");
     toast.className = "toast";
     toast.textContent = message;

@@ -1133,20 +1133,24 @@ tbody tr:hover {
 }
 
 /* === Toast Notification === */
-#toast {
+.toast {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: linear-gradient(135deg, #008000, #2a6f2a);
-    /* Unchanged: Green for toast */
+    /* Background is set by JS */
     color: #fff;
     padding: 1rem 1.5rem;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    display: none;
-    animation: fadeInOut 4s forwards;
+    /* Display/Animation handled by JS classes */
     z-index: 3000;
     font-size: 1rem;
+    opacity: 0;
+    /* Starte hidden for fade in */
+}
+
+.toast.fadeInOut {
+    animation: fadeInOut 3s forwards;
 }
 
 @keyframes fadeInOut {
