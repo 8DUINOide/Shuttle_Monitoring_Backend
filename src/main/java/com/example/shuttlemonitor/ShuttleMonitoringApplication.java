@@ -9,6 +9,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import jakarta.annotation.PostConstruct;
+import java.util.TimeZone;
 
 @SpringBootApplication
 public class ShuttleMonitoringApplication {
@@ -21,6 +23,13 @@ public class ShuttleMonitoringApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ShuttleMonitoringApplication.class, args);
+	}
+
+	@PostConstruct
+	public void init() {
+		// Setting Spring Boot SetTimeZone
+		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Manila"));
+		System.out.println("JVM Default TimeZone set to Asia/Manila");
 	}
 
 	@Bean

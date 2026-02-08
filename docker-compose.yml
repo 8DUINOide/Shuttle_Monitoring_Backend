@@ -13,6 +13,7 @@ services:
       - MAIL_PASSWORD=ausw wjdu olkh fszr
       - JWT_SECRET=my-very-secure-secret-key-1234567890
       - MAPBOX_ACCESS_TOKEN=pk.eyJ1IjoiYWxmcmFuY2lzYnA0IiwiYSI6ImNtZnRqaDU2dzBsbGIyanM4cHFhbDY1MjMifQ.-ZQAt1NphjZJLxYUeMkZ7g
+      - TZ=Asia/Manila
     depends_on:
       db:
         condition: service_healthy
@@ -26,6 +27,7 @@ services:
       - POSTGRES_DB=shuttle_monitor
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=100403
+      - TZ=Asia/Manila
     ports:
       - "5432:5432"
     volumes:
