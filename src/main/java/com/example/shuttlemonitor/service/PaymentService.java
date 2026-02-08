@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 @Service
@@ -25,9 +27,9 @@ public class PaymentService {
     @Autowired
     private OperatorRepository operatorRepository;
 
-    public List<Payment> getAllPayments() {
+    public Page<Payment> getAllPayments(Pageable pageable) {
         checkOverduePayments();
-        return paymentRepository.findAll();
+        return paymentRepository.findAll(pageable);
     }
 
     public Payment createPayment(Long studentId, Long operatorId, Double amount, LocalDateTime dueDate, String paymentType, String billingMonth, String paymentPlan) {

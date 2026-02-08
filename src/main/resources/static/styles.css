@@ -2253,6 +2253,7 @@ tbody tr:hover {
 .chat-input-area button:hover {
     background: #0066CC;
 }
+
 /* === Payment Tab Styles === */
 .bill-card {
     background: #fff;
@@ -2329,6 +2330,7 @@ tbody tr:hover {
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -2346,3 +2348,86 @@ tbody tr:hover {
     display: block;
 }
 
+/* === Payment Tab Specific Styles === */
+#payment .search-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 40px;
+    margin-bottom: 1rem;
+}
+
+#payment .search-container input {
+    flex: 1;
+    width: 100%;
+    min-width: 300px;
+    max-width: 1200px;
+}
+
+#payment .search-container select {
+    padding: 10px;
+    border: 1px solid #003A6C;
+    border-radius: 6px;
+    background: #fff;
+    color: #003A6C;
+    font-size: 0.9rem;
+}
+
+/* === Payment Table Column Widths === */
+#payment-admin-view table th:nth-child(1),
+#payment-admin-view table td:nth-child(1) {
+    /* Student */
+    width: 15%;
+}
+
+#payment-admin-view table th:nth-child(2),
+#payment-admin-view table td:nth-child(2) {
+    /* Operator */
+    width: 15%;
+}
+
+#payment-admin-view table th:nth-child(3),
+#payment-admin-view table td:nth-child(3) {
+    /* Amount */
+    width: 10%;
+}
+
+#payment-admin-view table th:nth-child(4),
+#payment-admin-view table td:nth-child(4) {
+    /* Month */
+    width: 10%;
+}
+
+#payment-admin-view table th:nth-child(5),
+#payment-admin-view table td:nth-child(5) {
+    /* Plan */
+    width: 10%;
+}
+
+#payment-admin-view table th:nth-child(6),
+#payment-admin-view table td:nth-child(6) {
+    /* Due Date */
+    width: 10%;
+}
+
+#payment-admin-view table th:nth-child(7),
+#payment-admin-view table td:nth-child(7) {
+    /* Status */
+    width: 10%;
+}
+
+#payment-admin-view table th:nth-child(8),
+#payment-admin-view table td:nth-child(8) {
+    /* Method */
+    width: 8%;
+}
+
+#payment-admin-view table th:nth-child(9),
+#payment-admin-view table td:nth-child(9) {
+    /* Paid Date */
+    width: 12%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.85rem;
+}

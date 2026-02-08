@@ -19,7 +19,8 @@ const paginationState = {
     shuttles: { page: 0, size: 10, totalPages: 0 },
     students: { page: 0, size: 10, totalPages: 0 },
     drivers: { page: 0, size: 10, totalPages: 0 },
-    registration: { page: 0, size: 10, totalPages: 0 }
+    registration: { page: 0, size: 10, totalPages: 0 },
+    payments: { page: 0, size: 10, totalPages: 0 }
 };
 
 // =================== PAGINATION CONTROLS ===================
@@ -53,6 +54,7 @@ async function changePage(entityType, newPage) {
     else if (entityType === 'students') await loadStudents();
     else if (entityType === 'drivers') await loadDrivers();
     else if (entityType === 'registration') await loadRegistration();
+    else if (entityType === 'payments') await loadAdminPayments();
 }
 
 const studentStatuses = ['Checked in', 'Checked out', 'Not boarded'];
@@ -1320,6 +1322,32 @@ function clearAllNotifications() {
     document.getElementById("no-notifications-message").style.display = "block";
     showToast("All notifications cleared");
     updateDashboard(); // Update recent activity after change
+}
+
+function filterPayments() {
+    const searchValue = document.getElementById("searchPayments").value.toLowerCase();
+    const statusFilter = document.getElementById("statusFilterPayments").value.toLowerCase();
+    const rows = document.querySelectorAll("#payment-admin-table tr");
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const student = row.querySelector("td:nth-child(1)")?.textContent.toLowerCase() || "";
+        const operator = row.querySelector("td:nth-child(2)")?.textContent.toLowerCase() || "";
+        const status = row.querySelector("td:nth-child(7) span")?.textContent.toLowerCase() || "";
+
+        const matchesSearch = student.includes(searchValue) || operator.includes(searchValue);
+        const matchesStatus = statusFilter === "all" || status === statusFilter;
+
+        if (matchesSearch && matchesStatus) {
+            row.style.display = "";
+            visibleCount++;
+        } else {
+            row.style.display = "none";
+        }
+    });
+
+    const noMsg = document.getElementById("no-payments-message");
+    if (noMsg) noMsg.style.display = visibleCount === 0 ? "block" : "none";
 }
 
 // =================== SHUTTLE MODAL FUNCTIONS ===================
@@ -4041,17 +4069,30 @@ function switchPaymentRole(role) {
 async function loadAdminPayments() {
     if (!token) return;
     try {
-        const res = await fetch(`${SERVER_URL}/api/payments`, {
+        const { page, size } = paginationState.payments;
+        const res = await fetch(`${SERVER_URL}/api/payments?page=${page}&size=${size}&sortBy=paymentId&sortOrder=desc`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        const payments = await res.json();
+        const data = await res.json();
+        const payments = data.content;
+
+        // Update pagination
+        paginationState.payments.totalPages = data.totalPages;
+        paginationState.payments.page = data.number;
+
         const tbody = document.getElementById('payment-admin-table');
         tbody.innerHTML = '';
+
+        // If empty
+        if (payments.length === 0) {
+            document.getElementById('no-payments-message').style.display = 'block';
+        } else {
+            document.getElementById('no-payments-message').style.display = 'none';
+        }
 
         payments.forEach(p => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>#${p.paymentId}</td>
                 <td>${sanitizeHTML(p.student?.fullName || 'N/A')}</td>
                 <td>${sanitizeHTML(p.operator?.fullName || 'N/A')}</td>
                 <td>₱${p.amount.toLocaleString()}</td>
@@ -4064,8 +4105,12 @@ async function loadAdminPayments() {
             `;
             tbody.appendChild(tr);
         });
+
+        renderPagination('payments', 'payment-admin-view');
+
     } catch (e) {
         console.error("Error loading admin payments:", e);
+        showToast("Error loading payments data");
     }
 }
 

@@ -994,10 +994,21 @@
                             <p>Global list of all payments and status</p>
                         </div>
                     </div>
+                    <div class="search-container">
+                        <input id="searchPayments" type="text" placeholder="Search student or operator..."
+                            oninput="filterPayments()">
+                        <select id="statusFilterPayments" onchange="filterPayments()">
+                            <option value="all">All Status</option>
+                            <option value="paid">Paid</option>
+                            <option value="pending">Pending</option>
+                            <option value="overdue">Overdue</option>
+                        </select>
+                    </div>
+                    <p id="no-payments-message" style="display:none; color: red; margin-top: 10px;">No payments found.
+                    </p>
                     <table>
                         <thead>
                             <tr>
-                                <th>ID</th>
                                 <th>Student</th>
                                 <th>Operator</th>
                                 <th>Amount</th>
