@@ -379,6 +379,7 @@ function showTab(tabId) {
     if (tabId === 'checkin') loadCheckInManagement();
     if (tabId === 'ride-history') loadRideHistory();
     if (tabId === 'messages') loadMessagesTab();
+    if (tabId === 'payment') loadPaymentsTab();
 
     // Fix map size when switching to live-map tab
     if (tabId === 'live-map' && window.dashboardMap) {
@@ -4010,4 +4011,428 @@ async function fetchUnreadMessageCount() {
     } catch (e) {
         console.error("Error fetching unread count:", e);
     }
+}
+
+// =================== PAYMENT SYSTEM ===================
+let currentPaymentRole = 'ADMIN';
+let currentGcashPaymentId = null;
+
+async function loadPaymentsTab() {
+    console.log("Loading Payments Tab...");
+    switchPaymentRole(currentPaymentRole);
+}
+
+function switchPaymentRole(role) {
+    currentPaymentRole = role;
+    document.querySelectorAll('.payment-view').forEach(v => v.classList.remove('active'));
+
+    if (role === 'ADMIN') {
+        document.getElementById('payment-admin-view').classList.add('active');
+        loadAdminPayments();
+    } else if (role === 'OPERATOR') {
+        document.getElementById('payment-operator-view').classList.add('active');
+        loadOperatorPayments();
+    } else if (role === 'PARENT') {
+        document.getElementById('payment-parent-view').classList.add('active');
+        loadParentSimulatorData();
+    }
+}
+
+async function loadAdminPayments() {
+    if (!token) return;
+    try {
+        const res = await fetch(`${SERVER_URL}/api/payments`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const payments = await res.json();
+        const tbody = document.getElementById('payment-admin-table');
+        tbody.innerHTML = '';
+
+        payments.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>#${p.paymentId}</td>
+                <td>${sanitizeHTML(p.student?.fullName || 'N/A')}</td>
+                <td>${sanitizeHTML(p.operator?.fullName || 'N/A')}</td>
+                <td>₱${p.amount.toLocaleString()}</td>
+                <td>${p.billingMonth || '-'}</td>
+                <td>${p.paymentPlan || '-'}</td>
+                <td>${p.dueDate ? new Date(p.dueDate).toLocaleDateString() : 'N/A'}</td>
+                <td><span class="status-badge ${(p.paymentStatus || 'PENDING').toLowerCase()}">${p.paymentStatus || 'PENDING'}</span></td>
+                <td>${p.paymentMethod || '-'}</td>
+                <td>${p.transactionDate ? new Date(p.transactionDate).toLocaleString() : '-'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) {
+        console.error("Error loading admin payments:", e);
+    }
+}
+
+async function loadOperatorPayments() {
+    if (!token) return;
+    try {
+        // Set default billing month
+        const now = new Date();
+        const monthNames = ["January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ];
+        const defaultMonth = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+        document.getElementById('pay-billing-month').value = defaultMonth;
+
+        // Load All Operators
+        const opRes = await fetch(`${SERVER_URL}/api/operators/all?size=100`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const opData = await opRes.json();
+        const operators = opData.content;
+        const opSelect = document.getElementById('pay-operator-id');
+        opSelect.innerHTML = '<option value="">Select Operator</option>';
+        operators.forEach(op => {
+            const opt = document.createElement('option');
+            opt.value = op.operatorId;
+            opt.textContent = op.fullName;
+            opSelect.appendChild(opt);
+        });
+
+        // Initialize student select
+        const studSelect = document.getElementById('pay-student-id');
+        studSelect.innerHTML = '<option value="">Select Operator First</option>';
+
+        // Default to first operator if exists
+        if (operators.length > 0) {
+            opSelect.value = operators[0].operatorId;
+            onPaymentOperatorChange();
+        }
+
+    } catch (e) {
+        console.error("Error loading operator simulator:", e);
+    }
+}
+
+async function onPaymentOperatorChange() {
+    const operatorId = document.getElementById('pay-operator-id').value;
+    if (!operatorId) return;
+
+    try {
+        // Load Students for this Operator
+        const studRes = await fetch(`${SERVER_URL}/api/students/operator/${operatorId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const students = await studRes.json();
+        const studSelect = document.getElementById('pay-student-id');
+        studSelect.innerHTML = '<option value="">Select Student</option>';
+        students.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.studentId;
+            opt.textContent = `${s.fullName} (${s.grade})`;
+            studSelect.appendChild(opt);
+        });
+
+        // Load payments sent by this operator
+        const pRes = await fetch(`${SERVER_URL}/api/payments/operator/${operatorId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const payments = await pRes.json();
+        const tbody = document.getElementById('payment-operator-table');
+        tbody.innerHTML = '';
+        payments.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${sanitizeHTML(p.student?.fullName || 'N/A')}</td>
+                <td>₱${p.amount.toLocaleString()}</td>
+                <td>${p.billingMonth || '-'}</td>
+                <td>${p.paymentPlan || '-'}</td>
+                <td>${p.dueDate ? new Date(p.dueDate).toLocaleDateString() : 'N/A'}</td>
+                <td><span class="status-badge ${(p.paymentStatus || 'PENDING').toLowerCase()}">${p.paymentStatus || 'PENDING'}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) {
+        console.error("Error on operator change:", e);
+    }
+}
+
+async function operatorCreatePayment() {
+    const operatorId = document.getElementById('pay-operator-id').value;
+    const studentId = document.getElementById('pay-student-id').value;
+    const amount = document.getElementById('pay-amount').value;
+    const type = document.getElementById('pay-type').value;
+    const plan = document.getElementById('pay-plan').value;
+    const billingMonth = document.getElementById('pay-billing-month').value;
+    const dueDate = document.getElementById('pay-due-date').value;
+
+    if (!operatorId || !studentId || !amount || !dueDate || !billingMonth || !plan) {
+        showToast("Please fill all fields", "error");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${SERVER_URL}/api/payments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                studentId: parseInt(studentId),
+                operatorId: parseInt(operatorId),
+                amount: parseFloat(amount),
+                dueDate: dueDate + "T23:59:59",
+                paymentType: type,
+                billingMonth: billingMonth,
+                paymentPlan: plan
+            })
+        });
+
+        if (res.ok) {
+            showToast("Payment request created successfully", "success");
+            loadOperatorPayments();
+        } else {
+            const errorData = await res.json().catch(() => ({}));
+            const msg = errorData.message || "Failed to create payment";
+            showToast(msg, "error");
+        }
+    } catch (e) {
+        showToast("Error creating payment: " + e.message, "error");
+    }
+}
+
+async function loadParentSimulatorData() {
+    if (!token) return;
+    try {
+        const res = await fetch(`${SERVER_URL}/api/parents/all?size=100`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const select = document.getElementById('pay-parent-id');
+        select.innerHTML = '<option value="">Select Parent</option>';
+        data.content.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.parentId;
+            opt.textContent = p.fullName;
+            select.appendChild(opt);
+        });
+        if (data.content.length > 0) {
+            select.value = data.content[0].parentId;
+            onPaymentParentChange();
+        }
+    } catch (e) {
+        console.error("Error loading parent simulator data:", e);
+    }
+}
+
+async function onPaymentParentChange() {
+    const parentId = document.getElementById('pay-parent-id').value;
+    if (!parentId) {
+        document.getElementById('pay-parent-student-id').innerHTML = '<option value="">Select Parent First</option>';
+        return;
+    }
+
+    try {
+        const res = await fetch(`${SERVER_URL}/api/students/parent/${parentId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const students = await res.json();
+        const select = document.getElementById('pay-parent-student-id');
+        select.innerHTML = '<option value="">Select Child</option>';
+        students.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.studentId;
+            opt.textContent = s.fullName;
+            select.appendChild(opt);
+        });
+
+        if (students.length > 0) {
+            select.value = students[0].studentId;
+            loadParentPayments();
+        } else {
+            document.getElementById('parent-bills-list').innerHTML = '<p style="color: #888; text-align: center; width: 100%;">No children found for this parent.</p>';
+        }
+    } catch (e) {
+        console.error("Error on parent change:", e);
+    }
+}
+
+async function loadParentPayments() {
+    const parentId = document.getElementById('pay-parent-id').value;
+    const studentId = document.getElementById('pay-parent-student-id').value;
+    if (!parentId || !studentId) return;
+
+    try {
+        const res = await fetch(`${SERVER_URL}/api/payments/parent/${parentId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const payments = await res.json();
+        const container = document.getElementById('parent-bills-list');
+        container.innerHTML = '';
+
+        const studentPayments = payments.filter(p => p.student.studentId == studentId);
+
+        if (studentPayments.length === 0) {
+            container.innerHTML = '<p style="color: #888; text-align: center; width: 100%;">No bills found for this child.</p>';
+            return;
+        }
+
+        studentPayments.forEach(p => {
+            const card = document.createElement('div');
+            card.className = `bill-card ${(p.paymentStatus || 'PENDING').toLowerCase()}`;
+
+            const actionBtn = (p.paymentStatus || 'PENDING') !== 'PAID'
+                ? `<button class="pay-now-btn" onclick="openGcashModal(${p.paymentId}, ${p.amount}, '${(p.operator?.fullName || 'Transit Agency').replace(/'/g, "\\'")}', '${(p.parent?.user?.email || '').replace(/'/g, "\\'")}', '${(p.parent?.contactPhone || '').replace(/'/g, "\\'")}')"><i class="fa-solid fa-wallet"></i> Pay with GCash ₱${p.amount.toLocaleString()}</button>`
+                : `<div style="text-align: center; color: #5cb85c; margin-top: 10px; font-weight: bold; background: #f0f9eb; padding: 10px; border-radius: 8px;">
+                     <i class="fa-solid fa-circle-check"></i> Payment Success
+                   </div>`;
+
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                    <div>
+                        <h3 style="margin: 0; color: #003A6C;">${p.paymentType} BILL</h3>
+                        <p style="margin: 2px 0 0 0; font-size: 0.85rem; color: #666;">${p.billingMonth || ''}</p>
+                    </div>
+                    <span class="status-badge ${(p.paymentStatus || 'PENDING').toLowerCase()}">${p.paymentStatus || 'PENDING'}</span>
+                </div>
+                <div class="amount" style="font-size: 1.8rem; font-weight: bold; color: #333; margin: 10px 0;">₱${p.amount.toLocaleString()}</div>
+                <div class="details" style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">
+                    <div style="margin-bottom: 4px;"><i class="fa-solid fa-calendar-day"></i> Due: ${new Date(p.dueDate).toLocaleDateString()}</div>
+                    <div style="margin-bottom: 4px;"><i class="fa-solid fa-route"></i> Plan: ${p.paymentPlan || 'Round Trip'}</div>
+                    <div><i class="fa-solid fa-id-badge"></i> Operator: ${p.operator?.fullName || 'N/A'}</div>
+                </div>
+                ${actionBtn}
+            `;
+            container.appendChild(card);
+        });
+    } catch (e) {
+        console.error("Error loading parent payments:", e);
+    }
+}
+
+let currentGcashParentEmail = '';
+let currentGcashParentPhone = '';
+
+function openGcashModal(paymentId, amount, operatorName, parentEmail, parentPhone) {
+    currentGcashPaymentId = paymentId;
+    currentGcashParentEmail = parentEmail || 'parent@gmail.com';
+    currentGcashParentPhone = parentPhone || '09123456789';
+
+    document.getElementById('gcash-merchant').textContent = operatorName || 'Shuttle Operator';
+    document.getElementById('gcash-amount').textContent = `₱${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+    document.getElementById('gcash-pay-btn-amount').textContent = amount.toLocaleString(undefined, { minimumFractionDigits: 2 });
+    document.getElementById('gcash-modal').style.display = 'flex';
+}
+
+function closeGcashModal() {
+    document.getElementById('gcash-modal').style.display = 'none';
+    currentGcashPaymentId = null;
+
+    // Reset views for next time
+    setTimeout(() => {
+        document.getElementById('gcash-pay-view').style.display = 'block';
+        document.getElementById('gcash-receipt-view').style.display = 'none';
+        const btn = document.getElementById('gcash-pay-btn');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `PAY ₱<span id="gcash-pay-btn-amount">0.00</span>`;
+        }
+    }, 300);
+}
+
+async function confirmGcashPayment() {
+    if (!currentGcashPaymentId) return;
+
+    const btn = document.getElementById('gcash-pay-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+
+    try {
+        const res = await fetch(`${SERVER_URL}/api/payments/${currentGcashPaymentId}/pay`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+            // Success! Show Receipt
+            showGcashReceipt();
+            if (typeof loadParentPayments === 'function') loadParentPayments();
+            if (typeof loadAdminPayments === 'function') loadAdminPayments();
+        } else {
+            showToast('Payment failed. Please try again.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    } catch (err) {
+        console.error('GCash Payment Error:', err);
+        showToast('Connection error.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+function showGcashReceipt() {
+    const payView = document.getElementById('gcash-pay-view');
+    const receiptView = document.getElementById('gcash-receipt-view');
+
+    // Get current data from modal
+    const merchant = document.getElementById('gcash-merchant').textContent;
+    const amountStr = document.getElementById('gcash-amount').textContent.replace('₱', '');
+
+    // Populate Receipt
+    document.getElementById('receipt-merchant-name').textContent = merchant;
+    document.getElementById('receipt-merchant-initial').textContent = merchant.charAt(0).toUpperCase();
+    document.getElementById('receipt-amount-display').textContent = amountStr;
+    document.getElementById('receipt-details-amount').textContent = amountStr;
+
+    // Mask logic for actual phone number
+    let maskedPhone = '09** *** 0000';
+    if (currentGcashParentPhone && currentGcashParentPhone.length >= 4) {
+        const lastFour = currentGcashParentPhone.slice(-4);
+        const prefix = currentGcashParentPhone.startsWith('09') ? '09' : currentGcashParentPhone.slice(0, 2);
+        maskedPhone = `${prefix}** *** ${lastFour}`;
+    }
+    document.getElementById('receipt-account-number').textContent = maskedPhone;
+    document.getElementById('receipt-email').textContent = currentGcashParentEmail;
+
+    // Generate Random Ref No
+    const refNo = Math.floor(1000 + Math.random() * 9000) + ' ' +
+        Math.floor(1000 + Math.random() * 9000) + ' ' +
+        Math.floor(1 * Math.random() * 10);
+    document.getElementById('receipt-ref-no').textContent = refNo;
+
+    // Set current date/time
+    const now = new Date();
+    const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+    document.getElementById('receipt-date-time').textContent = now.toLocaleString('en-US', options);
+
+    // Swap Views
+    payView.style.display = 'none';
+    receiptView.style.display = 'block';
+}
+
+function downloadGcashReceipt() {
+    const receiptElement = document.getElementById('gcash-receipt-view');
+    const downloadBtn = receiptElement.querySelector('.fa-download').parentNode;
+
+    // Temporarily hide the download button for the screenshot
+    downloadBtn.style.display = 'none';
+
+    html2canvas(receiptElement, {
+        scale: 2, // Higher resolution
+        backgroundColor: null, // Transparent background if needed, or use '#f0f0f0'
+        logging: false,
+        useCORS: true
+    }).then(canvas => {
+        // Show button again
+        downloadBtn.style.display = 'block';
+
+        // Trigger Download
+        const link = document.createElement('a');
+        link.download = `GCash-Receipt-${document.getElementById('receipt-ref-no').textContent.replace(/\s/g, '')}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }).catch(err => {
+        console.error("Receipt download failed:", err);
+        downloadBtn.style.display = 'block'; // Ensure button comes back on error
+        showToast("Failed to download receipt", "error");
+    });
 }

@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="styles.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css" rel="stylesheet">
     <script
@@ -214,6 +215,7 @@
                     <i class="fa-solid fa-message"></i> Messages
                     <span id="messages-badge" class="notification-badge">0</span>
                 </li>
+                <li onclick="showTab('payment')"><i class="fa-solid fa-file-invoice-dollar"></i> Payments</li>
                 <li onclick="showTab('profile')"><i class="fa-solid fa-user"></i> Profile</li>
                 <li onclick="showLogoutConfirmModal()"><i class="fa-solid fa-sign-out-alt"></i> Logout</li>
             </ul>
@@ -962,6 +964,157 @@
                 </div>
             </div>
 
+            <div id="payment" class="tab" style="position: relative;">
+                <header>
+                    <div class="title-container">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        <h2>Payment Management</h2>
+                    </div>
+                    <p>Bill parents and monitor transactions</p>
+                </header>
+
+                <!-- Role Simulator Widget -->
+                <div id="payment-role-simulator"
+                    style="position: absolute; top: 20px; right: 20px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 3000; border: 2px solid #003A6C;">
+                    <h4 style="margin: 0 0 10px 0; color: #003A6C; font-size: 1rem;"><i class="fa-solid fa-mask"></i>
+                        Role Simulator</h4>
+                    <select id="sim-payment-role" onchange="switchPaymentRole(this.value)"
+                        style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-weight: bold;">
+                        <option value="ADMIN">Admin View</option>
+                        <option value="OPERATOR">Operator Simulator</option>
+                        <option value="PARENT">Parent Simulator</option>
+                    </select>
+                </div>
+
+                <!-- Admin Overview -->
+                <div id="payment-admin-view" class="payment-view active">
+                    <div class="table-header">
+                        <div class="table-title-section">
+                            <h3>Transaction History</h3>
+                            <p>Global list of all payments and status</p>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Student</th>
+                                <th>Operator</th>
+                                <th>Amount</th>
+                                <th>Month</th>
+                                <th>Plan</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Method</th>
+                                <th>Paid Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payment-admin-table"></tbody>
+                    </table>
+                </div>
+
+                <!-- Operator Simulator -->
+                <div id="payment-operator-view" class="payment-view">
+                    <div class="table-header">
+                        <div class="table-title-section">
+                            <h3>Operator Billing</h3>
+                            <p>Create new payment requests for students</p>
+                        </div>
+                    </div>
+                    <div class="simulation-card" style="max-width: 500px; margin-bottom: 2rem;">
+                        <h4><i class="fa-solid fa-plus"></i> Create New Payable</h4>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label>Select Operator</label>
+                            <select id="pay-operator-id" onchange="onPaymentOperatorChange()"></select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label>Select Student</label>
+                            <select id="pay-student-id"></select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Amount (PHP)</label>
+                                <input type="number" id="pay-amount" value="3500">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Type</label>
+                                    <select id="pay-type">
+                                        <option value="MONTHLY">Monthly</option>
+                                        <option value="DAILY">Daily</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Plan</label>
+                                    <select id="pay-plan">
+                                        <option value="Round Trip">Round Trip</option>
+                                        <option value="One Way">One Way</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label>Billing Month</label>
+                            <input type="text" id="pay-billing-month" placeholder="e.g., February 2026">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label>Due Date</label>
+                            <input type="date" id="pay-due-date">
+                        </div>
+                        <button class="add-btn" onclick="operatorCreatePayment()"
+                            style="margin-top: 1.5rem; width: 100%; justify-content: center;">
+                            Create Payment Request
+                        </button>
+                    </div>
+                    <h4>Sent Payments</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Amount</th>
+                                <th>Month</th>
+                                <th>Plan</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payment-operator-table"></tbody>
+                    </table>
+                </div>
+
+                <!-- Parent Simulator -->
+                <div id="payment-parent-view" class="payment-view">
+                    <div class="table-header">
+                        <div class="table-title-section">
+                            <h3>My Bills</h3>
+                            <p>Simulate parent paying for their children</p>
+                        </div>
+                    </div>
+
+                    <div class="simulation-card" style="max-width: 600px; margin-bottom: 2rem;">
+                        <h4><i class="fa-solid fa-user-shield"></i> Parent & Child Selection</h4>
+                        <div class="form-row">
+                            <div class="form-group" style="flex: 1;">
+                                <label>Select Parent</label>
+                                <select id="pay-parent-id" onchange="onPaymentParentChange()"
+                                    style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc;"></select>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Select Child</label>
+                                <select id="pay-parent-student-id" onchange="loadParentPayments()"
+                                    style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc;"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="parent-bills-list" class="balance-section"
+                        style="padding: 0; gap: 1.5rem; flex-wrap: wrap; justify-content: flex-start;">
+                        <p style="color: #888; text-align: center; width: 100%;">Select a parent and child to view
+                            bills.</p>
+                    </div>
+                </div>
+            </div>
+
 
             <div id="notifications" class="tab">
                 <header>
@@ -1675,6 +1828,158 @@
 
 
     </script>
+    <!-- GCASH Simulator Modal -->
+    <div id="gcash-modal" class="modal" style="background-color: rgba(0,0,0,0.85);">
+        <div class="modal-content"
+            style="width: 380px; padding: 0; background: transparent; overflow: visible; border: none; box-shadow: none;">
+
+            <!-- VIEW 1: Payment Screen -->
+            <div id="gcash-pay-view" style="background: #fff; border-radius: 20px; overflow: hidden;">
+                <div
+                    style="background: #007dfe; padding: 25px 15px; text-align: center; color: white; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                    <img src="images/gcash-logo.png" alt="GCash"
+                        style="height: 38px; display: block; margin-bottom: 5px;">
+                    <p
+                        style="margin: 0; opacity: 0.9; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px;">
+                        Secure Payment</p>
+                </div>
+                <div style="padding: 30px 20px; text-align: center;">
+                    <div style="margin-bottom: 20px;">
+                        <p style="color: #666; margin-bottom: 5px; font-size: 0.9rem;">Payment For</p>
+                        <h4 id="gcash-merchant" style="margin: 0; color: #333; font-size: 1.2rem; font-weight: bold;">
+                            Shuttle Operator</h4>
+                    </div>
+                    <div style="margin-bottom: 30px;">
+                        <p style="color: #666; margin-bottom: 5px; font-size: 0.9rem;">Total Amount</p>
+                        <h2 id="gcash-amount" style="margin: 0; color: #007dfe; font-size: 2.5rem; font-weight: bold;">
+                            ₱0.00</h2>
+                    </div>
+                    <div
+                        style="background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: left; margin-bottom: 30px; border: 1px solid #eee;">
+                        <p
+                            style="margin: 0; font-size: 0.75rem; color: #888; font-weight: bold; text-transform: uppercase;">
+                            Pay With</p>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                            <div
+                                style="width: 30px; height: 30px; background: #007dfe; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem;">
+                                G</div>
+                            <p style="margin: 0; font-weight: bold; color: #333;">GCash Balance (Simulated)</p>
+                        </div>
+                    </div>
+                    <button id="gcash-pay-btn" onclick="confirmGcashPayment()"
+                        style="width: 100%; padding: 15px; background: #007dfe; color: white; border: none; border-radius: 30px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 10px rgba(0, 125, 254, 0.3);">
+                        PAY ₱<span id="gcash-pay-btn-amount">0.00</span>
+                    </button>
+                    <p onclick="closeGcashModal()"
+                        style="margin-top: 15px; color: #888; cursor: pointer; font-size: 0.9rem; transition: color 0.2s;"
+                        onmouseenter="this.style.color='#666'" onmouseleave="this.style.color='#888'">Cancel</p>
+                </div>
+            </div>
+
+            <!-- VIEW 2: Receipt View (GCash Success Screen Style) -->
+            <div id="gcash-receipt-view" style="display: none; position: relative; font-family: 'Inter', sans-serif;">
+                <!-- Header -->
+                <div
+                    style="background: #007dfe; padding: 15px; border-top-left-radius: 15px; border-top-right-radius: 15px; display: flex; align-items: center; justify-content: center; position: relative;">
+                    <span onclick="closeGcashModal()"
+                        style="position: absolute; left: 15px; color: #fff; font-size: 1.2rem; cursor: pointer;"><i
+                            class="fa-solid fa-xmark"></i></span>
+                    <span style="color: #fff; font-weight: bold; font-size: 1.1rem;">Pay Bills</span>
+                </div>
+
+                <!-- "Paper" Body with Zigzag effect -->
+                <div
+                    style="background: white; padding: 25px 20px 40px 20px; position: relative; background-image: radial-gradient(circle at 10px 0px, transparent 10px, white 10px), radial-gradient(circle at 10px 100%, transparent 10px, white 10px); background-position: left top, left bottom; background-repeat: repeat-x; background-size: 20px 15px; margin: 0 10px;">
+
+                    <div style="text-align: center;">
+                        <div onclick="downloadGcashReceipt()"
+                            style="position: absolute; right: 20px; top: 20px; color: #333; font-size: 1.5rem; cursor: pointer;"
+                            title="Download Receipt">
+                            <i class="fa-solid fa-download"></i>
+                        </div>
+                        <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Payment Received</p>
+
+                        <!-- Initial Icon -->
+                        <div id="receipt-merchant-initial"
+                            style="width: 60px; height: 60px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: #666; margin: 0 auto 15px auto; border: 4px solid #f5f5f5;">
+                            D</div>
+
+                        <h4 id="receipt-merchant-name"
+                            style="margin: 0; color: #333; font-size: 1rem; font-weight: bold; letter-spacing: 0.5px;">
+                            DLS-COLLEGE OF ST BENILDE</h4>
+
+                        <h2 style="margin: 15px 0 5px 0; color: #333; font-size: 2rem; font-weight: bold;">
+                            PHP <span id="receipt-amount-display">3,025.00</span>
+                        </h2>
+
+                        <p style="color: #999; font-size: 0.8rem; margin: 0;">GCash</p>
+
+                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+
+                        <!-- Details Table -->
+                        <div style="text-align: left; font-size: 0.75rem; color: #666;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Amount Paid</span>
+                                <span style="font-weight: bold; color: #333;">PHP <span
+                                        id="receipt-details-amount">3,000.00</span></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Fee</span>
+                                <span style="font-weight: bold; color: #333;">PHP 0.00</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Account</span>
+                                <span style="font-weight: bold; color: #333;" id="receipt-account-name">Parent
+                                    Account</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Account Number</span>
+                                <span style="font-weight: bold; color: #333;" id="receipt-account-number">09** ***
+                                    1234</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Email</span>
+                                <span style="font-weight: bold; color: #333;" id="receipt-email">parent@gmail.com</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Payment purpose</span>
+                                <span style="font-weight: bold; color: #333;" id="receipt-purpose">Shuttle Fee</span>
+                            </div>
+                        </div>
+
+                        <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
+
+                        <div style="font-size: 0.8rem; color: #777;">
+                            <p style="margin: 0 0 5px 0;">Ref. No. <span id="receipt-ref-no"
+                                    style="font-weight: bold; color: #333;">5695 5992 5</span></p>
+                            <p id="receipt-date-time" style="margin: 0; font-size: 0.75rem;">12 April 2022 01:46:01 PM
+                            </p>
+                        </div>
+
+                        <p style="margin: 25px 0 20px 0; font-size: 0.75rem; color: #999; line-height: 1.4;">
+                            This has been processed and your payment will be posted next business day.
+                        </p>
+
+                        <div
+                            style="font-weight: bold; color: #007dfe; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <img src="images/gcash-logo.png" style="height: 18px;"> Pay Bills
+                        </div>
+
+                        <div
+                            style="margin-top: 15px; font-weight: bold; color: #007dfe; font-size: 0.85rem; cursor: pointer; text-decoration: underline;">
+                            Save Biller Details >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Zigzag effect (White gap) -->
+                <div
+                    style="height: 15px; margin: 0 10px; background-image: linear-gradient(135deg, white 25%, transparent 25%), linear-gradient(225deg, white 25%, transparent 25%); background-position: left bottom; background-repeat: repeat-x; background-size: 20px 10px;">
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 
 </html>

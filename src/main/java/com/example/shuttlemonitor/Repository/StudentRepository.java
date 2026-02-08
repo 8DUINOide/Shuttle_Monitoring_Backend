@@ -24,6 +24,11 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     @Query("SELECT s FROM Student s WHERE s.assignedShuttle = :shuttle")
     List<Student> findByAssignedShuttle(Shuttle shuttle);
 
+    @Query("SELECT s FROM Student s WHERE s.assignedShuttle.operator.operatorId = :operatorId")
+    List<Student> findByOperatorId(@Param("operatorId") Long operatorId);
+
+    List<Student> findByParent_ParentId(Long parentId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM Student s WHERE s.studentId = :id")
     Optional<Student> findByIdLocked(@Param("id") Long id);

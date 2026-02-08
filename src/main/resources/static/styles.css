@@ -2253,3 +2253,96 @@ tbody tr:hover {
 .chat-input-area button:hover {
     background: #0066CC;
 }
+/* === Payment Tab Styles === */
+.bill-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+    border: 1px solid #eee;
+    animation: paymentFadeIn 0.5s ease-out;
+}
+
+.bill-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.bill-card.paid {
+    border-left: 5px solid #28a745;
+}
+
+.bill-card.pending {
+    border-left: 5px solid #ffc107;
+}
+
+.bill-card.overdue {
+    border-left: 5px solid #dc3545;
+}
+
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.status-badge.pending {
+    background: #fdf6ec;
+    color: #e6a23c;
+}
+
+.status-badge.overdue {
+    background: #fef0f0;
+    color: #f56c6c;
+}
+
+.status-badge.paid {
+    background: #f0f9eb;
+    color: #67c23a;
+}
+
+.pay-now-btn {
+    width: 100%;
+    padding: 12px;
+    background: #003A6C;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 15px;
+}
+
+.pay-now-btn:hover {
+    background: #0066cc;
+}
+
+@keyframes paymentFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* === Payment Role View Toggling === */
+.payment-view {
+    display: none;
+    animation: fadeIn 0.3s;
+}
+
+.payment-view.active {
+    display: block;
+}
+

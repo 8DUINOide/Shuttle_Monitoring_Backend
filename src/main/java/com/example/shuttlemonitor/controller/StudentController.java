@@ -193,4 +193,14 @@ public class StudentController {
             return ResponseEntity.badRequest().body(Map.of("error", "Latitude and Longitude are required"));
         }
     }
+
+    @GetMapping("/operator/{operatorId}")
+    public ResponseEntity<List<Student>> getStudentsByOperator(@PathVariable Long operatorId) {
+        return ResponseEntity.ok(studentRepository.findByOperatorId(operatorId));
+    }
+
+    @GetMapping("/parent/{parentId}")
+    public ResponseEntity<List<Student>> getStudentsByParent(@PathVariable Long parentId) {
+        return ResponseEntity.ok(studentRepository.findByParent_ParentId(parentId));
+    }
 }
